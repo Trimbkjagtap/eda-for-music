@@ -1,0 +1,56 @@
+# ============================================
+# Exploratory Data Analysis for Music
+# Python Dependencies
+# ============================================
+
+# --- Spotify API ---
+spotipy>=2.24.0
+
+# --- Graph & Network ---
+neo4j>=5.0.0
+networkx>=3.2
+python-louvain>=0.16
+pyvis>=0.3.2
+
+# --- ML & Data Science ---
+numpy>=1.26.0
+pandas>=2.1.0
+scikit-learn>=1.4.0
+scipy>=1.12.0
+
+# --- Deep Learning / GNN (Day 7) ---
+torch>=2.2.0
+torch-geometric>=2.5.0
+
+# --- Visualization ---
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+
+# --- NLP (metadata similarity, Day 5) ---
+sentence-transformers>=2.3.0
+
+# --- Backend (Day 8) ---
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# --- Frontend (Day 8) ---
+streamlit>=1.31.0
+streamlit-agraph>=0.0.45
+
+# --- Agent Framework (Day 6) ---
+crewai>=0.28.0
+
+# --- Utilities ---
+python-dotenv>=1.0.0
+requests>=2.31.0
+tenacity>=8.2.0
+tqdm>=4.66.0
+loguru>=0.7.0
+httpx>=0.26.0
+
+# --- Dev & Testing ---
+pytest>=8.0.0
+jupyter>=1.0.0
+ipykernel>=6.29.0

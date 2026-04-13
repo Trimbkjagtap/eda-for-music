@@ -1,0 +1,29 @@
+# Environment
+.env
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Data (raw/cache — large files)
+data/raw/
+data/kaggle/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+logs/
