@@ -31,8 +31,8 @@ class Config:
     PROCESSED_DIR: Path = ROOT / "data" / "processed"
     KAGGLE_DIR: Path = ROOT / "data" / "kaggle"
 
-    # Rate limiting
-    RATE_LIMIT_CALLS_PER_SECOND: int = int(os.getenv("RATE_LIMIT_CALLS_PER_SECOND", "10"))
+    # Rate limiting — Spotify free tier: 2 calls/sec is safe for long ingest runs
+    RATE_LIMIT_CALLS_PER_SECOND: int = int(os.getenv("RATE_LIMIT_CALLS_PER_SECOND", "2"))
 
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

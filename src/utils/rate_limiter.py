@@ -55,4 +55,5 @@ def with_retry(max_retries: int = 5, base_delay: float = 1.0):
 
 
 # Shared global limiter
-default_limiter = RateLimiter(calls_per_second=10)
+# Spotify free tier: keep at ≤2 calls/second to avoid 429s on long ingest runs
+default_limiter = RateLimiter(calls_per_second=2)
