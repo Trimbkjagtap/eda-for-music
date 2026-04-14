@@ -2,22 +2,67 @@
 Ground truth seed artists.
 - GHOST: known fake/AI-generated artists from documented cases
 - ORGANIC: verified real artists in similar genres as controls
+- KAGGLE_CANDIDATES: lowest-variance artists from Kaggle dataset analysis
+  (pending Spotify API verification — do not treat as confirmed ghost artists)
 
 Sources:
 - Michael Smith wire fraud case (US DOJ, 2024)
 - Dagens Nyheter investigation (830 fake artists, 2023-2024)
+- Exercise 1 Kaggle analysis: artists with 15+ tracks, lowest total audio feature variance
+  (variance = sum of per-feature variance across danceability, energy, valence, acousticness)
 """
 
-# Known ghost/fake artists — Spotify IDs to be confirmed via search
-# These come from the Michael Smith case and DN investigation
+# Known ghost/fake artists — Spotify IDs confirmed via Neo4j ingestion
 GHOST_ARTISTS = [
     # Michael Smith case — AI-generated ambient/lo-fi artists
-    # IDs need to be verified via search (search by name first)
-    {"name": "Calmo", "spotify_id": None, "source": "Michael Smith case", "genre": "ambient"},
-    {"name": "Relaxing White Noise", "spotify_id": None, "source": "Michael Smith case", "genre": "ambient"},
-    {"name": "Meditation Relax Club", "spotify_id": None, "source": "bot network", "genre": "meditation"},
-    {"name": "Sleep Meditation Music", "spotify_id": None, "source": "bot network", "genre": "sleep"},
-    {"name": "Study Music Project", "spotify_id": None, "source": "bot network", "genre": "focus"},
+    {"name": "Calmo", "spotify_id": "4Wx3ZL6d6p1gVMtwQ2YWsz",
+     "source": "Michael Smith case", "genre": "ambient",
+     "neo4j_tracks": 38, "isrc_prefixes": ["ITIWE", "CH654"]},
+    {"name": "Relaxing White Noise", "spotify_id": None,
+     "source": "Michael Smith case", "genre": "ambient",
+     "neo4j_tracks": 280, "isrc_prefixes": ["DEPI8", "DE1QW"]},
+    {"name": "Meditation Relax Club", "spotify_id": None,
+     "source": "bot network", "genre": "meditation",
+     "neo4j_tracks": 172, "isrc_prefixes": ["ITO10", "ITLU5"]},
+    {"name": "Sleep Meditation Music", "spotify_id": None,
+     "source": "bot network", "genre": "sleep",
+     "neo4j_tracks": 0, "isrc_prefixes": []},
+    {"name": "Study Music Project", "spotify_id": None,
+     "source": "bot network", "genre": "focus",
+     "neo4j_tracks": 0, "isrc_prefixes": []},
+]
+
+# Kaggle-derived ghost candidates — artists with lowest non-trivial total variance
+# across danceability, energy, valence, acousticness (15+ tracks, variance > 1e-8).
+# NOTE: These are derived from Kaggle CSV analysis only.
+# Spotify IDs are NOT set — these need verification via Spotify search API.
+# Many low-variance entries in Kaggle are multi-artist collaborations where
+# the same track appears across multiple genre buckets (dataset artifact).
+# Do NOT treat as confirmed ghost artists until Spotify API verification is complete.
+KAGGLE_GHOST_CANDIDATES = [
+    # Top 3 lowest non-trivial variance artists (≥15 tracks), from Exercise 1
+    # total_variance values from Kaggle analysis (2026-04-14)
+    {"name": "The Verve",
+     "spotify_id": None,  # pending API verification
+     "source": "Kaggle variance analysis (Exercise 1)",
+     "genre": "alternative",
+     "kaggle_track_count": 15,
+     "total_variance": 4.287e-06,
+     "note": "Kaggle-derived candidate pending Spotify API verification"},
+    {"name": "Lykke Li;The Magician",
+     "spotify_id": None,
+     "source": "Kaggle variance analysis (Exercise 1)",
+     "genre": "pop",
+     "kaggle_track_count": 18,
+     "total_variance": 8.181e-06,
+     "note": "Kaggle-derived candidate pending Spotify API verification — multi-artist entry"},
+    {"name": "MEDUZA;Becky Hill;Goodboys",
+     "spotify_id": None,
+     "source": "Kaggle variance analysis (Exercise 1)",
+     "genre": "dance",
+     "kaggle_track_count": 15,
+     "total_variance": 8.800e-06,
+     "note": "Kaggle-derived candidate pending Spotify API verification — multi-artist entry"},
 ]
 
 # Organic control artists — verified, similar genres
@@ -41,13 +86,18 @@ KNOWN_ISRC_PREFIXES = {
 
 
 def get_all_seeds() -> list[dict]:
-    """Return all seed artists with their labels."""
+    """Return confirmed ghost + organic seed artists with their labels."""
     seeds = []
     for a in GHOST_ARTISTS:
         seeds.append({**a, "is_ghost": True})
     for a in ORGANIC_ARTISTS:
         seeds.append({**a, "is_ghost": False})
     return seeds
+
+
+def get_kaggle_candidates() -> list[dict]:
+    """Return unverified ghost candidates derived from Kaggle variance analysis."""
+    return [{**a, "is_ghost": None} for a in KAGGLE_GHOST_CANDIDATES]
 
 
 def get_ghost_seeds() -> list[dict]:
