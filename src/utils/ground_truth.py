@@ -25,7 +25,7 @@ ORGANIC_ARTISTS = [
     {"name": "Radiohead", "spotify_id": "4Z8W4fKeB5YxbusRsdQVPb", "source": "verified", "genre": "alternative"},
     {"name": "Bon Iver", "spotify_id": "4LEiUm1SRbFMgfqnQTwUbQ", "source": "verified", "genre": "indie folk"},
     {"name": "Brian Eno", "spotify_id": "7MSUfLeTdDEoZiJPDSBXgi", "source": "verified", "genre": "ambient"},
-    {"name": "Nils Frahm", "spotify_id": "5hVghJ4KaYES3BFUATCYn0", "source": "verified", "genre": "neo-classical"},
+    {"name": "Nils Frahm", "spotify_id": "5gqhueRUZEa7VDnQt4HODp", "source": "verified", "genre": "neo-classical"},
     {"name": "Tycho", "spotify_id": "5oOhM2DFWab8XhSoAkacgR", "source": "verified", "genre": "ambient electronic"},
 ]
 

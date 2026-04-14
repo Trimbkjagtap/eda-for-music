@@ -36,6 +36,27 @@ from loguru import logger
 from src.utils.config import config
 from src.utils.rate_limiter import default_limiter, with_retry
 
+# Session-level API call counter and safety limit
+_call_counter = 0
+_CALL_WARN_AT = 40
+_CALL_LIMIT = 50
+
+
+def _checked_call(fn):
+    """Increment the global call counter, warn at threshold, block at limit."""
+    global _call_counter
+    _call_counter += 1
+    if _call_counter >= _CALL_LIMIT:
+        raise RuntimeError(
+            f"API call #{_call_counter} blocked — session limit of {_CALL_LIMIT} reached. "
+            "Restart the session or raise _CALL_LIMIT to continue."
+        )
+    if _call_counter >= _CALL_WARN_AT:
+        logger.warning(f"API call #{_call_counter} — approaching session limit of {_CALL_LIMIT}")
+    else:
+        print(f"API call #{_call_counter}")
+    return fn()
+
 
 class SpotifyClient:
     def __init__(self):
@@ -83,7 +104,7 @@ class SpotifyClient:
         if cached:
             return cached
         default_limiter.wait()
-        result = self.sp.artist(artist_id)
+        result = _checked_call(lambda: self.sp.artist(artist_id))
         self._to_cache(result, "artist", artist_id)
         return result
 
@@ -100,12 +121,12 @@ class SpotifyClient:
         albums = []
         default_limiter.wait()
         # April 2026: max limit is 10 for artist albums (was 50)
-        page = self.sp.artist_albums(artist_id, include_groups=include_groups, limit=10)
+        page = _checked_call(lambda: self.sp.artist_albums(artist_id, include_groups=include_groups, limit=10))
         while page:
             albums.extend(page["items"])
             if page["next"]:
                 default_limiter.wait()
-                page = self.sp.next(page)
+                page = _checked_call(lambda: self.sp.next(page))
             else:
                 break
 
@@ -161,12 +182,12 @@ class SpotifyClient:
 
         tracks = []
         default_limiter.wait()
-        page = self.sp.album_tracks(album_id, limit=50)
+        page = _checked_call(lambda: self.sp.album_tracks(album_id, limit=50))
         while page:
             tracks.extend(page["items"])
             if page["next"]:
                 default_limiter.wait()
-                page = self.sp.next(page)
+                page = _checked_call(lambda: self.sp.next(page))
             else:
                 break
 
@@ -185,7 +206,7 @@ class SpotifyClient:
         if cached:
             return cached
         default_limiter.wait()
-        result = self.sp.track(track_id)
+        result = _checked_call(lambda: self.sp.track(track_id))
         self._to_cache(result, "track", track_id)
         return result
 
@@ -194,23 +215,38 @@ class SpotifyClient:
     @with_retry()
     def search_tracks(self, query: str, limit: int = 10) -> list[dict]:
         """Search tracks. Max 10 per page."""
+        cached = self._from_cache("search_tracks", query, limit)
+        if cached:
+            return cached
         default_limiter.wait()
-        result = self.sp.search(q=query, type="track", limit=min(limit, 10))
-        return result.get("tracks", {}).get("items", [])
+        result = _checked_call(lambda: self.sp.search(q=query, type="track", limit=min(limit, 10)))
+        items = result.get("tracks", {}).get("items", [])
+        self._to_cache(items, "search_tracks", query, limit)
+        return items
 
     @with_retry()
     def search_artists(self, query: str, limit: int = 10) -> list[dict]:
         """Search artists by name. Returns minimal objects (name, id, images)."""
+        cached = self._from_cache("search_artists", query, limit)
+        if cached:
+            return cached
         default_limiter.wait()
-        result = self.sp.search(q=query, type="artist", limit=min(limit, 10))
-        return result.get("artists", {}).get("items", [])
+        result = _checked_call(lambda: self.sp.search(q=query, type="artist", limit=min(limit, 10)))
+        items = result.get("artists", {}).get("items", [])
+        self._to_cache(items, "search_artists", query, limit)
+        return items
 
     @with_retry()
     def search_playlists(self, query: str, limit: int = 10) -> list[dict]:
         """Search playlists by keyword."""
+        cached = self._from_cache("search_playlists", query, limit)
+        if cached:
+            return cached
         default_limiter.wait()
-        result = self.sp.search(q=query, type="playlist", limit=min(limit, 10))
-        return result.get("playlists", {}).get("items", [])
+        result = _checked_call(lambda: self.sp.search(q=query, type="playlist", limit=min(limit, 10)))
+        items = result.get("playlists", {}).get("items", [])
+        self._to_cache(items, "search_playlists", query, limit)
+        return items
 
     # --------------------------------------------------------------- playlists
 
@@ -226,7 +262,7 @@ class SpotifyClient:
             return cached
         try:
             default_limiter.wait()
-            result = self.sp.playlist(playlist_id, fields="id,name,owner,description,tracks.total")
+            result = _checked_call(lambda: self.sp.playlist(playlist_id, fields="id,name,owner,description,tracks.total"))
             self._to_cache(result, "playlist", playlist_id)
             return result
         except Exception as e:
@@ -247,14 +283,14 @@ class SpotifyClient:
         tracks = []
         try:
             default_limiter.wait()
-            page = self.sp.playlist_tracks(playlist_id, limit=100)
+            page = _checked_call(lambda: self.sp.playlist_tracks(playlist_id, limit=100))
             while page:
                 for item in page.get("items", []):
                     if item and item.get("track"):
                         tracks.append(item["track"])
                 if page["next"]:
                     default_limiter.wait()
-                    page = self.sp.next(page)
+                    page = _checked_call(lambda: self.sp.next(page))
                 else:
                     break
             self._to_cache(tracks, "playlist_tracks", playlist_id)
