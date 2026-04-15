@@ -1,0 +1,82 @@
+[
+  {
+    "artist_id": "6bo3atMVp3qFECNALVwq9N",
+    "artist_name": "Relaxing White Noise",
+    "signal_scores": {
+      "s1_audio_similarity": null,
+      "s2_cadence_sync": 0.4195,
+      "s3_playlist_cooccurrence": 0.0,
+      "s4_follower_ratio": 0.7567,
+      "s5_metadata_similarity": 0.108,
+      "s6_graph_density": 0.7158,
+      "s7_cross_platform": 0.0
+    },
+    "overall_score": 0.3566,
+    "verdict": "LIKELY_ORGANIC",
+    "confidence": 0.86,
+    "signals_computed": 6,
+    "signals_total": 7,
+    "explanation": "Relaxing White Noise \u2014 LIKELY_ORGANIC (score=0.357)\nSignals firing HIGH (\u22650.60):\n  \u2022 catalog density anomaly: 0.76\n  \u2022 ISRC concentration (HHI): 0.72\n  Cadence: 81% same-day releases, median gap=7d\n  ISRC HHI=0.671 (dominant company: 79% of tracks)\n  Cross-platform: YouTube=353,775,503 views, Apple Music=5 results\nSignals NOT firing (< 0.40):\n  \u25cb ISRC operator co-occurrence: 0.00\n  \u25cb metadata / keyword pattern: 0.11\n  \u25cb cross-platform visibility: 0.00\nSignals unavailable: audio fingerprint (Kaggle)",
+    "true_label": "ghost"
+  },
+  {
+    "artist_id": "39t4EeLBfpT72UQJVkIeuj",
+    "artist_name": "Meditation Relax Club",
+    "signal_scores": {
+      "s1_audio_similarity": null,
+      "s2_cadence_sync": 0.5872,
+      "s3_playlist_cooccurrence": 0.0,
+      "s4_follower_ratio": 0.5363,
+      "s5_metadata_similarity": 0.108,
+      "s6_graph_density": 0.5603,
+      "s7_cross_platform": 0.0
+    },
+    "overall_score": 0.3313,
+    "verdict": "LIKELY_ORGANIC",
+    "confidence": 0.86,
+    "signals_computed": 6,
+    "signals_total": 7,
+    "explanation": "Meditation Relax Club \u2014 LIKELY_ORGANIC (score=0.331)\n  Cadence: 95% same-day releases, median gap=75d\n  ISRC HHI=0.515 (dominant company: 59% of tracks)\n  Cross-platform: YouTube=157,581,316 views, Apple Music=5 results\nSignals NOT firing (< 0.40):\n  \u25cb ISRC operator co-occurrence: 0.00\n  \u25cb metadata / keyword pattern: 0.11\n  \u25cb cross-platform visibility: 0.00\nSignals unavailable: audio fingerprint (Kaggle)",
+    "true_label": "ghost"
+  },
+  {
+    "artist_id": "4Wx3ZL6d6p1gVMtwQ2YWsz",
+    "artist_name": "Calmo",
+    "signal_scores": {
+      "s1_audio_similarity": null,
+      "s2_cadence_sync": 0.2315,
+      "s3_playlist_cooccurrence": 0.0,
+      "s4_follower_ratio": 0.138,
+      "s5_metadata_similarity": 0.108,
+      "s6_graph_density": 0.4459,
+      "s7_cross_platform": 0.48
+    },
+    "overall_score": 0.2201,
+    "verdict": "LIKELY_ORGANIC",
+    "confidence": 0.86,
+    "signals_computed": 6,
+    "signals_total": 7,
+    "explanation": "Calmo \u2014 LIKELY_ORGANIC (score=0.220)\n  Cadence: 32% same-day releases, median gap=56d\n  ISRC HHI=0.452 (dominant company: 50% of tracks)\n  Cross-platform: YouTube=319 views, Apple Music=5 results\nSignals NOT firing (< 0.40):\n  \u25cb release cadence / bulk-upload fingerprint: 0.23\n  \u25cb ISRC operator co-occurrence: 0.00\n  \u25cb catalog density anomaly: 0.14\n  \u25cb metadata / keyword pattern: 0.11\nSignals unavailable: audio fingerprint (Kaggle)",
+    "true_label": "ghost"
+  },
+  {
+    "artist_id": "5gqhueRUZEa7VDnQt4HODp",
+    "artist_name": "Nils Frahm",
+    "signal_scores": {
+      "s1_audio_similarity": null,
+      "s2_cadence_sync": 0.023846090141015037,
+      "s3_playlist_cooccurrence": 0.0,
+      "s4_follower_ratio": 0.0,
+      "s5_metadata_similarity": 0.108,
+      "s6_graph_density": 0.0,
+      "s7_cross_platform": 0.0
+    },
+    "overall_score": 0.0233,
+    "verdict": "LIKELY_ORGANIC",
+    "confidence": 0.86,
+    "signals_computed": 6,
+    "signals_total": 7,
+    "explanation": "Nils Frahm \u2014 LIKELY_ORGANIC (score=0.023)\n  Cadence: 4% same-day releases, median gap=0d\n  ISRC HHI=0.000 (dominant company: 0% of tracks)\n  Cross-platform: YouTube=9,107,596 views, Apple Music=4 results\nSignals NOT firing (< 0.40):\n  \u25cb release cadence / bulk-upload fingerprint: 0.02\n  \u25cb ISRC operator co-occurrence: 0.00\n  \u25cb catalog density anomaly: 0.00\n  \u25cb metadata / keyword pattern: 0.11\n  \u25cb ISRC concentration (HHI): 0.00\n  \u25cb cross-platform visibility: 0.00\nSignals unavailable: audio fingerprint (Kaggle)",
+    "true_label": "organic"
+  }
+]

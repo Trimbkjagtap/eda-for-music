@@ -1,0 +1,8 @@
+Signal,Ghost Mean,Organic Mean,Gap (Ghost − Organic),Discriminative?
+S6 Graph Density (HHI),0.574,0.0,0.574,✓ YES
+S4 Catalog Density,0.47700000000000004,0.0,0.47700000000000004,✓ YES
+S2 Release Cadence,0.41273333333333334,0.023846090141015037,0.3888872431923183,✓ YES
+S7 Cross-Platform,0.16,0.0,0.16,✓ YES
+S1 Audio Similarity,0.0,0.0,0.0,✗ NO
+S3 Playlist Co-occur,0.0,0.0,0.0,✗ NO
+S5 Metadata Similarity,0.108,0.108,0.0,✗ NO

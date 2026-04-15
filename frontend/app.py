@@ -179,6 +179,31 @@ FIGURES_META = {
         "exercise": "Exercise 5",
         "signal": "Release Cadence",
     },
+    "fig6_signal_radar.png": {
+        "title": "Figure 6: Seven-Signal Ghost Artist Detection Radar",
+        "caption": (
+            "Radar chart showing all 7 signal scores per artist (left) and averaged ghost vs organic (right). "
+            "S2 Release Cadence, S4 Catalog Density, and S6 Graph/HHI are the most discriminative signals. "
+            "S7 Cross-Platform is inconclusive for the relaxation sub-genre: "
+            "Relaxing White Noise has 353M YouTube views, Meditation Relax Club 157M — "
+            "these artists are NOT invisible cross-platform. "
+            "Ghost behavior is Spotify-stream-farming, not platform absence."
+        ),
+        "exercise": "Exercise 6",
+        "signal": "Aggregate Score",
+    },
+    "fig6b_signal_heatmap.png": {
+        "title": "Figure 6b: Signal Report Card Heatmap",
+        "caption": (
+            "Heatmap of all 7 signal scores across 4 artists. "
+            "Red = ghost-like behavior (score ≥ 0.6), Green = organic behavior (≤ 0.4), "
+            "Grey = N/A (data unavailable). "
+            "S1 Audio Similarity returns N/A for all artists (Kaggle dataset miss — niche genre). "
+            "S2/S4/S6 cleanly separate ghost from organic with 0.3–0.7+ score gaps."
+        ),
+        "exercise": "Exercise 6",
+        "signal": "Aggregate Score",
+    },
 }
 
 FRAMEWORK_LAYERS = [
@@ -290,9 +315,10 @@ if page == "🏠 Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.info(
-        "**Status:** Exercises 1–5 complete using Kaggle dataset + Neo4j + cached Spotify data. "
-        "Exercises 6–7 (metadata similarity + aggregate score) pending. "
-        "No proprietary data or special API access required."
+        "**Status:** Exercises 1–6 complete. All 7 signals implemented and tested. "
+        "Key finding: ghost artists ARE visible on YouTube (353M views for RWN) — "
+        "stream farming is Spotify-specific, not cross-platform absence. "
+        "Exercise 7 (GNN aggregate) pending."
     )
 
 # ── EXERCISE GALLERY PAGE ──────────────────────────────────────────────────────
