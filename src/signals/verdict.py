@@ -331,3 +331,136 @@ def _empty_verdict(artist_id: str, artist_name: str,
         "explanation": f"No signals could be computed for {artist_name}.",
         "weights_used": weights,
     }
+
+
+# ── GNN-backed verdict ────────────────────────────────────────────────────────
+
+def compute_verdict_gnn(
+    artist_id: str,
+    artist_name: str | None = None,
+    track_name: str | None = None,
+    gnn_weight: float = 0.6,
+    rule_weight: float = 0.4,
+    neo4j: Neo4jClient | None = None,
+    run_s7: bool = False,
+) -> dict:
+    """
+    Compute a hybrid verdict combining the trained GAT model with the
+    rule-based signal scorer.
+
+    Parameters
+    ----------
+    artist_id   : Spotify artist ID
+    artist_name : Display name (resolved from Neo4j if None)
+    track_name  : Optional track for cross-platform check
+    gnn_weight  : Weight given to GNN score in combined verdict (default 0.6)
+    rule_weight : Weight given to rule-based score (default 0.4)
+    neo4j       : Neo4jClient instance (created if None)
+    run_s7      : Whether to run Signal 7 in the rule-based component
+
+    Returns
+    -------
+    dict with keys:
+        rule_based_score, gnn_score, combined_score,
+        verdict_label, confidence, explanation,
+        signal_scores (from rule-based), gnn_available (bool)
+    """
+    from pathlib import Path
+    import json as _json
+
+    # ── Step 1: Rule-based verdict (always runs) ──────────────────────────────
+    rule_result = compute_verdict(
+        artist_id=artist_id,
+        artist_name=artist_name,
+        track_name=track_name,
+        neo4j=neo4j,
+        run_s7=run_s7,
+    )
+    rule_score = rule_result["overall_score"]
+    artist_name = rule_result["artist_name"]
+
+    # ── Step 2: GNN inference (requires trained model) ────────────────────────
+    gnn_score = None
+    gnn_available = False
+
+    try:
+        import torch
+        from src.models.gnn_detector import GhostDetectorGAT
+        from src.models.dataset_builder import FEATURE_NAMES, _EX5, _EX4_HHI
+
+        ROOT = Path(__file__).resolve().parents[2]
+        PROCESSED = ROOT / "data" / "processed"
+        model_path = PROCESSED / "gat_model.pt"
+        meta_path = PROCESSED / "gnn_dataset_meta.json"
+
+        if not model_path.exists():
+            logger.warning("GAT model not found at data/processed/gat_model.pt — skipping GNN inference")
+            raise FileNotFoundError("gat_model.pt not found")
+
+        meta = _json.loads(meta_path.read_text())
+        col_min = torch.tensor(meta["col_min"], dtype=torch.float)
+        col_max = torch.tensor(meta["col_max"], dtype=torch.float)
+        col_range = (col_max - col_min).clamp(min=1e-8)
+
+        # Build feature vector for this artist
+        ex5 = _EX5.get(artist_name, {})
+        hhi = _EX4_HHI.get(artist_name, 0.15)
+
+        raw_feats = [
+            float(ex5.get("track_count", rule_result.get("signal_details", {}).get("s4", {}).get("track_count", 20))),
+            float(ex5.get("closure_rate", rule_result.get("signal_details", {}).get("s2", {}).get("closure_rate", 0.05))),
+            float(ex5.get("tracks_per_day", 0.01)),
+            float(hhi),
+            0.0,                # total_variance — Kaggle miss for niche genre
+            180_000.0,          # mean_duration_ms — genre default
+            float(ex5.get("isrc_prefix_count", 2)),
+            1.0,                # genre_count — mono-genre assumed
+        ]
+
+        x_raw = torch.tensor(raw_feats, dtype=torch.float).unsqueeze(0)
+        x_norm = (x_raw - col_min) / col_range
+
+        # Isolated inference: no graph edges (self-loop only)
+        edge_index = torch.tensor([[0], [0]], dtype=torch.long)
+
+        in_ch = len(FEATURE_NAMES)
+        model = GhostDetectorGAT(in_ch)
+        model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+        model.eval()
+
+        with torch.no_grad():
+            prob = model(x_norm, edge_index)
+        gnn_score = float(prob[0])
+        gnn_available = True
+        logger.info(f"GNN score for {artist_name}: {gnn_score:.4f}")
+
+    except Exception as e:
+        logger.warning(f"GNN inference failed for {artist_name}: {e}")
+
+    # ── Step 3: Combine scores ────────────────────────────────────────────────
+    if gnn_available and gnn_score is not None:
+        combined = gnn_weight * gnn_score + rule_weight * rule_score
+    else:
+        combined = rule_score
+
+    verdict_label = _verdict_label(combined)
+
+    explanation_parts = [rule_result["explanation"]]
+    if gnn_available:
+        explanation_parts.append(
+            f"GNN score: {gnn_score:.3f} (GAT inference) · "
+            f"Combined: {combined:.3f} ({gnn_weight:.0%} GNN + {rule_weight:.0%} rule-based)"
+        )
+    else:
+        explanation_parts.append("GNN unavailable — using rule-based score only.")
+
+    return {
+        **rule_result,
+        "rule_based_score": rule_score,
+        "gnn_score": gnn_score,
+        "gnn_available": gnn_available,
+        "combined_score": round(combined, 4),
+        "verdict": verdict_label,
+        "overall_score": round(combined, 4),
+        "explanation": "\n".join(explanation_parts),
+    }

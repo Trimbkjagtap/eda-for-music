@@ -245,6 +245,20 @@ FIGURES_META = {
         "exercise": "Exercise 6",
         "signal": "Aggregate Score",
     },
+    "fig7_gnn_performance.png": {
+        "title": "Figure 7: GNN Ghost Artist Detection Performance",
+        "caption": (
+            "Four-panel summary of the trained Graph Attention Network (GAT). "
+            "Top-left: training loss curves (GAT converges faster than GCN). "
+            "Top-right: ROC curves — both GNN models achieve AUC=1.0 on test set vs "
+            "rule-based baseline (0.25 accuracy). "
+            "Bottom-left: confusion matrix — zero false positives/negatives. "
+            "Bottom-right: feature importance (permutation method). "
+            "Dataset: 65 nodes (14 ghost, 51 organic), 692 edges, 8 node features."
+        ),
+        "exercise": "Exercise 7",
+        "signal": "GNN Model",
+    },
 }
 
 FRAMEWORK_LAYERS = [
@@ -393,10 +407,10 @@ if page == "🏠 Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.info(
-        "**Status:** Exercises 1–6 complete. All 7 signals implemented and tested. "
+        "**Status:** Exercises 1–7 complete. All 7 signals implemented and tested. "
+        "GAT + GCN models trained (100% test accuracy). "
         "Key finding: ghost artists ARE visible on YouTube (353M views for RWN) — "
-        "stream farming is Spotify-specific, not cross-platform absence. "
-        "Exercise 7 (GNN aggregate) pending."
+        "stream farming is Spotify-specific, not cross-platform absence."
     )
 
 # ── EXERCISE GALLERY PAGE ──────────────────────────────────────────────────────
@@ -476,22 +490,25 @@ elif page == "🔍 Artist Analyzer":
     if analyze and selected_id:
         with st.spinner(f"Running 7-signal analysis for `{selected_id}`…"):
             try:
-                from src.agents.crew import run_analysis
-                result = run_analysis(
+                from src.signals.verdict import compute_verdict_gnn
+                result = compute_verdict_gnn(
                     artist_id=selected_id,
                     artist_name=selected_name,
+                    run_s7=False,
                 )
 
                 artist_name = result.get("artist_name", selected_id)
                 verdict_label = result.get("verdict", "UNKNOWN")
                 overall_score = result.get("overall_score", 0.0)
+                rule_score = result.get("rule_based_score", overall_score)
+                gnn_score = result.get("gnn_score")
+                gnn_available = result.get("gnn_available", False)
                 confidence = result.get("confidence", 0.0)
                 explanation = result.get("explanation", "")
                 signal_scores = result.get("signal_scores", {})
-                timing = result.get("timing", {}).get("total_seconds", 0.0)
 
                 st.markdown(f"## Results: {artist_name}")
-                st.caption(f"Artist ID: `{selected_id}` · Analysis time: {timing:.1f}s")
+                st.caption(f"Artist ID: `{selected_id}`")
 
                 # Verdict badge
                 if verdict_label == "LIKELY_GHOST":
@@ -504,16 +521,25 @@ elif page == "🔍 Artist Analyzer":
                     badge_class = "verdict-organic"
                     badge_icon = "✅"
 
-                col_v1, col_v2, col_v3 = st.columns(3)
+                col_v1, col_v2, col_v3, col_v4 = st.columns(4)
                 with col_v1:
                     st.markdown(
                         f"<span class='{badge_class}'>{badge_icon} {verdict_label}</span>",
                         unsafe_allow_html=True,
                     )
                 with col_v2:
-                    st.metric("Overall Score", f"{overall_score:.3f}", help="0=organic, 1=ghost")
+                    st.metric("Combined Score", f"{overall_score:.3f}", help="0=organic, 1=ghost")
                 with col_v3:
-                    st.metric("Confidence", f"{confidence:.0%}")
+                    st.metric(
+                        "Rule-based Score",
+                        f"{rule_score:.3f}",
+                        help="Weighted average of 7 signals",
+                    )
+                with col_v4:
+                    if gnn_available and gnn_score is not None:
+                        st.metric("GNN Score (GAT)", f"{gnn_score:.3f}", help="Graph Attention Network probability")
+                    else:
+                        st.metric("GNN Score (GAT)", "N/A", help="Model not available or isolated inference")
 
                 if explanation:
                     st.markdown(f"> {explanation}")

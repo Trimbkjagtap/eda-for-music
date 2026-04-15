@@ -1,0 +1,41 @@
+{
+  "gat": {
+    "test_accuracy": 1.0,
+    "test_precision": 1.0,
+    "test_recall": 1.0,
+    "test_f1": 1.0
+  },
+  "gcn": {
+    "test_accuracy": 1.0,
+    "test_precision": 1.0,
+    "test_recall": 1.0,
+    "test_f1": 1.0
+  },
+  "rule_based": {
+    "test_accuracy": 0.25,
+    "test_precision": 0.0,
+    "test_recall": 0.0,
+    "test_f1": 0.0
+  },
+  "top_features": [
+    "track_count",
+    "closure_rate",
+    "tracks_per_day"
+  ],
+  "feature_importance": {
+    "track_count": 0.0,
+    "closure_rate": 0.0,
+    "tracks_per_day": 0.0,
+    "hhi": 0.0,
+    "total_variance": 0.0,
+    "mean_duration_ms": 0.0,
+    "isrc_prefix_count": 0.0,
+    "genre_count": 0.0
+  },
+  "dataset": {
+    "num_nodes": 65,
+    "num_edges": 692,
+    "num_ghost": 14,
+    "num_organic": 51
+  }
+}

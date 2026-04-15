@@ -74,6 +74,9 @@ class AnalyzeResponse(BaseModel):
     confidence: float
     explanation: str
     timing_seconds: float
+    rule_based_score: float | None = None
+    gnn_score: float | None = None
+    gnn_available: bool = False
 
 
 # ── Lazy singletons ───────────────────────────────────────────────────────────
@@ -157,6 +160,9 @@ async def analyze_artist(req: AnalyzeRequest):
         confidence=result.get("confidence", 0.0),
         explanation=result.get("explanation", ""),
         timing_seconds=result.get("timing", {}).get("total_seconds", 0.0),
+        rule_based_score=result.get("rule_based_score"),
+        gnn_score=result.get("gnn_score"),
+        gnn_available=result.get("gnn_available", False),
     )
 
 
@@ -444,6 +450,37 @@ async def get_exercises_summary():
                 "Nils Frahm": 9107596,
             },
         },
+    }
+
+
+@app.get("/model/info", summary="GNN model architecture and training stats")
+async def get_model_info():
+    """Return GAT model architecture, training summary, and feature list."""
+    import json as _json
+    from pathlib import Path
+
+    ROOT = Path(__file__).resolve().parents[1]
+    summary_path = ROOT / "data" / "processed" / "gnn_training_summary.json"
+    meta_path = ROOT / "data" / "processed" / "gnn_dataset_meta.json"
+    model_path = ROOT / "data" / "processed" / "gat_model.pt"
+
+    summary = _json.loads(summary_path.read_text()) if summary_path.exists() else {}
+    meta = _json.loads(meta_path.read_text()) if meta_path.exists() else {}
+
+    return {
+        "architecture": {
+            "model": "GhostDetectorGAT",
+            "type": "Graph Attention Network (GAT)",
+            "in_channels": meta.get("num_features", 8),
+            "hidden_channels": 32,
+            "heads": 4,
+            "dropout": 0.3,
+            "epochs_trained": 200,
+        },
+        "features": meta.get("feature_names", []),
+        "dataset": meta.get("num_nodes", 0),
+        "training_summary": summary,
+        "model_available": model_path.exists(),
     }
 
 
