@@ -376,22 +376,6 @@ def check_neo4j_for_artist(artist_name: str) -> dict:
         return {"found": False}
 
 
-@st.cache_data(ttl=3600)
-def get_ai_key_findings() -> str:
-    """Generate AI key findings for the Home page (cached 1 hour)."""
-    client = get_openai_client()
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": f"You are a research assistant summarizing findings from the EDA for Music project.\n{PROJECT_CONTEXT}"},
-            {"role": "user", "content": "List the 5 most important and surprising findings from this project as a numbered list. Each finding should be 1-2 sentences, specific, and cite actual numbers. Format as plain text with numbers 1-5."},
-        ],
-        temperature=0.3,
-        max_tokens=500,
-    )
-    return response.choices[0].message.content
-
-
 def research_assistant_query(question: str, history: list) -> str:
     """Answer a research question using GPT-4o with full project context."""
     client = get_openai_client()
@@ -413,29 +397,6 @@ Respond at PhD level with specific numbers and citations to the data. Be rigorou
         messages=messages,
         temperature=0.4,
         max_tokens=3000,
-    )
-    return response.choices[0].message.content
-
-
-def ai_interpret_cross_platform(artist_name: str, yt_views: int, apple_music: bool, verdict: str) -> str:
-    """GPT-4o interpretation of cross-platform data."""
-    client = get_openai_client()
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": f"You are a ghost artist detection researcher. {PROJECT_CONTEXT}"},
-            {"role": "user", "content": f"""Interpret the cross-platform data for {artist_name}:
-- YouTube views: {yt_views:,}
-- On Apple Music: {apple_music}
-- Current ghost verdict: {verdict}
-
-Compare to baselines (RWN=353M views, MRC=157M views, Calmo=155 views, NF=9M views).
-What does this cross-platform presence tell us about this artist's behavior?
-Is cross-platform presence consistent or inconsistent with the ghost verdict?
-Write 2-3 sentences, cite specific numbers, be precise."""},
-        ],
-        temperature=0.3,
-        max_tokens=300,
     )
     return response.choices[0].message.content
 
@@ -505,17 +466,25 @@ if page == "🏠 Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # AI Key Findings
-    st.markdown("## 🤖 AI-Generated Key Findings")
-    with st.spinner("Generating research insights…"):
-        try:
-            findings = get_ai_key_findings()
-            st.markdown(f"""<div class='ai-card'>
-                <div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:8px;'>GPT-4o ANALYSIS</div>
-                <div style='color:#e2e8f0;line-height:1.7;'>{findings.replace(chr(10), '<br>')}</div>
-            </div>""", unsafe_allow_html=True)
-        except Exception as e:
-            st.info(f"AI findings unavailable: {e}")
+    # Key Findings
+    st.markdown("## Key Findings")
+    findings_list = [
+        ("📊", "12.5× catalog variance ratio", "Ghost artists show 12.5× lower audio feature variance than organic controls (Levene's test p&lt;0.001)."),
+        ("⏱️", "81–95% cadence closure", "Ghost artists bulk-upload tracks with 81–95% same-day release clustering vs 0% for Nils Frahm."),
+        ("📺", "Ghost artists ARE on YouTube", "Relaxing White Noise has 353M YouTube views — fraud is Spotify-economic stream farming, not fabricated identity."),
+        ("🏭", "HHI 0.88 concentration", "Single production company controls 88% of RWN's catalog, revealing bulk-upload operations via ISRC attribution."),
+        ("🧠", "100% GNN test accuracy", "GAT model achieves 100% test accuracy on the proof-of-concept 65-node graph (note: synthetic graph structure)."),
+    ]
+    for icon, title, detail in findings_list:
+        st.markdown(f"""<div class='ai-card' style='padding:14px 18px;margin:8px 0;'>
+            <div style='display:flex;align-items:flex-start;gap:12px;'>
+                <span style='font-size:1.4rem;'>{icon}</span>
+                <div>
+                    <div style='color:#a78bfa;font-weight:700;font-size:0.95rem;'>{title}</div>
+                    <div style='color:#e2e8f0;font-size:0.88rem;margin-top:3px;line-height:1.5;'>{detail}</div>
+                </div>
+            </div>
+        </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("## The 7-Layer Detection Framework")
@@ -575,7 +544,7 @@ elif page == "📊 Exercise Gallery":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🔍 Artist Analyzer":
     st.markdown("# 🔍 Artist Analyzer")
-    st.markdown("Search **any artist** by name. The AI will collect all available data and provide a PhD-level ghost detection analysis.")
+    st.markdown("Search **any artist** across YouTube, Apple Music, Kaggle, and Neo4j. Optionally run a GPT-4o deep-dive.")
 
     search_col, btn_col = st.columns([4, 1])
     with search_col:
@@ -585,7 +554,7 @@ elif page == "🔍 Artist Analyzer":
             label_visibility="collapsed",
         )
     with btn_col:
-        analyze_btn = st.button("🔍 Analyze", type="primary", use_container_width=True)
+        analyze_btn = st.button("🔍 Search", type="primary", use_container_width=True)
 
     # Quick-pick
     st.markdown("<div style='color:#64748b;font-size:0.8rem;margin-bottom:4px;'>Quick-pick:</div>", unsafe_allow_html=True)
@@ -601,37 +570,30 @@ elif page == "🔍 Artist Analyzer":
 
         with st.spinner(f"Collecting data for **{artist_query}**…"):
 
-            # ── Phase 1: Data collection ──────────────────────────────────────
+            # ── Data collection (no OpenAI) ───────────────────────────────────
             collected_data = {"artist_name": artist_query, "sources": {}}
 
-            # Check if it looks like a Spotify ID (22 chars, alphanumeric)
-            is_spotify_id = len(artist_query) == 22 and artist_query.replace("_","").replace("-","").isalnum()
-
-            # Neo4j check
             st.caption("🔍 Checking Neo4j cache…")
             neo4j_data = check_neo4j_for_artist(artist_query)
             collected_data["neo4j"] = neo4j_data
             collected_data["sources"]["neo4j"] = neo4j_data["found"]
 
-            # Kaggle check
             st.caption("🔍 Searching Kaggle dataset (114K tracks)…")
             kaggle_data = search_kaggle_for_artist(artist_query)
             collected_data["kaggle"] = kaggle_data
             collected_data["sources"]["kaggle"] = kaggle_data["found"]
 
-            # YouTube
             st.caption("🔍 Searching YouTube…")
             yt_data = search_youtube_for_artist(artist_query)
             collected_data["youtube"] = yt_data
             collected_data["sources"]["youtube"] = yt_data.get("found", False)
 
-            # iTunes
             st.caption("🔍 Checking Apple Music (iTunes)…")
             itunes_data = search_itunes_for_artist(artist_query)
             collected_data["apple_music"] = itunes_data
             collected_data["sources"]["apple_music"] = itunes_data.get("found", False)
 
-            # If in Neo4j, run full pipeline
+            # Signal pipeline (Neo4j artists only)
             signal_scores = None
             gnn_score = None
             rule_score = None
@@ -653,163 +615,209 @@ elif page == "🔍 Artist Analyzer":
                 except Exception as e:
                     collected_data["pipeline_error"] = str(e)
 
-        # ── Phase 2: AI Analysis ──────────────────────────────────────────────
-        with st.spinner("🤖 GPT-4o analyzing for ghost behavior…"):
-            try:
-                ai_result = ai_analyze_artist(artist_query, collected_data)
-                analysis_ok = True
-            except Exception as e:
-                ai_result = {"verdict": "INSUFFICIENT_DATA", "ghost_probability": 50, "confidence": 0, "analysis": f"AI analysis failed: {e}", "estimated_signals": {}, "comparison": "", "missing_data": [], "key_signals": []}
-                analysis_ok = False
+        # Store collected data in session state for optional AI analysis
+        st.session_state["analyzer_data"] = collected_data
+        st.session_state["analyzer_query"] = artist_query
+        st.session_state["analyzer_signal_scores"] = signal_scores
+        st.session_state["analyzer_gnn_score"] = gnn_score
+        st.session_state["analyzer_rule_score"] = rule_score
 
-        # ── Display Results ───────────────────────────────────────────────────
+    # ── Display results whenever we have collected data ───────────────────────
+    if st.session_state.get("analyzer_data") and st.session_state.get("analyzer_query"):
+        artist_query = st.session_state["analyzer_query"]
+        collected_data = st.session_state["analyzer_data"]
+        signal_scores = st.session_state.get("analyzer_signal_scores")
+        gnn_score = st.session_state.get("analyzer_gnn_score")
+        rule_score = st.session_state.get("analyzer_rule_score")
+
         st.markdown("---")
-        st.markdown(f"## Analysis: {artist_query}")
+        st.markdown(f"## Results: {artist_query}")
 
         # Data sources checklist
         sources = collected_data.get("sources", {})
         src_cols = st.columns(5)
-        src_cols[0].markdown(f"{'✅' if sources.get('neo4j') else '❌'} Neo4j cache", unsafe_allow_html=True)
-        src_cols[1].markdown(f"{'✅' if sources.get('kaggle') else '❌'} Kaggle dataset", unsafe_allow_html=True)
-        src_cols[2].markdown(f"{'✅' if sources.get('youtube') else '❌'} YouTube", unsafe_allow_html=True)
-        src_cols[3].markdown(f"{'✅' if sources.get('apple_music') else '❌'} Apple Music", unsafe_allow_html=True)
-        src_cols[4].markdown(f"{'✅' if signal_scores else '❌'} Signal pipeline", unsafe_allow_html=True)
+        src_cols[0].markdown(f"{'✅' if sources.get('neo4j') else '❌'} Neo4j cache")
+        src_cols[1].markdown(f"{'✅' if sources.get('kaggle') else '❌'} Kaggle dataset")
+        src_cols[2].markdown(f"{'✅' if sources.get('youtube') else '❌'} YouTube")
+        src_cols[3].markdown(f"{'✅' if sources.get('apple_music') else '❌'} Apple Music")
+        src_cols[4].markdown(f"{'✅' if signal_scores else '❌'} Signal pipeline")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Verdict header
-        ghost_prob = ai_result.get("ghost_probability", 50)
-        verdict = ai_result.get("verdict", "INSUFFICIENT_DATA")
-        confidence = ai_result.get("confidence", 0)
+        # ── Rule-based summary (no OpenAI) ────────────────────────────────────
+        yt_views = collected_data.get("youtube", {}).get("views", 0)
+        apple_found = collected_data.get("apple_music", {}).get("found", False)
+        kaggle_found = collected_data.get("kaggle", {}).get("found", False)
 
-        if verdict == "LIKELY_GHOST":
-            badge_class, badge_icon, gauge_color = "verdict-ghost", "🚨", "#e74c3c"
-        elif verdict == "SUSPICIOUS":
-            badge_class, badge_icon, gauge_color = "verdict-suspicious", "⚠️", "#f59e0b"
-        elif verdict == "LIKELY_ORGANIC":
-            badge_class, badge_icon, gauge_color = "verdict-organic", "✅", "#22c55e"
+        rule_cols = st.columns(3)
+        # YouTube presence
+        if not collected_data.get("youtube", {}).get("found"):
+            yt_label, yt_color = "Not found", "#64748b"
+        elif yt_views >= 10_000_000:
+            yt_label, yt_color = f"{yt_views/1e6:.1f}M views — Strong", "#22c55e"
+        elif yt_views >= 1_000:
+            yt_label, yt_color = f"{yt_views:,} views — Moderate", "#f59e0b"
         else:
-            badge_class, badge_icon, gauge_color = "verdict-suspicious", "❓", "#64748b"
-
-        hdr_c1, hdr_c2, hdr_c3, hdr_c4 = st.columns(4)
-        with hdr_c1:
-            st.markdown(f"<span class='{badge_class}'>{badge_icon} {verdict}</span>", unsafe_allow_html=True)
-        with hdr_c2:
-            st.metric("Ghost Probability", f"{ghost_prob}%")
-        with hdr_c3:
-            st.metric("AI Confidence", f"{confidence}%")
-        with hdr_c4:
-            if gnn_score is not None:
-                st.metric("GNN Score (GAT)", f"{gnn_score:.3f}")
-            elif rule_score is not None:
-                st.metric("Rule-based Score", f"{rule_score:.3f}")
-
-        # Ghost probability gauge
-        try:
-            import plotly.graph_objects as go
-            gauge_fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=ghost_prob,
-                domain={"x": [0, 1], "y": [0, 1]},
-                title={"text": "Ghost Probability %", "font": {"color": "#e2e8f0", "size": 14}},
-                gauge={
-                    "axis": {"range": [0, 100], "tickcolor": "#64748b"},
-                    "bar": {"color": gauge_color},
-                    "bgcolor": "#1a1a2e",
-                    "bordercolor": "#2a2a4a",
-                    "steps": [
-                        {"range": [0, 40], "color": "#14532d"},
-                        {"range": [40, 70], "color": "#78350f"},
-                        {"range": [70, 100], "color": "#7f1d1d"},
-                    ],
-                    "threshold": {"line": {"color": gauge_color, "width": 4}, "value": ghost_prob},
-                },
-                number={"font": {"color": gauge_color, "size": 36}, "suffix": "%"},
-            ))
-            gauge_fig.update_layout(paper_bgcolor="#12121f", height=220, margin=dict(t=40, b=0, l=30, r=30))
-            st.plotly_chart(gauge_fig, use_container_width=True)
-        except ImportError:
-            st.progress(ghost_prob / 100)
-
-        # AI Analysis card
-        st.markdown("### 🤖 Expert Analysis")
-        analysis_text = ai_result.get("analysis", "")
-        st.markdown(f"""<div class='ai-card'>
-            <div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:12px;'>GPT-4o ANALYSIS — {artist_query.upper()}</div>
-            <div style='color:#e2e8f0;line-height:1.8;font-size:0.92rem;'>{analysis_text.replace(chr(10), "<br>")}</div>
+            yt_label, yt_color = f"{yt_views} views — Minimal", "#e74c3c"
+        rule_cols[0].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
+            <div style='color:#94a3b8;font-size:0.75rem;'>YouTube</div>
+            <div style='color:{yt_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{yt_label}</div>
+        </div>""", unsafe_allow_html=True)
+        # Apple Music
+        ap_label = "Found" if apple_found else "Not found"
+        ap_color = "#22c55e" if apple_found else "#e74c3c"
+        rule_cols[1].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
+            <div style='color:#94a3b8;font-size:0.75rem;'>Apple Music</div>
+            <div style='color:{ap_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{"✅ " if apple_found else "❌ "}{ap_label}</div>
+        </div>""", unsafe_allow_html=True)
+        # GNN / rule score
+        if gnn_score is not None:
+            score_val = gnn_score
+            score_label = f"GNN Score: {score_val:.3f}"
+            score_color = "#e74c3c" if score_val > 0.7 else ("#f59e0b" if score_val > 0.4 else "#22c55e")
+        elif rule_score is not None:
+            score_val = rule_score
+            score_label = f"Rule Score: {score_val:.3f}"
+            score_color = "#e74c3c" if score_val > 0.7 else ("#f59e0b" if score_val > 0.4 else "#22c55e")
+        else:
+            score_label, score_color = "No pipeline score", "#64748b"
+        rule_cols[2].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
+            <div style='color:#94a3b8;font-size:0.75rem;'>Detection Score</div>
+            <div style='color:{score_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{score_label}</div>
         </div>""", unsafe_allow_html=True)
 
-        # Comparison to baselines
-        comparison = ai_result.get("comparison", "")
-        if comparison:
-            with st.expander("📊 Comparison to Known Baselines"):
-                st.markdown(comparison)
-                # Mini comparison table
-                import pandas as pd
-                baseline_df = pd.DataFrame([
-                    {"Artist": "Relaxing White Noise", "Type": "GHOST", "Cadence": "81%", "HHI": "0.67", "YT Views": "353M"},
-                    {"Artist": "Meditation Relax Club", "Type": "GHOST", "Cadence": "95%", "HHI": "0.52", "YT Views": "157M"},
-                    {"Artist": "Calmo", "Type": "GHOST?", "Cadence": "32%", "HHI": "0.45", "YT Views": "155"},
-                    {"Artist": "Nils Frahm", "Type": "ORGANIC", "Cadence": "0%", "HHI": "0.00", "YT Views": "9M"},
-                    {"Artist": artist_query, "Type": verdict, "Cadence": "?", "HHI": "?",
-                     "YT Views": f"{collected_data.get('youtube', {}).get('views', '?'):,}" if isinstance(collected_data.get('youtube', {}).get('views'), int) else "?"},
-                ])
-                st.dataframe(baseline_df, use_container_width=True, hide_index=True)
+        # Pipeline signal scores if available
+        if signal_scores:
+            st.markdown("### Signal Scores (pipeline)")
+            SIGNAL_META_DISPLAY = [
+                ("s1_audio_similarity",      "S1", "Audio Fingerprint"),
+                ("s2_cadence_sync",          "S2", "Release Cadence"),
+                ("s3_playlist_cooccurrence", "S3", "Playlist Co-occurrence"),
+                ("s4_follower_ratio",        "S4", "Catalog Density"),
+                ("s5_metadata_similarity",   "S5", "Metadata Similarity"),
+                ("s6_graph_density",         "S6", "Graph Density / HHI"),
+                ("s7_cross_platform",        "S7", "Cross-Platform"),
+            ]
+            for pipeline_key, num, name in SIGNAL_META_DISPLAY:
+                val = signal_scores.get(pipeline_key)
+                if val is None:
+                    score_str, score_color, bar_pct = "N/A", "#64748b", 0
+                else:
+                    score_str = f"{val:.3f}"
+                    bar_pct = int(val * 100)
+                    score_color = "#e74c3c" if val > 0.7 else ("#f59e0b" if val > 0.4 else "#22c55e")
+                st.markdown(f"""<div class='signal-card'>
+                    <span class='score' style='color:{score_color};'>{score_str}</span>
+                    <div class='name'>{num}: {name}</div>
+                    <div style='margin-top:6px;background:#2a2a4a;border-radius:4px;height:6px;'>
+                        <div style='width:{bar_pct}%;background:{score_color};border-radius:4px;height:6px;'></div>
+                    </div>
+                </div>""", unsafe_allow_html=True)
 
-        # Signal scores (AI estimated + pipeline if available)
-        st.markdown("### Signal Scores")
-        estimated = ai_result.get("estimated_signals", {})
-        SIGNAL_META_DISPLAY = [
-            ("s1_audio_similarity",     "s1_audio",    "S1", "Audio Fingerprint Similarity"),
-            ("s2_cadence_sync",         "s2_cadence",  "S2", "Release Cadence Synchrony"),
-            ("s3_playlist_cooccurrence","s3_playlist", "S3", "Playlist Co-occurrence"),
-            ("s4_follower_ratio",       "s4_catalog",  "S4", "Catalog Density Anomaly"),
-            ("s5_metadata_similarity",  "s5_metadata", "S5", "Metadata Similarity"),
-            ("s6_graph_density",        "s6_graph",    "S6", "Graph Density / HHI"),
-            ("s7_cross_platform",       "s7_crossplatform", "S7", "Cross-Platform Discrepancy"),
-        ]
-        for pipeline_key, ai_key, num, name in SIGNAL_META_DISPLAY:
-            pipeline_val = (signal_scores or {}).get(pipeline_key)
-            ai_val = estimated.get(ai_key)
-            # Prefer pipeline value, fall back to AI estimate
-            val = pipeline_val if pipeline_val is not None else ai_val
-            source_tag = "pipeline" if pipeline_val is not None else ("AI estimate" if ai_val is not None else "N/A")
+        # ── Optional AI deep-dive ─────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 🤖 AI Deep-Dive Analysis *(optional)*")
+        st.caption("Calls GPT-4o once to generate a PhD-level ghost detection analysis from the data above.")
+        ai_btn = st.button("Get AI Analysis", type="secondary")
 
-            if val is None:
-                score_str, score_color, bar_pct = "N/A", "#64748b", 0
+        if ai_btn:
+            with st.spinner("🤖 GPT-4o analyzing for ghost behavior…"):
+                try:
+                    ai_result = ai_analyze_artist(artist_query, collected_data)
+                    st.session_state["analyzer_ai_result"] = ai_result
+                except Exception as e:
+                    st.error(f"AI analysis failed: {e}")
+                    st.session_state.pop("analyzer_ai_result", None)
+
+        ai_result = st.session_state.get("analyzer_ai_result")
+        if ai_result and st.session_state.get("analyzer_query") == artist_query:
+            ghost_prob = ai_result.get("ghost_probability", 50)
+            verdict = ai_result.get("verdict", "INSUFFICIENT_DATA")
+            confidence = ai_result.get("confidence", 0)
+
+            if verdict == "LIKELY_GHOST":
+                badge_class, badge_icon, gauge_color = "verdict-ghost", "🚨", "#e74c3c"
+            elif verdict == "SUSPICIOUS":
+                badge_class, badge_icon, gauge_color = "verdict-suspicious", "⚠️", "#f59e0b"
+            elif verdict == "LIKELY_ORGANIC":
+                badge_class, badge_icon, gauge_color = "verdict-organic", "✅", "#22c55e"
             else:
-                score_str = f"{val:.3f}"
-                bar_pct = int(val * 100)
-                score_color = "#e74c3c" if val > 0.7 else ("#f59e0b" if val > 0.4 else "#22c55e")
+                badge_class, badge_icon, gauge_color = "verdict-suspicious", "❓", "#64748b"
 
-            st.markdown(f"""<div class='signal-card'>
-                <span class='score' style='color:{score_color};'>{score_str}</span>
-                <div class='name'>{num}: {name} <span style='color:#64748b;font-size:0.75rem;font-weight:400;'>({source_tag})</span></div>
-                <div style='margin-top:6px;background:#2a2a4a;border-radius:4px;height:6px;'>
-                    <div style='width:{bar_pct}%;background:{score_color};border-radius:4px;height:6px;'></div>
-                </div>
+            hdr_c1, hdr_c2, hdr_c3 = st.columns(3)
+            with hdr_c1:
+                st.markdown(f"<span class='{badge_class}'>{badge_icon} {verdict}</span>", unsafe_allow_html=True)
+            with hdr_c2:
+                st.metric("Ghost Probability", f"{ghost_prob}%")
+            with hdr_c3:
+                st.metric("AI Confidence", f"{confidence}%")
+
+            try:
+                import plotly.graph_objects as go
+                gauge_fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=ghost_prob,
+                    domain={"x": [0, 1], "y": [0, 1]},
+                    title={"text": "Ghost Probability %", "font": {"color": "#e2e8f0", "size": 14}},
+                    gauge={
+                        "axis": {"range": [0, 100], "tickcolor": "#64748b"},
+                        "bar": {"color": gauge_color},
+                        "bgcolor": "#1a1a2e",
+                        "bordercolor": "#2a2a4a",
+                        "steps": [
+                            {"range": [0, 40], "color": "#14532d"},
+                            {"range": [40, 70], "color": "#78350f"},
+                            {"range": [70, 100], "color": "#7f1d1d"},
+                        ],
+                        "threshold": {"line": {"color": gauge_color, "width": 4}, "value": ghost_prob},
+                    },
+                    number={"font": {"color": gauge_color, "size": 36}, "suffix": "%"},
+                ))
+                gauge_fig.update_layout(paper_bgcolor="#12121f", height=220, margin=dict(t=40, b=0, l=30, r=30))
+                st.plotly_chart(gauge_fig, use_container_width=True)
+            except ImportError:
+                st.progress(ghost_prob / 100)
+
+            analysis_text = ai_result.get("analysis", "")
+            st.markdown(f"""<div class='ai-card'>
+                <div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:12px;'>GPT-4o ANALYSIS — {artist_query.upper()}</div>
+                <div style='color:#e2e8f0;line-height:1.8;font-size:0.92rem;'>{analysis_text.replace(chr(10), "<br>")}</div>
             </div>""", unsafe_allow_html=True)
 
-        # Key signals + missing data
-        ks_col, md_col = st.columns(2)
-        with ks_col:
-            key_signals = ai_result.get("key_signals", [])
-            if key_signals:
-                st.markdown("**🔑 Key Signals**")
-                for s in key_signals:
-                    st.markdown(f"- {s}")
-        with md_col:
-            missing = ai_result.get("missing_data", [])
-            if missing:
-                st.markdown("**📋 Additional Data Needed**")
-                for m in missing:
-                    st.markdown(f"- {m}")
+            comparison = ai_result.get("comparison", "")
+            if comparison:
+                with st.expander("📊 Comparison to Known Baselines"):
+                    st.markdown(comparison)
+                    import pandas as pd
+                    baseline_df = pd.DataFrame([
+                        {"Artist": "Relaxing White Noise", "Type": "GHOST", "Cadence": "81%", "HHI": "0.67", "YT Views": "353M"},
+                        {"Artist": "Meditation Relax Club", "Type": "GHOST", "Cadence": "95%", "HHI": "0.52", "YT Views": "157M"},
+                        {"Artist": "Calmo", "Type": "GHOST?", "Cadence": "32%", "HHI": "0.45", "YT Views": "155"},
+                        {"Artist": "Nils Frahm", "Type": "ORGANIC", "Cadence": "0%", "HHI": "0.00", "YT Views": "9M"},
+                        {"Artist": artist_query, "Type": verdict, "Cadence": "?", "HHI": "?",
+                         "YT Views": f"{collected_data.get('youtube', {}).get('views', '?'):,}" if isinstance(collected_data.get('youtube', {}).get('views'), int) else "?"},
+                    ])
+                    st.dataframe(baseline_df, use_container_width=True, hide_index=True)
+
+            ks_col, md_col = st.columns(2)
+            with ks_col:
+                key_signals = ai_result.get("key_signals", [])
+                if key_signals:
+                    st.markdown("**🔑 Key Signals**")
+                    for s in key_signals:
+                        st.markdown(f"- {s}")
+            with md_col:
+                missing = ai_result.get("missing_data", [])
+                if missing:
+                    st.markdown("**📋 Additional Data Needed**")
+                    for m in missing:
+                        st.markdown(f"- {m}")
 
     elif analyze_btn and not artist_input.strip():
         st.error("Please enter an artist name.")
 
-    elif not analyze_btn:
-        st.markdown("<div style='color:#64748b;text-align:center;padding:40px;'>Enter an artist name above and click Analyze to run AI-powered ghost detection.</div>", unsafe_allow_html=True)
+    elif not st.session_state.get("analyzer_data"):
+        st.markdown("<div style='color:#64748b;text-align:center;padding:40px;'>Enter an artist name above and click Search to collect data.</div>", unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -937,15 +945,19 @@ elif page == "📡 Cross-Platform":
                 <div style='color:#64748b;font-size:0.75rem;'>{itunes.get("primary_genre","")}</div>
             </div>""", unsafe_allow_html=True)
 
-        with st.spinner("🤖 GPT-4o interpreting cross-platform data…"):
-            try:
-                interp = ai_interpret_cross_platform(cp_input, views, apple_found, cp_verdict)
-                st.markdown(f"""<div class='ai-card'>
-                    <div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:8px;'>GPT-4o INTERPRETATION</div>
-                    <div style='color:#e2e8f0;'>{interp}</div>
-                </div>""", unsafe_allow_html=True)
-            except Exception as e:
-                st.info(f"AI interpretation unavailable: {e}")
+        # Rule-based assessment (no OpenAI)
+        if views >= 10_000_000:
+            presence_label, presence_color = "Strong presence", "#22c55e"
+        elif views >= 1_000:
+            presence_label, presence_color = "Moderate presence", "#f59e0b"
+        elif views > 0:
+            presence_label, presence_color = "Minimal presence", "#f59e0b"
+        else:
+            presence_label, presence_color = "Not found", "#64748b"
+        st.markdown(f"""<div style='background:#1a1a2e;border-left:4px solid {presence_color};border-radius:8px;padding:14px 18px;margin-top:12px;'>
+            <span style='color:{presence_color};font-weight:700;'>{presence_label}</span>
+            <span style='color:#94a3b8;font-size:0.85rem;margin-left:12px;'>{cp_verdict}</span>
+        </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("### Verified Data: Seed Artists")
@@ -1000,6 +1012,7 @@ elif page == "📡 Cross-Platform":
 elif page == "🤖 AI Research Assistant":
     st.markdown("# 🤖 AI Research Assistant")
     st.markdown("Ask any research question about the project. Powered by GPT-4o with full project context.")
+    st.info("Each question uses one OpenAI API call.")
 
     # Initialize chat history
     if "chat_history" not in st.session_state:
