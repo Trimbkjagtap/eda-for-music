@@ -155,6 +155,30 @@ FIGURES_META = {
         "exercise": "Exercise 3",
         "signal": "ISRC Attribution",
     },
+    "fig4_bipartite_neighborhood.png": {
+        "title": "Figure 4: Artist × Production Company Bipartite Neighborhood",
+        "caption": (
+            "Bipartite neighborhood graph showing ISRC-based production company concentration per artist. "
+            "Node size = track count. Edge weight = tracks registered with that company. "
+            "HHI scores: RWN=0.88, MRC=0.66, Calmo=0.54 — ghost artists show extreme ISRC concentration "
+            "(single production company controls 80–95% of catalog), consistent with bulk-upload operations. "
+            "Data: 490 tracks, 8 production companies from Neo4j AuraDB."
+        ),
+        "exercise": "Exercise 4",
+        "signal": "Graph Centrality",
+    },
+    "fig5_recommendation_walk.png": {
+        "title": "Figure 5: Recommendation Walk — Release Cadence as Walk Closure Signal",
+        "caption": (
+            "Temporal walk through each artist's catalog in release-date order. "
+            "Walk closure = % of consecutive tracks released on the same day (bulk-upload fingerprint). "
+            "Ghost artists: RWN=81%, MRC=95% closure — nearly all tracks bulk-uploaded in daily batches. "
+            "Organic control (Nils Frahm): 0% closure, median gap 105 days between releases. "
+            "The cadence gap is 81–95× larger for ghost catalogs, providing a near-perfect discriminator."
+        ),
+        "exercise": "Exercise 5",
+        "signal": "Release Cadence",
+    },
 }
 
 FRAMEWORK_LAYERS = [
@@ -266,8 +290,8 @@ if page == "🏠 Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.info(
-        "**Status:** Exercises 1–3 complete using Kaggle dataset + Neo4j. "
-        "Exercises 4–7 pending Spotify API rate limit reset (~24h). "
+        "**Status:** Exercises 1–5 complete using Kaggle dataset + Neo4j + cached Spotify data. "
+        "Exercises 6–7 (metadata similarity + aggregate score) pending. "
         "No proprietary data or special API access required."
     )
 
@@ -371,21 +395,35 @@ elif page == "🕸️ Network Explorer":
     )
     st.markdown("---")
 
-    # Show the ISRC graph if it exists
-    fig3_path = FIGURES_DIR / "fig3_isrc_join.png"
-    if fig3_path.exists():
-        st.markdown("### Current Graph: ISRC Production Company Attribution")
-        st.image(str(fig3_path), use_container_width=True)
+    # Show Exercise 4 bipartite neighborhood if it exists
+    fig4_path = FIGURES_DIR / "fig4_bipartite_neighborhood.png"
+    if fig4_path.exists():
+        st.markdown("### Exercise 4: Artist × Production Company Bipartite Neighborhood")
+        st.image(str(fig4_path), use_container_width=True)
         st.markdown(
             "<div style='color:#94a3b8;font-size:0.85rem;'>"
-            "Static graph from Exercise 3. Interactive pyvis version will be added in Day 6."
+            "ISRC-based bipartite graph from Exercise 4. HHI concentration scores: RWN=0.88, MRC=0.66, Calmo=0.54. "
+            "Interactive pyvis version will be added in Day 6."
             "</div>",
             unsafe_allow_html=True,
         )
-    else:
+
+    # Show the ISRC join graph if it exists
+    fig3_path = FIGURES_DIR / "fig3_isrc_join.png"
+    if fig3_path.exists():
+        st.markdown("### Exercise 3: ISRC Production Company Attribution")
+        st.image(str(fig3_path), use_container_width=True)
+        st.markdown(
+            "<div style='color:#94a3b8;font-size:0.85rem;'>"
+            "Static graph from Exercise 3. Edge width = track count per company."
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+    if not fig4_path.exists() and not fig3_path.exists():
         st.info(
-            "No graph data loaded yet. Run `notebooks/03_isrc_join.ipynb` to generate the "
-            "ISRC attribution graph, then reload."
+            "No graph data loaded yet. Run `notebooks/03_isrc_join.ipynb` and "
+            "`notebooks/04_bipartite_neighborhood.ipynb` to generate graphs, then reload."
         )
 
     st.markdown("---")

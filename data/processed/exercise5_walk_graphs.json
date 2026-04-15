@@ -1,0 +1,1446 @@
+{
+  "Calmo": {
+    "nodes": [
+      {
+        "id": "2020-07-17",
+        "release_date": "2020-07-17",
+        "track_count": 1
+      },
+      {
+        "id": "2020-09-25",
+        "release_date": "2020-09-25",
+        "track_count": 1
+      },
+      {
+        "id": "2021-02-05",
+        "release_date": "2021-02-05",
+        "track_count": 1
+      },
+      {
+        "id": "2021-04-02",
+        "release_date": "2021-04-02",
+        "track_count": 1
+      },
+      {
+        "id": "2021-06-18",
+        "release_date": "2021-06-18",
+        "track_count": 1
+      },
+      {
+        "id": "2021-08-04",
+        "release_date": "2021-08-04",
+        "track_count": 1
+      },
+      {
+        "id": "2021-10-27",
+        "release_date": "2021-10-27",
+        "track_count": 1
+      },
+      {
+        "id": "2021-11-18",
+        "release_date": "2021-11-18",
+        "track_count": 1
+      },
+      {
+        "id": "2022-08-05",
+        "release_date": "2022-08-05",
+        "track_count": 1
+      },
+      {
+        "id": "2022-11-25",
+        "release_date": "2022-11-25",
+        "track_count": 1
+      },
+      {
+        "id": "2023-01-13",
+        "release_date": "2023-01-13",
+        "track_count": 1
+      },
+      {
+        "id": "2023-07-07",
+        "release_date": "2023-07-07",
+        "track_count": 1
+      },
+      {
+        "id": "2023-08-04",
+        "release_date": "2023-08-04",
+        "track_count": 1
+      },
+      {
+        "id": "2023-09-29",
+        "release_date": "2023-09-29",
+        "track_count": 1
+      },
+      {
+        "id": "2023-11-03",
+        "release_date": "2023-11-03",
+        "track_count": 1
+      },
+      {
+        "id": "2023-11-28",
+        "release_date": "2023-11-28",
+        "track_count": 1
+      },
+      {
+        "id": "2023-12-07",
+        "release_date": "2023-12-07",
+        "track_count": 6
+      },
+      {
+        "id": "2024-08-02",
+        "release_date": "2024-08-02",
+        "track_count": 1
+      },
+      {
+        "id": "2025-04-30",
+        "release_date": "2025-04-30",
+        "track_count": 1
+      },
+      {
+        "id": "2025-05-29",
+        "release_date": "2025-05-29",
+        "track_count": 1
+      },
+      {
+        "id": "2025-07-22",
+        "release_date": "2025-07-22",
+        "track_count": 1
+      },
+      {
+        "id": "2025-08-27",
+        "release_date": "2025-08-27",
+        "track_count": 1
+      },
+      {
+        "id": "2025-09-24",
+        "release_date": "2025-09-24",
+        "track_count": 1
+      },
+      {
+        "id": "2025-11-19",
+        "release_date": "2025-11-19",
+        "track_count": 1
+      },
+      {
+        "id": "2026-01-14",
+        "release_date": "2026-01-14",
+        "track_count": 1
+      },
+      {
+        "id": "2026-02-06",
+        "release_date": "2026-02-06",
+        "track_count": 8
+      }
+    ],
+    "edges": [
+      {
+        "source": "2020-07-17",
+        "target": "2020-09-25",
+        "gap_days": 70
+      },
+      {
+        "source": "2020-09-25",
+        "target": "2021-02-05",
+        "gap_days": 133
+      },
+      {
+        "source": "2021-02-05",
+        "target": "2021-04-02",
+        "gap_days": 56
+      },
+      {
+        "source": "2021-04-02",
+        "target": "2021-06-18",
+        "gap_days": 77
+      },
+      {
+        "source": "2021-06-18",
+        "target": "2021-08-04",
+        "gap_days": 47
+      },
+      {
+        "source": "2021-08-04",
+        "target": "2021-10-27",
+        "gap_days": 84
+      },
+      {
+        "source": "2021-10-27",
+        "target": "2021-11-18",
+        "gap_days": 22
+      },
+      {
+        "source": "2021-11-18",
+        "target": "2022-08-05",
+        "gap_days": 260
+      },
+      {
+        "source": "2022-08-05",
+        "target": "2022-11-25",
+        "gap_days": 112
+      },
+      {
+        "source": "2022-11-25",
+        "target": "2023-01-13",
+        "gap_days": 49
+      },
+      {
+        "source": "2023-01-13",
+        "target": "2023-07-07",
+        "gap_days": 175
+      },
+      {
+        "source": "2023-07-07",
+        "target": "2023-08-04",
+        "gap_days": 28
+      },
+      {
+        "source": "2023-08-04",
+        "target": "2023-09-29",
+        "gap_days": 56
+      },
+      {
+        "source": "2023-09-29",
+        "target": "2023-11-03",
+        "gap_days": 35
+      },
+      {
+        "source": "2023-11-03",
+        "target": "2023-11-28",
+        "gap_days": 25
+      },
+      {
+        "source": "2023-11-28",
+        "target": "2023-12-07",
+        "gap_days": 9
+      },
+      {
+        "source": "2023-12-07",
+        "target": "2024-08-02",
+        "gap_days": 239
+      },
+      {
+        "source": "2024-08-02",
+        "target": "2025-04-30",
+        "gap_days": 271
+      },
+      {
+        "source": "2025-04-30",
+        "target": "2025-05-29",
+        "gap_days": 29
+      },
+      {
+        "source": "2025-05-29",
+        "target": "2025-07-22",
+        "gap_days": 54
+      },
+      {
+        "source": "2025-07-22",
+        "target": "2025-08-27",
+        "gap_days": 36
+      },
+      {
+        "source": "2025-08-27",
+        "target": "2025-09-24",
+        "gap_days": 28
+      },
+      {
+        "source": "2025-09-24",
+        "target": "2025-11-19",
+        "gap_days": 56
+      },
+      {
+        "source": "2025-11-19",
+        "target": "2026-01-14",
+        "gap_days": 56
+      },
+      {
+        "source": "2026-01-14",
+        "target": "2026-02-06",
+        "gap_days": 23
+      }
+    ]
+  },
+  "Meditation Relax Club": {
+    "nodes": [
+      {
+        "id": "2021-09-09",
+        "release_date": "2021-09-09",
+        "track_count": 23
+      },
+      {
+        "id": "2021-09-24",
+        "release_date": "2021-09-24",
+        "track_count": 23
+      },
+      {
+        "id": "2021-11-17",
+        "release_date": "2021-11-17",
+        "track_count": 12
+      },
+      {
+        "id": "2021-12-29",
+        "release_date": "2021-12-29",
+        "track_count": 30
+      },
+      {
+        "id": "2022-03-14",
+        "release_date": "2022-03-14",
+        "track_count": 16
+      },
+      {
+        "id": "2022-06-10",
+        "release_date": "2022-06-10",
+        "track_count": 12
+      },
+      {
+        "id": "2022-06-16",
+        "release_date": "2022-06-16",
+        "track_count": 15
+      },
+      {
+        "id": "2023-05-11",
+        "release_date": "2023-05-11",
+        "track_count": 16
+      },
+      {
+        "id": "2023-12-01",
+        "release_date": "2023-12-01",
+        "track_count": 10
+      },
+      {
+        "id": "2025-01-31",
+        "release_date": "2025-01-31",
+        "track_count": 15
+      }
+    ],
+    "edges": [
+      {
+        "source": "2021-09-09",
+        "target": "2021-09-24",
+        "gap_days": 15
+      },
+      {
+        "source": "2021-09-24",
+        "target": "2021-11-17",
+        "gap_days": 54
+      },
+      {
+        "source": "2021-11-17",
+        "target": "2021-12-29",
+        "gap_days": 42
+      },
+      {
+        "source": "2021-12-29",
+        "target": "2022-03-14",
+        "gap_days": 75
+      },
+      {
+        "source": "2022-03-14",
+        "target": "2022-06-10",
+        "gap_days": 88
+      },
+      {
+        "source": "2022-06-10",
+        "target": "2022-06-16",
+        "gap_days": 6
+      },
+      {
+        "source": "2022-06-16",
+        "target": "2023-05-11",
+        "gap_days": 329
+      },
+      {
+        "source": "2023-05-11",
+        "target": "2023-12-01",
+        "gap_days": 204
+      },
+      {
+        "source": "2023-12-01",
+        "target": "2025-01-31",
+        "gap_days": 427
+      }
+    ]
+  },
+  "Relaxing White Noise": {
+    "nodes": [
+      {
+        "id": "2023-01-05",
+        "release_date": "2023-01-05",
+        "track_count": 10
+      },
+      {
+        "id": "2023-10-20",
+        "release_date": "2023-10-20",
+        "track_count": 20
+      },
+      {
+        "id": "2023-11-17",
+        "release_date": "2023-11-17",
+        "track_count": 10
+      },
+      {
+        "id": "2023-11-24",
+        "release_date": "2023-11-24",
+        "track_count": 10
+      },
+      {
+        "id": "2023-12-01",
+        "release_date": "2023-12-01",
+        "track_count": 10
+      },
+      {
+        "id": "2023-12-08",
+        "release_date": "2023-12-08",
+        "track_count": 10
+      },
+      {
+        "id": "2023-12-15",
+        "release_date": "2023-12-15",
+        "track_count": 10
+      },
+      {
+        "id": "2023-12-22",
+        "release_date": "2023-12-22",
+        "track_count": 10
+      },
+      {
+        "id": "2023-12-29",
+        "release_date": "2023-12-29",
+        "track_count": 10
+      },
+      {
+        "id": "2024-01-12",
+        "release_date": "2024-01-12",
+        "track_count": 10
+      },
+      {
+        "id": "2024-01-19",
+        "release_date": "2024-01-19",
+        "track_count": 10
+      },
+      {
+        "id": "2024-01-26",
+        "release_date": "2024-01-26",
+        "track_count": 10
+      },
+      {
+        "id": "2024-02-09",
+        "release_date": "2024-02-09",
+        "track_count": 10
+      },
+      {
+        "id": "2024-02-23",
+        "release_date": "2024-02-23",
+        "track_count": 10
+      },
+      {
+        "id": "2024-03-15",
+        "release_date": "2024-03-15",
+        "track_count": 1
+      },
+      {
+        "id": "2024-03-29",
+        "release_date": "2024-03-29",
+        "track_count": 1
+      },
+      {
+        "id": "2024-04-12",
+        "release_date": "2024-04-12",
+        "track_count": 1
+      },
+      {
+        "id": "2024-04-26",
+        "release_date": "2024-04-26",
+        "track_count": 1
+      },
+      {
+        "id": "2024-05-10",
+        "release_date": "2024-05-10",
+        "track_count": 1
+      },
+      {
+        "id": "2024-05-24",
+        "release_date": "2024-05-24",
+        "track_count": 10
+      },
+      {
+        "id": "2024-06-07",
+        "release_date": "2024-06-07",
+        "track_count": 1
+      },
+      {
+        "id": "2024-06-21",
+        "release_date": "2024-06-21",
+        "track_count": 1
+      },
+      {
+        "id": "2024-07-05",
+        "release_date": "2024-07-05",
+        "track_count": 1
+      },
+      {
+        "id": "2024-07-19",
+        "release_date": "2024-07-19",
+        "track_count": 1
+      },
+      {
+        "id": "2024-08-02",
+        "release_date": "2024-08-02",
+        "track_count": 1
+      },
+      {
+        "id": "2024-08-16",
+        "release_date": "2024-08-16",
+        "track_count": 10
+      },
+      {
+        "id": "2024-10-04",
+        "release_date": "2024-10-04",
+        "track_count": 1
+      },
+      {
+        "id": "2025-02-21",
+        "release_date": "2025-02-21",
+        "track_count": 1
+      },
+      {
+        "id": "2025-05-23",
+        "release_date": "2025-05-23",
+        "track_count": 1
+      },
+      {
+        "id": "2025-06-06",
+        "release_date": "2025-06-06",
+        "track_count": 10
+      },
+      {
+        "id": "2025-06-13",
+        "release_date": "2025-06-13",
+        "track_count": 1
+      },
+      {
+        "id": "2025-06-20",
+        "release_date": "2025-06-20",
+        "track_count": 1
+      },
+      {
+        "id": "2025-06-27",
+        "release_date": "2025-06-27",
+        "track_count": 10
+      },
+      {
+        "id": "2025-07-04",
+        "release_date": "2025-07-04",
+        "track_count": 1
+      },
+      {
+        "id": "2025-07-11",
+        "release_date": "2025-07-11",
+        "track_count": 1
+      },
+      {
+        "id": "2025-07-18",
+        "release_date": "2025-07-18",
+        "track_count": 1
+      },
+      {
+        "id": "2025-07-25",
+        "release_date": "2025-07-25",
+        "track_count": 10
+      },
+      {
+        "id": "2025-08-01",
+        "release_date": "2025-08-01",
+        "track_count": 1
+      },
+      {
+        "id": "2025-08-08",
+        "release_date": "2025-08-08",
+        "track_count": 1
+      },
+      {
+        "id": "2025-08-15",
+        "release_date": "2025-08-15",
+        "track_count": 1
+      },
+      {
+        "id": "2025-08-22",
+        "release_date": "2025-08-22",
+        "track_count": 1
+      },
+      {
+        "id": "2025-12-12",
+        "release_date": "2025-12-12",
+        "track_count": 1
+      },
+      {
+        "id": "2025-12-19",
+        "release_date": "2025-12-19",
+        "track_count": 10
+      },
+      {
+        "id": "2025-12-26",
+        "release_date": "2025-12-26",
+        "track_count": 1
+      },
+      {
+        "id": "2026-01-02",
+        "release_date": "2026-01-02",
+        "track_count": 1
+      },
+      {
+        "id": "2026-01-09",
+        "release_date": "2026-01-09",
+        "track_count": 10
+      },
+      {
+        "id": "2026-01-16",
+        "release_date": "2026-01-16",
+        "track_count": 1
+      },
+      {
+        "id": "2026-01-23",
+        "release_date": "2026-01-23",
+        "track_count": 10
+      },
+      {
+        "id": "2026-01-30",
+        "release_date": "2026-01-30",
+        "track_count": 1
+      },
+      {
+        "id": "2026-02-06",
+        "release_date": "2026-02-06",
+        "track_count": 10
+      },
+      {
+        "id": "2026-02-13",
+        "release_date": "2026-02-13",
+        "track_count": 1
+      },
+      {
+        "id": "2026-02-20",
+        "release_date": "2026-02-20",
+        "track_count": 1
+      },
+      {
+        "id": "2026-02-27",
+        "release_date": "2026-02-27",
+        "track_count": 1
+      },
+      {
+        "id": "2026-03-06",
+        "release_date": "2026-03-06",
+        "track_count": 10
+      }
+    ],
+    "edges": [
+      {
+        "source": "2023-01-05",
+        "target": "2023-10-20",
+        "gap_days": 288
+      },
+      {
+        "source": "2023-10-20",
+        "target": "2023-11-17",
+        "gap_days": 28
+      },
+      {
+        "source": "2023-11-17",
+        "target": "2023-11-24",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-11-24",
+        "target": "2023-12-01",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-12-01",
+        "target": "2023-12-08",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-12-08",
+        "target": "2023-12-15",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-12-15",
+        "target": "2023-12-22",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-12-22",
+        "target": "2023-12-29",
+        "gap_days": 7
+      },
+      {
+        "source": "2023-12-29",
+        "target": "2024-01-12",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-01-12",
+        "target": "2024-01-19",
+        "gap_days": 7
+      },
+      {
+        "source": "2024-01-19",
+        "target": "2024-01-26",
+        "gap_days": 7
+      },
+      {
+        "source": "2024-01-26",
+        "target": "2024-02-09",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-02-09",
+        "target": "2024-02-23",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-02-23",
+        "target": "2024-03-15",
+        "gap_days": 21
+      },
+      {
+        "source": "2024-03-15",
+        "target": "2024-03-29",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-03-29",
+        "target": "2024-04-12",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-04-12",
+        "target": "2024-04-26",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-04-26",
+        "target": "2024-05-10",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-05-10",
+        "target": "2024-05-24",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-05-24",
+        "target": "2024-06-07",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-06-07",
+        "target": "2024-06-21",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-06-21",
+        "target": "2024-07-05",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-07-05",
+        "target": "2024-07-19",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-07-19",
+        "target": "2024-08-02",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-08-02",
+        "target": "2024-08-16",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-08-16",
+        "target": "2024-10-04",
+        "gap_days": 49
+      },
+      {
+        "source": "2024-10-04",
+        "target": "2025-02-21",
+        "gap_days": 140
+      },
+      {
+        "source": "2025-02-21",
+        "target": "2025-05-23",
+        "gap_days": 91
+      },
+      {
+        "source": "2025-05-23",
+        "target": "2025-06-06",
+        "gap_days": 14
+      },
+      {
+        "source": "2025-06-06",
+        "target": "2025-06-13",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-06-13",
+        "target": "2025-06-20",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-06-20",
+        "target": "2025-06-27",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-06-27",
+        "target": "2025-07-04",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-07-04",
+        "target": "2025-07-11",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-07-11",
+        "target": "2025-07-18",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-07-18",
+        "target": "2025-07-25",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-07-25",
+        "target": "2025-08-01",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-08-01",
+        "target": "2025-08-08",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-08-08",
+        "target": "2025-08-15",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-08-15",
+        "target": "2025-08-22",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-08-22",
+        "target": "2025-12-12",
+        "gap_days": 112
+      },
+      {
+        "source": "2025-12-12",
+        "target": "2025-12-19",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-12-19",
+        "target": "2025-12-26",
+        "gap_days": 7
+      },
+      {
+        "source": "2025-12-26",
+        "target": "2026-01-02",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-01-02",
+        "target": "2026-01-09",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-01-09",
+        "target": "2026-01-16",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-01-16",
+        "target": "2026-01-23",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-01-23",
+        "target": "2026-01-30",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-01-30",
+        "target": "2026-02-06",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-02-06",
+        "target": "2026-02-13",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-02-13",
+        "target": "2026-02-20",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-02-20",
+        "target": "2026-02-27",
+        "gap_days": 7
+      },
+      {
+        "source": "2026-02-27",
+        "target": "2026-03-06",
+        "gap_days": 7
+      }
+    ]
+  },
+  "Nils Frahm": {
+    "nodes": [
+      {
+        "id": "2005-01-01",
+        "release_date": "2005-01-01",
+        "track_count": 1
+      },
+      {
+        "id": "2006-01-01",
+        "release_date": "2006-01-01",
+        "track_count": 1
+      },
+      {
+        "id": "2008-01-01",
+        "release_date": "2008-01-01",
+        "track_count": 1
+      },
+      {
+        "id": "2009-11-30",
+        "release_date": "2009-11-30",
+        "track_count": 1
+      },
+      {
+        "id": "2009-12-07",
+        "release_date": "2009-12-07",
+        "track_count": 1
+      },
+      {
+        "id": "2010-02-01",
+        "release_date": "2010-02-01",
+        "track_count": 1
+      },
+      {
+        "id": "2010-06-18",
+        "release_date": "2010-06-18",
+        "track_count": 1
+      },
+      {
+        "id": "2010-08-23",
+        "release_date": "2010-08-23",
+        "track_count": 1
+      },
+      {
+        "id": "2011-03-14",
+        "release_date": "2011-03-14",
+        "track_count": 1
+      },
+      {
+        "id": "2011-10-10",
+        "release_date": "2011-10-10",
+        "track_count": 2
+      },
+      {
+        "id": "2011-11-07",
+        "release_date": "2011-11-07",
+        "track_count": 1
+      },
+      {
+        "id": "2011-12-12",
+        "release_date": "2011-12-12",
+        "track_count": 1
+      },
+      {
+        "id": "2012-03-26",
+        "release_date": "2012-03-26",
+        "track_count": 1
+      },
+      {
+        "id": "2012-12-03",
+        "release_date": "2012-12-03",
+        "track_count": 1
+      },
+      {
+        "id": "2013-03-01",
+        "release_date": "2013-03-01",
+        "track_count": 1
+      },
+      {
+        "id": "2013-07-15",
+        "release_date": "2013-07-15",
+        "track_count": 1
+      },
+      {
+        "id": "2013-11-18",
+        "release_date": "2013-11-18",
+        "track_count": 2
+      },
+      {
+        "id": "2015-03-29",
+        "release_date": "2015-03-29",
+        "track_count": 1
+      },
+      {
+        "id": "2015-06-15",
+        "release_date": "2015-06-15",
+        "track_count": 1
+      },
+      {
+        "id": "2015-08-21",
+        "release_date": "2015-08-21",
+        "track_count": 1
+      },
+      {
+        "id": "2015-09-11",
+        "release_date": "2015-09-11",
+        "track_count": 1
+      },
+      {
+        "id": "2015-10-02",
+        "release_date": "2015-10-02",
+        "track_count": 1
+      },
+      {
+        "id": "2016-01-22",
+        "release_date": "2016-01-22",
+        "track_count": 1
+      },
+      {
+        "id": "2016-03-04",
+        "release_date": "2016-03-04",
+        "track_count": 1
+      },
+      {
+        "id": "2016-03-28",
+        "release_date": "2016-03-28",
+        "track_count": 1
+      },
+      {
+        "id": "2016-04-01",
+        "release_date": "2016-04-01",
+        "track_count": 1
+      },
+      {
+        "id": "2016-07-08",
+        "release_date": "2016-07-08",
+        "track_count": 1
+      },
+      {
+        "id": "2016-10-28",
+        "release_date": "2016-10-28",
+        "track_count": 1
+      },
+      {
+        "id": "2017-06-09",
+        "release_date": "2017-06-09",
+        "track_count": 1
+      },
+      {
+        "id": "2018-01-26",
+        "release_date": "2018-01-26",
+        "track_count": 1
+      },
+      {
+        "id": "2018-06-01",
+        "release_date": "2018-06-01",
+        "track_count": 1
+      },
+      {
+        "id": "2019-01-25",
+        "release_date": "2019-01-25",
+        "track_count": 1
+      },
+      {
+        "id": "2019-09-20",
+        "release_date": "2019-09-20",
+        "track_count": 1
+      },
+      {
+        "id": "2019-10-18",
+        "release_date": "2019-10-18",
+        "track_count": 1
+      },
+      {
+        "id": "2020-03-28",
+        "release_date": "2020-03-28",
+        "track_count": 1
+      },
+      {
+        "id": "2020-11-26",
+        "release_date": "2020-11-26",
+        "track_count": 1
+      },
+      {
+        "id": "2020-12-03",
+        "release_date": "2020-12-03",
+        "track_count": 1
+      },
+      {
+        "id": "2021-02-24",
+        "release_date": "2021-02-24",
+        "track_count": 1
+      },
+      {
+        "id": "2021-03-10",
+        "release_date": "2021-03-10",
+        "track_count": 1
+      },
+      {
+        "id": "2021-03-29",
+        "release_date": "2021-03-29",
+        "track_count": 1
+      },
+      {
+        "id": "2021-09-03",
+        "release_date": "2021-09-03",
+        "track_count": 1
+      },
+      {
+        "id": "2021-12-03",
+        "release_date": "2021-12-03",
+        "track_count": 1
+      },
+      {
+        "id": "2022-03-29",
+        "release_date": "2022-03-29",
+        "track_count": 1
+      },
+      {
+        "id": "2022-09-23",
+        "release_date": "2022-09-23",
+        "track_count": 1
+      },
+      {
+        "id": "2024-01-19",
+        "release_date": "2024-01-19",
+        "track_count": 1
+      },
+      {
+        "id": "2024-02-09",
+        "release_date": "2024-02-09",
+        "track_count": 1
+      },
+      {
+        "id": "2024-03-01",
+        "release_date": "2024-03-01",
+        "track_count": 1
+      },
+      {
+        "id": "2024-11-01",
+        "release_date": "2024-11-01",
+        "track_count": 1
+      },
+      {
+        "id": "2024-11-22",
+        "release_date": "2024-11-22",
+        "track_count": 1
+      },
+      {
+        "id": "2024-12-06",
+        "release_date": "2024-12-06",
+        "track_count": 1
+      },
+      {
+        "id": "2025-04-04",
+        "release_date": "2025-04-04",
+        "track_count": 1
+      },
+      {
+        "id": "2025-04-25",
+        "release_date": "2025-04-25",
+        "track_count": 1
+      },
+      {
+        "id": "2025-05-09",
+        "release_date": "2025-05-09",
+        "track_count": 1
+      },
+      {
+        "id": "2025-09-19",
+        "release_date": "2025-09-19",
+        "track_count": 1
+      }
+    ],
+    "edges": [
+      {
+        "source": "2005-01-01",
+        "target": "2006-01-01",
+        "gap_days": 365
+      },
+      {
+        "source": "2006-01-01",
+        "target": "2008-01-01",
+        "gap_days": 730
+      },
+      {
+        "source": "2008-01-01",
+        "target": "2009-11-30",
+        "gap_days": 699
+      },
+      {
+        "source": "2009-11-30",
+        "target": "2009-12-07",
+        "gap_days": 7
+      },
+      {
+        "source": "2009-12-07",
+        "target": "2010-02-01",
+        "gap_days": 56
+      },
+      {
+        "source": "2010-02-01",
+        "target": "2010-06-18",
+        "gap_days": 137
+      },
+      {
+        "source": "2010-06-18",
+        "target": "2010-08-23",
+        "gap_days": 66
+      },
+      {
+        "source": "2010-08-23",
+        "target": "2011-03-14",
+        "gap_days": 203
+      },
+      {
+        "source": "2011-03-14",
+        "target": "2011-10-10",
+        "gap_days": 210
+      },
+      {
+        "source": "2011-10-10",
+        "target": "2011-11-07",
+        "gap_days": 28
+      },
+      {
+        "source": "2011-11-07",
+        "target": "2011-12-12",
+        "gap_days": 35
+      },
+      {
+        "source": "2011-12-12",
+        "target": "2012-03-26",
+        "gap_days": 105
+      },
+      {
+        "source": "2012-03-26",
+        "target": "2012-12-03",
+        "gap_days": 252
+      },
+      {
+        "source": "2012-12-03",
+        "target": "2013-03-01",
+        "gap_days": 88
+      },
+      {
+        "source": "2013-03-01",
+        "target": "2013-07-15",
+        "gap_days": 136
+      },
+      {
+        "source": "2013-07-15",
+        "target": "2013-11-18",
+        "gap_days": 126
+      },
+      {
+        "source": "2013-11-18",
+        "target": "2015-03-29",
+        "gap_days": 496
+      },
+      {
+        "source": "2015-03-29",
+        "target": "2015-06-15",
+        "gap_days": 78
+      },
+      {
+        "source": "2015-06-15",
+        "target": "2015-08-21",
+        "gap_days": 67
+      },
+      {
+        "source": "2015-08-21",
+        "target": "2015-09-11",
+        "gap_days": 21
+      },
+      {
+        "source": "2015-09-11",
+        "target": "2015-10-02",
+        "gap_days": 21
+      },
+      {
+        "source": "2015-10-02",
+        "target": "2016-01-22",
+        "gap_days": 112
+      },
+      {
+        "source": "2016-01-22",
+        "target": "2016-03-04",
+        "gap_days": 42
+      },
+      {
+        "source": "2016-03-04",
+        "target": "2016-03-28",
+        "gap_days": 24
+      },
+      {
+        "source": "2016-03-28",
+        "target": "2016-04-01",
+        "gap_days": 4
+      },
+      {
+        "source": "2016-04-01",
+        "target": "2016-07-08",
+        "gap_days": 98
+      },
+      {
+        "source": "2016-07-08",
+        "target": "2016-10-28",
+        "gap_days": 112
+      },
+      {
+        "source": "2016-10-28",
+        "target": "2017-06-09",
+        "gap_days": 224
+      },
+      {
+        "source": "2017-06-09",
+        "target": "2018-01-26",
+        "gap_days": 231
+      },
+      {
+        "source": "2018-01-26",
+        "target": "2018-06-01",
+        "gap_days": 126
+      },
+      {
+        "source": "2018-06-01",
+        "target": "2019-01-25",
+        "gap_days": 238
+      },
+      {
+        "source": "2019-01-25",
+        "target": "2019-09-20",
+        "gap_days": 238
+      },
+      {
+        "source": "2019-09-20",
+        "target": "2019-10-18",
+        "gap_days": 28
+      },
+      {
+        "source": "2019-10-18",
+        "target": "2020-03-28",
+        "gap_days": 162
+      },
+      {
+        "source": "2020-03-28",
+        "target": "2020-11-26",
+        "gap_days": 243
+      },
+      {
+        "source": "2020-11-26",
+        "target": "2020-12-03",
+        "gap_days": 7
+      },
+      {
+        "source": "2020-12-03",
+        "target": "2021-02-24",
+        "gap_days": 83
+      },
+      {
+        "source": "2021-02-24",
+        "target": "2021-03-10",
+        "gap_days": 14
+      },
+      {
+        "source": "2021-03-10",
+        "target": "2021-03-29",
+        "gap_days": 19
+      },
+      {
+        "source": "2021-03-29",
+        "target": "2021-09-03",
+        "gap_days": 158
+      },
+      {
+        "source": "2021-09-03",
+        "target": "2021-12-03",
+        "gap_days": 91
+      },
+      {
+        "source": "2021-12-03",
+        "target": "2022-03-29",
+        "gap_days": 116
+      },
+      {
+        "source": "2022-03-29",
+        "target": "2022-09-23",
+        "gap_days": 178
+      },
+      {
+        "source": "2022-09-23",
+        "target": "2024-01-19",
+        "gap_days": 483
+      },
+      {
+        "source": "2024-01-19",
+        "target": "2024-02-09",
+        "gap_days": 21
+      },
+      {
+        "source": "2024-02-09",
+        "target": "2024-03-01",
+        "gap_days": 21
+      },
+      {
+        "source": "2024-03-01",
+        "target": "2024-11-01",
+        "gap_days": 245
+      },
+      {
+        "source": "2024-11-01",
+        "target": "2024-11-22",
+        "gap_days": 21
+      },
+      {
+        "source": "2024-11-22",
+        "target": "2024-12-06",
+        "gap_days": 14
+      },
+      {
+        "source": "2024-12-06",
+        "target": "2025-04-04",
+        "gap_days": 119
+      },
+      {
+        "source": "2025-04-04",
+        "target": "2025-04-25",
+        "gap_days": 21
+      },
+      {
+        "source": "2025-04-25",
+        "target": "2025-05-09",
+        "gap_days": 14
+      },
+      {
+        "source": "2025-05-09",
+        "target": "2025-09-19",
+        "gap_days": 133
+      }
+    ]
+  }
+}

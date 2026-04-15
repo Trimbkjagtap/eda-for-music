@@ -38,24 +38,37 @@ from src.utils.rate_limiter import default_limiter, with_retry
 
 # Session-level API call counter and safety limit
 _call_counter = 0
-_CALL_WARN_AT = 40
-_CALL_LIMIT = 50
+_CALL_WARN_AT = 25   # warn loudly when approaching limit
+_CALL_LIMIT = 30     # hard stop — never exceed 30 live calls per session
 
 
 def _checked_call(fn):
-    """Increment the global call counter, warn at threshold, block at limit."""
+    """
+    Increment the global call counter, enforce a 1-second sleep after every
+    live API call, warn at _CALL_WARN_AT, and hard-block at _CALL_LIMIT.
+
+    Rules:
+    - Cache hits NEVER reach this function (callers return early from cache).
+    - Every call through here is a real network request.
+    - time.sleep(1) runs AFTER the call succeeds, giving Spotify time to breathe.
+    """
     global _call_counter
     _call_counter += 1
-    if _call_counter >= _CALL_LIMIT:
+    if _call_counter > _CALL_LIMIT:
         raise RuntimeError(
-            f"API call #{_call_counter} blocked — session limit of {_CALL_LIMIT} reached. "
-            "Restart the session or raise _CALL_LIMIT to continue."
+            f"API call #{_call_counter} blocked — session hard limit of {_CALL_LIMIT} reached. "
+            "All further data must come from cache. Restart the Python session to reset."
         )
     if _call_counter >= _CALL_WARN_AT:
-        logger.warning(f"API call #{_call_counter} — approaching session limit of {_CALL_LIMIT}")
+        logger.warning(
+            f"API call #{_call_counter}/{_CALL_LIMIT} — "
+            f"{_CALL_LIMIT - _call_counter} calls remaining this session"
+        )
     else:
-        print(f"API call #{_call_counter}")
-    return fn()
+        print(f"API call #{_call_counter}/{_CALL_LIMIT}")
+    result = fn()
+    time.sleep(1)   # mandatory 1-second gap after every live call
+    return result
 
 
 class SpotifyClient:
@@ -121,12 +134,15 @@ class SpotifyClient:
         albums = []
         default_limiter.wait()
         # April 2026: max limit is 10 for artist albums (was 50)
-        page = _checked_call(lambda: self.sp.artist_albums(artist_id, include_groups=include_groups, limit=10))
+        page = _checked_call(
+            lambda: self.sp.artist_albums(artist_id, include_groups=include_groups, limit=10)
+        )
         while page:
             albums.extend(page["items"])
             if page["next"]:
                 default_limiter.wait()
-                page = _checked_call(lambda: self.sp.next(page))
+                _page = page  # capture current page to avoid closure-over-loop-var bug
+                page = _checked_call(lambda p=_page: self.sp.next(p))
             else:
                 break
 
@@ -164,7 +180,7 @@ class SpotifyClient:
                     "release_date": album.get("release_date", ""),
                     "duration_ms": t.get("duration_ms", 0),
                 })
-            time.sleep(0.2)  # small pause between albums
+            time.sleep(1)  # 1-second pause between albums (rate limit safety)
         return tracks
 
     # --------------------------------------------------------------- albums
@@ -187,7 +203,8 @@ class SpotifyClient:
             tracks.extend(page["items"])
             if page["next"]:
                 default_limiter.wait()
-                page = _checked_call(lambda: self.sp.next(page))
+                _page = page  # capture current page to avoid closure-over-loop-var bug
+                page = _checked_call(lambda p=_page: self.sp.next(p))
             else:
                 break
 
@@ -290,7 +307,8 @@ class SpotifyClient:
                         tracks.append(item["track"])
                 if page["next"]:
                     default_limiter.wait()
-                    page = _checked_call(lambda: self.sp.next(page))
+                    _page = page  # capture current page to avoid closure-over-loop-var bug
+                    page = _checked_call(lambda p=_page: self.sp.next(p))
                 else:
                     break
             self._to_cache(tracks, "playlist_tracks", playlist_id)

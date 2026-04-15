@@ -1,0 +1,139 @@
+{
+  "nodes": [
+    {
+      "id": "Calmo",
+      "bipartite": 0,
+      "node_type": "artist",
+      "track_count": 38,
+      "num_prefixes": 4
+    },
+    {
+      "id": "Meditation Relax Club",
+      "bipartite": 0,
+      "node_type": "artist",
+      "track_count": 172,
+      "num_prefixes": 2
+    },
+    {
+      "id": "Relaxing White Noise",
+      "bipartite": 0,
+      "node_type": "artist",
+      "track_count": 280,
+      "num_prefixes": 2
+    },
+    {
+      "id": "CH654",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "CH",
+      "country_name": "Switzerland",
+      "track_count": 17,
+      "num_artists": 1
+    },
+    {
+      "id": "ITIWE",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "IT",
+      "country_name": "Italy",
+      "track_count": 19,
+      "num_artists": 1
+    },
+    {
+      "id": "ITI5B",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "IT",
+      "country_name": "Italy",
+      "track_count": 1,
+      "num_artists": 1
+    },
+    {
+      "id": "ITQV2",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "IT",
+      "country_name": "Italy",
+      "track_count": 1,
+      "num_artists": 1
+    },
+    {
+      "id": "ITO10",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "IT",
+      "country_name": "Italy",
+      "track_count": 101,
+      "num_artists": 1
+    },
+    {
+      "id": "ITLU5",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "IT",
+      "country_name": "Italy",
+      "track_count": 71,
+      "num_artists": 1
+    },
+    {
+      "id": "DEPI8",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "DE",
+      "country_name": "Germany",
+      "track_count": 222,
+      "num_artists": 1
+    },
+    {
+      "id": "DE1QW",
+      "bipartite": 1,
+      "node_type": "company",
+      "country": "DE",
+      "country_name": "Germany",
+      "track_count": 58,
+      "num_artists": 1
+    }
+  ],
+  "edges": [
+    {
+      "source": "Calmo",
+      "target": "CH654",
+      "weight": 17
+    },
+    {
+      "source": "Calmo",
+      "target": "ITI5B",
+      "weight": 1
+    },
+    {
+      "source": "Calmo",
+      "target": "ITIWE",
+      "weight": 19
+    },
+    {
+      "source": "Calmo",
+      "target": "ITQV2",
+      "weight": 1
+    },
+    {
+      "source": "Meditation Relax Club",
+      "target": "ITLU5",
+      "weight": 71
+    },
+    {
+      "source": "Meditation Relax Club",
+      "target": "ITO10",
+      "weight": 101
+    },
+    {
+      "source": "Relaxing White Noise",
+      "target": "DE1QW",
+      "weight": 58
+    },
+    {
+      "source": "Relaxing White Noise",
+      "target": "DEPI8",
+      "weight": 222
+    }
+  ]
+}

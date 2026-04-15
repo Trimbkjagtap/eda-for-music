@@ -1,0 +1,5 @@
+Artist,Tracks,Span (days),Release rate (tracks/mo),Closure (≤1d gap %),Within 7d (%),Median gap (days),ISRC prefixes,Walk entropy (bits),Q1 unique dates,Q2 unique dates,Q3 unique dates,Q4 unique dates,note
+Calmo,38,2030,0.6,32.4,32.4,29.0,4,1.295,10,7,6,3,
+Meditation Relax Club,172,1240,4.2,94.7,95.3,0.0,2,0.978,2,2,3,3,
+Relaxing White Noise,280,1156,7.3,81.0,92.1,0.0,2,0.736,6,7,24,17,
+Nils Frahm (organic),56,7566,0.2,3.6,9.1,98.0,1,0.0,13,13,14,14,album-level only (no Kaggle match)
