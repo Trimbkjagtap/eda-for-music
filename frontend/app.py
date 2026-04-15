@@ -4,7 +4,16 @@ A Layered Framework for Public-API Ghost Artist Discovery
 """
 import streamlit as st
 import os
+import sys
 from pathlib import Path
+
+# Ensure project root is on sys.path so src.* imports work
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from dotenv import load_dotenv
+load_dotenv(ROOT / ".env")
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -110,6 +119,38 @@ st.markdown("""
         padding: 2px 12px;
         font-size: 0.75rem;
         margin: 2px;
+    }
+
+    /* Verdict badge */
+    .verdict-ghost {
+        background: #7f1d1d;
+        color: #fca5a5;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 1.3rem;
+        font-weight: 800;
+        text-align: center;
+        display: block;
+    }
+    .verdict-suspicious {
+        background: #78350f;
+        color: #fcd34d;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 1.3rem;
+        font-weight: 800;
+        text-align: center;
+        display: block;
+    }
+    .verdict-organic {
+        background: #14532d;
+        color: #86efac;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 1.3rem;
+        font-weight: 800;
+        text-align: center;
+        display: block;
     }
 
     /* Hide default Streamlit footer */
@@ -230,15 +271,52 @@ FRAMEWORK_LAYERS = [
      "data": "All layers"},
 ]
 
-SIGNAL_SCORES_PLACEHOLDER = [
-    {"name": "Catalog Variance", "score": "—", "desc": "Pending: variance analysis requires full catalog"},
-    {"name": "Playlist Entropy", "score": "—", "desc": "Pending: playlist data requires Spotify API"},
-    {"name": "ISRC Attribution", "score": "—", "desc": "Pending: ISRC analysis from Neo4j"},
-    {"name": "Release Cadence", "score": "—", "desc": "Pending: release date clustering"},
-    {"name": "Metadata Similarity", "score": "—", "desc": "Pending: NLP similarity scoring"},
-    {"name": "Graph Centrality", "score": "—", "desc": "Pending: co-appearance graph"},
-    {"name": "Ghost Probability", "score": "—", "desc": "Aggregate of all 7 signals"},
-]
+# Known artists in Neo4j (for the analyzer quick-pick)
+KNOWN_ARTISTS = {
+    "Relaxing White Noise (ghost)": "6bo3atMVp3qFECNALVwq9N",
+    "Meditation Relax Club (ghost)": "3BqBPFLxBkzKQTkuBPGMNF",
+    "Calmo (ghost candidate)": "4Wx3ZL6d6p1gVMtwQ2YWsz",
+    "Nils Frahm (organic)": "5hVghJ3sCFHFJoLnSHySjL",
+}
+
+CROSS_PLATFORM_DATA = {
+    "Relaxing White Noise": {
+        "artist_id": "6bo3atMVp3qFECNALVwq9N",
+        "youtube_views": 353_775_028,
+        "youtube_channel": "Relaxing White Noise",
+        "apple_music": True,
+        "s7_score": 0.00,
+        "verdict": "LIKELY_GHOST",
+        "note": "353M YouTube views — ghost behavior is Spotify-specific, not cross-platform absence",
+    },
+    "Meditation Relax Club": {
+        "artist_id": "3BqBPFLxBkzKQTkuBPGMNF",
+        "youtube_views": 157_581_269,
+        "youtube_channel": "Meditation Relax Club",
+        "apple_music": True,
+        "s7_score": 0.00,
+        "verdict": "LIKELY_GHOST",
+        "note": "157M YouTube views — major cross-platform presence alongside Spotify",
+    },
+    "Calmo": {
+        "artist_id": "4Wx3ZL6d6p1gVMtwQ2YWsz",
+        "youtube_views": 155,
+        "youtube_channel": None,
+        "apple_music": False,
+        "s7_score": 0.48,
+        "verdict": "SUSPICIOUS",
+        "note": "155 YouTube views — truly invisible cross-platform, unlike RWN/MRC",
+    },
+    "Nils Frahm": {
+        "artist_id": "5hVghJ3sCFHFJoLnSHySjL",
+        "youtube_views": 9_107_596,
+        "youtube_channel": "Nils Frahm",
+        "apple_music": True,
+        "s7_score": 0.00,
+        "verdict": "LIKELY_ORGANIC",
+        "note": "9M YouTube views with verified Apple Music — consistent organic cross-platform presence",
+    },
+}
 
 # ── Sidebar navigation ────────────────────────────────────────────────────────
 with st.sidebar:
@@ -246,7 +324,7 @@ with st.sidebar:
     st.markdown("---")
     page = st.radio(
         "Navigate",
-        ["🏠 Home", "📊 Exercise Gallery", "🔍 Artist Analyzer", "🕸️ Network Explorer", "ℹ️ About"],
+        ["🏠 Home", "📊 Exercise Gallery", "🔍 Artist Analyzer", "🕸️ Network Explorer", "📡 Cross-Platform", "ℹ️ About"],
         label_visibility="collapsed",
     )
     st.markdown("---")
@@ -359,120 +437,416 @@ elif page == "📊 Exercise Gallery":
 elif page == "🔍 Artist Analyzer":
     st.markdown("# 🔍 Artist Analyzer")
     st.markdown(
-        "Enter a Spotify Artist ID to run all 7 detection signals. "
-        "Results are cached — repeated lookups are instant."
+        "Run all 7 ghost-detection signals on any artist in Neo4j. "
+        "Analysis uses **only cached data** — no live Spotify API calls."
     )
 
-    col_input, col_btn = st.columns([4, 1])
+    # Quick-pick from known artists
+    col_pick, col_or, col_input = st.columns([2, 0.3, 3])
+    with col_pick:
+        quick_pick = st.selectbox(
+            "Quick-pick a known artist",
+            ["— select —"] + list(KNOWN_ARTISTS.keys()),
+        )
+    with col_or:
+        st.markdown("<div style='text-align:center;padding-top:30px;color:#64748b;'>or</div>", unsafe_allow_html=True)
     with col_input:
-        artist_id = st.text_input(
-            "Spotify Artist ID",
-            placeholder="e.g. 4Z8W4fKeB5YxbusRsdQVPb  (Radiohead)",
-            label_visibility="collapsed",
+        manual_id = st.text_input(
+            "Enter Spotify Artist ID manually",
+            placeholder="e.g. 6bo3atMVp3qFECNALVwq9N",
+            label_visibility="visible",
         )
-    with col_btn:
-        analyze = st.button("Analyze", use_container_width=True, type="primary")
 
-    if analyze and artist_id:
-        st.info(
-            f"**Artist ID:** `{artist_id}`  \n"
-            "Spotify API is currently rate-limited. Analysis will run when the limit resets. "
-            "Showing placeholder signal scores below."
+    # Resolve the artist ID to use
+    if manual_id.strip():
+        selected_id = manual_id.strip()
+        selected_name = None
+    elif quick_pick != "— select —":
+        selected_id = KNOWN_ARTISTS[quick_pick]
+        selected_name = quick_pick.split(" (")[0]
+    else:
+        selected_id = None
+        selected_name = None
+
+    analyze = st.button("🔍 Run Analysis", type="primary", use_container_width=False)
+
+    if analyze and not selected_id:
+        st.error("Please select an artist or enter an Artist ID.")
+
+    if analyze and selected_id:
+        with st.spinner(f"Running 7-signal analysis for `{selected_id}`…"):
+            try:
+                from src.agents.crew import run_analysis
+                result = run_analysis(
+                    artist_id=selected_id,
+                    artist_name=selected_name,
+                )
+
+                artist_name = result.get("artist_name", selected_id)
+                verdict_label = result.get("verdict", "UNKNOWN")
+                overall_score = result.get("overall_score", 0.0)
+                confidence = result.get("confidence", 0.0)
+                explanation = result.get("explanation", "")
+                signal_scores = result.get("signal_scores", {})
+                timing = result.get("timing", {}).get("total_seconds", 0.0)
+
+                st.markdown(f"## Results: {artist_name}")
+                st.caption(f"Artist ID: `{selected_id}` · Analysis time: {timing:.1f}s")
+
+                # Verdict badge
+                if verdict_label == "LIKELY_GHOST":
+                    badge_class = "verdict-ghost"
+                    badge_icon = "🚨"
+                elif verdict_label == "SUSPICIOUS":
+                    badge_class = "verdict-suspicious"
+                    badge_icon = "⚠️"
+                else:
+                    badge_class = "verdict-organic"
+                    badge_icon = "✅"
+
+                col_v1, col_v2, col_v3 = st.columns(3)
+                with col_v1:
+                    st.markdown(
+                        f"<span class='{badge_class}'>{badge_icon} {verdict_label}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with col_v2:
+                    st.metric("Overall Score", f"{overall_score:.3f}", help="0=organic, 1=ghost")
+                with col_v3:
+                    st.metric("Confidence", f"{confidence:.0%}")
+
+                if explanation:
+                    st.markdown(f"> {explanation}")
+
+                st.markdown("---")
+                st.markdown("### Signal Scores")
+
+                SIGNAL_META = {
+                    "s1_audio_similarity":     ("S1", "Audio Fingerprint Similarity",   "Cosine sim vs Kaggle dataset"),
+                    "s2_cadence_sync":          ("S2", "Release Cadence Synchrony",       "Same-day release closure rate"),
+                    "s3_playlist_cooccurrence": ("S3", "Playlist Co-occurrence",           "ISRC Jaccard proxy"),
+                    "s4_follower_ratio":        ("S4", "Catalog Density Anomaly",          "Tracks/day upload rate"),
+                    "s5_metadata_similarity":   ("S5", "Artist Metadata Similarity",       "TF-IDF ghost keyword score"),
+                    "s6_graph_density":         ("S6", "Graph Density / HHI",              "ISRC production company HHI"),
+                    "s7_cross_platform":        ("S7", "Cross-Platform Discrepancy",        "YouTube + Apple Music presence"),
+                }
+
+                for key, (num, name, desc) in SIGNAL_META.items():
+                    raw = signal_scores.get(key)
+                    if raw is None:
+                        score_str = "N/A"
+                        score_color = "#64748b"
+                        bar_pct = 0
+                    else:
+                        score_str = f"{raw:.3f}"
+                        bar_pct = int(raw * 100)
+                        score_color = "#e74c3c" if raw > 0.7 else ("#f59e0b" if raw > 0.4 else "#22c55e")
+
+                    st.markdown(f"""
+                    <div class='signal-card'>
+                        <span class='score' style='color:{score_color};'>{score_str}</span>
+                        <div class='name'>{num}: {name}</div>
+                        <div class='desc'>{desc}</div>
+                        <div style='margin-top:6px;background:#2a2a4a;border-radius:4px;height:6px;'>
+                            <div style='width:{bar_pct}%;background:{score_color};border-radius:4px;height:6px;'></div>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+
+                # Show radar figure if it exists
+                radar_path = FIGURES_DIR / "fig6_signal_radar.png"
+                if radar_path.exists():
+                    st.markdown("---")
+                    st.markdown("### Signal Radar (Exercise 6 — all artists)")
+                    st.image(str(radar_path), use_container_width=True)
+
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+                st.markdown(
+                    "Make sure Neo4j is running and the artist is in the database. "
+                    "Check `backend/main.py` for connection details."
+                )
+
+    elif not analyze:
+        # Show placeholder when nothing has been run yet
+        st.markdown("### Signal Scores")
+        st.markdown(
+            "<div style='color:#64748b;font-size:0.83rem;margin-bottom:12px;'>"
+            "Select an artist above and click **Run Analysis** to see live scores."
+            "</div>",
+            unsafe_allow_html=True,
         )
-    elif analyze and not artist_id:
-        st.error("Please enter an Artist ID.")
 
-    st.markdown("### Signal Scores")
-    st.markdown(
-        "<div style='color:#64748b;font-size:0.83rem;margin-bottom:12px;'>"
-        "Scale: 0.0 (organic) → 1.0 (ghost). "
-        "Scores below require a completed analysis run."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    for sig in SIGNAL_SCORES_PLACEHOLDER:
-        score_color = "#f59e0b"
-        if sig["score"] != "—":
-            val = float(sig["score"])
-            score_color = "#e74c3c" if val > 0.7 else ("#f59e0b" if val > 0.4 else "#22c55e")
-        st.markdown(f"""
-        <div class='signal-card'>
-            <span class='score' style='color:{score_color};'>{sig['score']}</span>
-            <div class='name'>{sig['name']}</div>
-            <div class='desc'>{sig['desc']}</div>
-        </div>""", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("**Try these example artist IDs (from ground truth):**")
-    examples = {
-        "Radiohead (organic)": "4Z8W4fKeB5YxbusRsdQVPb",
-        "Brian Eno (organic)": "7MSUfLeTdDEoZiJPDSBXgi",
-        "Calmo (ghost candidate)": "4Wx3ZL6d6p1gVMtwQ2YWsz",
-    }
-    for name, aid in examples.items():
-        st.code(f"{name}: {aid}")
+        placeholder_sigs = [
+            ("S1", "Audio Fingerprint Similarity", "—", "#64748b"),
+            ("S2", "Release Cadence Synchrony",    "—", "#64748b"),
+            ("S3", "Playlist Co-occurrence",        "—", "#64748b"),
+            ("S4", "Catalog Density Anomaly",       "—", "#64748b"),
+            ("S5", "Artist Metadata Similarity",    "—", "#64748b"),
+            ("S6", "Graph Density / HHI",           "—", "#64748b"),
+            ("S7", "Cross-Platform Discrepancy",    "—", "#64748b"),
+        ]
+        for num, name, score, color in placeholder_sigs:
+            st.markdown(f"""
+            <div class='signal-card'>
+                <span class='score' style='color:{color};'>{score}</span>
+                <div class='name'>{num}: {name}</div>
+            </div>""", unsafe_allow_html=True)
 
 # ── NETWORK EXPLORER PAGE ──────────────────────────────────────────────────────
 elif page == "🕸️ Network Explorer":
     st.markdown("# 🕸️ Network Explorer")
     st.markdown(
-        "Interactive co-appearance graph connecting artists, playlists, and production companies."
+        "ISRC-based production company graph — connects artists to the companies "
+        "that registered their tracks. High concentration (HHI > 0.6) signals bulk-upload operations."
     )
     st.markdown("---")
 
-    # Show Exercise 4 bipartite neighborhood if it exists
+    # Live stats from Neo4j
+    st.markdown("### Graph Stats (Neo4j AuraDB)")
+    try:
+        from src.graph.neo4j_client import Neo4jClient
+        neo4j = Neo4jClient()
+        counts = neo4j.count_nodes()
+        rel_rows = neo4j.run(
+            "MATCH ()-[r]->() RETURN type(r) AS rel_type, count(r) AS cnt ORDER BY cnt DESC"
+        )
+        total_rels = sum(r["cnt"] for r in rel_rows)
+
+        col1, col2, col3, col4, col5 = st.columns(5)
+        col1.metric("Total Nodes", f"{sum(counts.values()):,}")
+        col2.metric("Artists", counts.get("Artist", 0))
+        col3.metric("Tracks", counts.get("Track", 0))
+        col4.metric("Albums", counts.get("Album", 0))
+        col5.metric("Relationships", f"{total_rels:,}")
+
+        # ISRC cluster table
+        st.markdown("---")
+        st.markdown("### ISRC Production Company Clusters")
+        st.markdown(
+            "Companies that register tracks for multiple artists are the strongest fraud signal."
+        )
+
+        cluster_rows = neo4j.run(
+            """
+            MATCH (a:Artist)-[:RELEASED]->(al:Album)-[:CONTAINS]->(t:Track)
+                  -[:REGISTERED_WITH]->(c:ProductionCompany)
+            WITH c, collect(DISTINCT a.name) AS artists,
+                 count(DISTINCT t) AS track_count
+            RETURN c.isrc_prefix AS prefix,
+                   c.name AS company_name,
+                   artists,
+                   size(artists) AS artist_count,
+                   track_count
+            ORDER BY track_count DESC
+            """
+        )
+
+        if cluster_rows:
+            import pandas as pd
+            df = pd.DataFrame(cluster_rows)
+            df["artists"] = df["artists"].apply(lambda x: ", ".join(x) if x else "—")
+            df["shared"] = df["artist_count"].apply(lambda x: "⚠️ SHARED" if x > 1 else "—")
+            df = df.rename(columns={
+                "prefix": "ISRC Prefix",
+                "company_name": "Company",
+                "artists": "Artists",
+                "artist_count": "# Artists",
+                "track_count": "# Tracks",
+                "shared": "Flag",
+            })
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("No ISRC cluster data found in Neo4j.")
+
+        # Per-artist neighborhood
+        st.markdown("---")
+        st.markdown("### Artist Neighborhood")
+        selected_artist_graph = st.selectbox(
+            "Select artist to view neighborhood",
+            list(KNOWN_ARTISTS.keys())[:3],  # Only the 3 in Neo4j
+            key="net_artist_select",
+        )
+        if selected_artist_graph:
+            artist_id_graph = KNOWN_ARTISTS[selected_artist_graph]
+            neighborhood = neo4j.run(
+                """
+                MATCH (a:Artist {spotify_id: $id})-[:RELEASED]->(al:Album)
+                      -[:CONTAINS]->(t:Track)-[:REGISTERED_WITH]->(c:ProductionCompany)
+                RETURN c.isrc_prefix AS prefix, c.name AS company,
+                       count(t) AS track_count
+                ORDER BY track_count DESC
+                """,
+                id=artist_id_graph,
+            )
+            if neighborhood:
+                import pandas as pd
+                ndf = pd.DataFrame(neighborhood)
+                ndf = ndf.rename(columns={
+                    "prefix": "ISRC Prefix",
+                    "company": "Production Company",
+                    "track_count": "Tracks",
+                })
+                total_tracks = ndf["Tracks"].sum()
+                ndf["Share %"] = (ndf["Tracks"] / total_tracks * 100).round(1)
+                st.dataframe(ndf, use_container_width=True, hide_index=True)
+
+                # HHI
+                shares = ndf["Tracks"] / total_tracks
+                hhi = (shares ** 2).sum()
+                hhi_color = "#e74c3c" if hhi > 0.6 else ("#f59e0b" if hhi > 0.35 else "#22c55e")
+                st.markdown(
+                    f"**HHI:** <span style='color:{hhi_color};font-weight:700;'>{hhi:.3f}</span> "
+                    f"({'Highly concentrated' if hhi > 0.6 else 'Moderately concentrated' if hhi > 0.35 else 'Distributed'})",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info(f"No neighborhood data found for {selected_artist_graph}.")
+
+    except Exception as e:
+        st.warning(f"Could not connect to Neo4j: {e}")
+        st.markdown("Showing static figures from Exercise notebooks instead.")
+
+    # Static figures as fallback / complement
+    st.markdown("---")
+    st.markdown("### Exercise Figures")
     fig4_path = FIGURES_DIR / "fig4_bipartite_neighborhood.png"
     if fig4_path.exists():
-        st.markdown("### Exercise 4: Artist × Production Company Bipartite Neighborhood")
+        st.markdown("**Exercise 4: Artist × Production Company Bipartite Neighborhood**")
         st.image(str(fig4_path), use_container_width=True)
-        st.markdown(
-            "<div style='color:#94a3b8;font-size:0.85rem;'>"
-            "ISRC-based bipartite graph from Exercise 4. HHI concentration scores: RWN=0.88, MRC=0.66, Calmo=0.54. "
-            "Interactive pyvis version will be added in Day 6."
-            "</div>",
-            unsafe_allow_html=True,
-        )
 
-    # Show the ISRC join graph if it exists
     fig3_path = FIGURES_DIR / "fig3_isrc_join.png"
     if fig3_path.exists():
-        st.markdown("### Exercise 3: ISRC Production Company Attribution")
+        st.markdown("**Exercise 3: ISRC Production Company Attribution**")
         st.image(str(fig3_path), use_container_width=True)
-        st.markdown(
-            "<div style='color:#94a3b8;font-size:0.85rem;'>"
-            "Static graph from Exercise 3. Edge width = track count per company."
-            "</div>",
-            unsafe_allow_html=True,
-        )
 
-    if not fig4_path.exists() and not fig3_path.exists():
-        st.info(
-            "No graph data loaded yet. Run `notebooks/03_isrc_join.ipynb` and "
-            "`notebooks/04_bipartite_neighborhood.ipynb` to generate graphs, then reload."
-        )
+# ── CROSS-PLATFORM PAGE ────────────────────────────────────────────────────────
+elif page == "📡 Cross-Platform":
+    st.markdown("# 📡 Cross-Platform Discrepancy (Signal 7)")
+    st.markdown(
+        "Ghost artists are Spotify-specific stream farmers. "
+        "**Key finding:** Major 'ghost' artists have massive YouTube presence — "
+        "invalidating the assumption that ghost = invisible cross-platform."
+    )
 
-    st.markdown("---")
-    st.markdown("### Graph Stats (Neo4j)")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Nodes", "1,523")
-    with col2:
-        st.metric("Artists", "3")
-    with col3:
-        st.metric("Tracks", "490")
-    with col4:
-        st.metric("Production Companies", "8")
+    st.warning(
+        "**Surprise finding (Exercise 6):** "
+        "Relaxing White Noise has **353 million YouTube views**. "
+        "Meditation Relax Club has **157 million**. "
+        "These artists are not hiding — they are exploiting Spotify's stream-farming economics specifically."
+    )
 
     st.markdown("---")
-    st.markdown("### Planned Interactive Features (Day 6)")
+    st.markdown("### Signal 7 Results by Artist")
+
+    for artist_name, data in CROSS_PLATFORM_DATA.items():
+        verdict = data["verdict"]
+        if verdict == "LIKELY_GHOST":
+            border_color = "#e74c3c"
+            verdict_icon = "🚨"
+        elif verdict == "SUSPICIOUS":
+            border_color = "#f59e0b"
+            verdict_icon = "⚠️"
+        else:
+            border_color = "#22c55e"
+            verdict_icon = "✅"
+
+        s7 = data["s7_score"]
+        s7_color = "#e74c3c" if s7 > 0.7 else ("#f59e0b" if s7 > 0.4 else "#22c55e")
+
+        yt_views = data["youtube_views"]
+        if yt_views >= 1_000_000:
+            yt_str = f"{yt_views / 1_000_000:.0f}M"
+        elif yt_views >= 1_000:
+            yt_str = f"{yt_views / 1_000:.0f}K"
+        else:
+            yt_str = str(yt_views)
+
+        apple_str = "✅ On Apple Music" if data["apple_music"] else "❌ Not on Apple Music"
+        channel_str = f"YouTube: {data['youtube_channel']}" if data["youtube_channel"] else "No YouTube channel found"
+
+        st.markdown(f"""
+        <div style='background:#1a1a2e;border-left:4px solid {border_color};border-radius:8px;padding:16px 20px;margin:10px 0;'>
+            <div style='display:flex;justify-content:space-between;align-items:center;'>
+                <span style='color:#e2e8f0;font-size:1.1rem;font-weight:700;'>{verdict_icon} {artist_name}</span>
+                <span style='color:{s7_color};font-weight:700;font-size:1.1rem;'>S7: {s7:.2f}</span>
+            </div>
+            <div style='margin-top:8px;display:flex;gap:24px;flex-wrap:wrap;'>
+                <span style='color:#a78bfa;'>▶ YouTube Views: <b style='color:#e2e8f0;'>{yt_str}</b></span>
+                <span style='color:#a78bfa;'>{channel_str}</span>
+                <span style='color:#a78bfa;'>{apple_str}</span>
+            </div>
+            <div style='margin-top:8px;color:#94a3b8;font-size:0.85rem;'>{data["note"]}</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### YouTube Views Comparison")
+
+    # Bar chart
+    try:
+        import plotly.graph_objects as go
+
+        artists = list(CROSS_PLATFORM_DATA.keys())
+        views = [d["youtube_views"] for d in CROSS_PLATFORM_DATA.values()]
+        verdicts = [d["verdict"] for d in CROSS_PLATFORM_DATA.values()]
+        colors = ["#e74c3c" if v == "LIKELY_GHOST" else ("#f59e0b" if v == "SUSPICIOUS" else "#22c55e")
+                  for v in verdicts]
+
+        fig = go.Figure(go.Bar(
+            x=artists,
+            y=views,
+            marker_color=colors,
+            text=[f"{v/1e6:.0f}M" if v > 1e6 else str(v) for v in views],
+            textposition="outside",
+        ))
+        fig.update_layout(
+            title="YouTube View Counts by Artist",
+            yaxis_title="YouTube Views",
+            plot_bgcolor="#12121f",
+            paper_bgcolor="#12121f",
+            font_color="#e2e8f0",
+            title_font_color="#a78bfa",
+            yaxis=dict(gridcolor="#2a2a4a"),
+            xaxis=dict(gridcolor="#2a2a4a"),
+            showlegend=False,
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except ImportError:
+        # Fallback to st.bar_chart
+        import pandas as pd
+        chart_df = pd.DataFrame({
+            "Artist": list(CROSS_PLATFORM_DATA.keys()),
+            "YouTube Views": [d["youtube_views"] for d in CROSS_PLATFORM_DATA.values()],
+        }).set_index("Artist")
+        st.bar_chart(chart_df)
+
+    st.markdown("---")
+    st.markdown("### What This Means")
     st.markdown("""
-    - **pyvis** force-directed graph embedded in Streamlit
-    - Click node → drill down to artist details + signal scores
-    - Filter by: production company, ISRC country, ghost probability threshold
-    - Highlight connected components (fraud clusters)
-    - Export graph as JSON / GraphML
+    **Traditional assumption:** Ghost artists are invisible cross-platform — no YouTube channel,
+    no Apple Music, no social media footprint.
+
+    **What we found:**
+    - **Relaxing White Noise** and **Meditation Relax Club** have massive YouTube presence (100M–353M views).
+    - These are legitimate ambient/relaxation content creators — but they also farm Spotify streams.
+    - The ghost behavior is **Spotify-economic**, not content-quality based.
+    - Only **Calmo** (155 YouTube views) matches the "invisible" stereotype.
+
+    **Implication for Signal 7:**
+    - S7 is inconclusive for the relaxation sub-genre.
+    - For other genres (e.g., fake pop artists), cross-platform absence remains a valid signal.
+    - Weight S7 lower (0.10) and rely on S2/S4/S6 as primary discriminators.
     """)
+
+    # Show radar chart for reference
+    radar_path = FIGURES_DIR / "fig6_signal_radar.png"
+    if radar_path.exists():
+        st.markdown("---")
+        st.markdown("### Exercise 6: Full Signal Radar")
+        st.image(str(radar_path), use_container_width=True)
+        st.caption(
+            "S7 (outermost ring) scores near-zero for RWN and MRC despite ghost verdict — "
+            "confirming cross-platform presence does not rule out stream farming."
+        )
 
 # ── ABOUT PAGE ────────────────────────────────────────────────────────────────
 elif page == "ℹ️ About":
@@ -506,7 +880,9 @@ elif page == "ℹ️ About":
         Spotify API    ──►    SpotifyClient          Neo4j Graph
         Kaggle CSV     ──►    Signal Extractors  ──► Signal Scores
         YouTube API    ──►    Neo4j Ingestion        Research Paper
-                              (this dashboard)       Figures (paper/)
+                              CrewAI Pipeline        Figures (paper/)
+                              FastAPI Backend
+                              (this dashboard)
         ```
         """)
 
@@ -520,6 +896,7 @@ elif page == "ℹ️ About":
             "Viz": ["matplotlib 3.10", "seaborn 0.13", "plotly 6.7"],
             "Backend": ["FastAPI 0.135", "uvicorn 0.44"],
             "Frontend": ["Streamlit 1.56"],
+            "Agents": ["crewai 1.14", "openai"],
         }
         for category, packages in stack.items():
             st.markdown(f"**{category}:** {' · '.join(packages)}")
