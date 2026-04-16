@@ -275,11 +275,17 @@ Respond in this exact JSON format:
     return json.loads(raw)
 
 
+@st.cache_data(show_spinner=False)
+def _load_kaggle_df():
+    """Load kaggle/dataset.csv once and cache it for the session."""
+    import pandas as pd
+    return pd.read_csv(ROOT / "data" / "kaggle" / "dataset.csv", low_memory=False)
+
+
 def search_kaggle_for_artist(artist_name: str) -> dict:
     """Search Kaggle dataset for an artist's tracks."""
     try:
-        import pandas as pd
-        df = pd.read_csv(ROOT / "data" / "kaggle" / "dataset.csv")
+        df = _load_kaggle_df()
         name_lower = artist_name.lower()
         mask = df["artists"].str.lower().str.contains(name_lower, na=False)
         matches = df[mask]
@@ -301,8 +307,109 @@ def search_kaggle_for_artist(artist_name: str) -> dict:
         return {"found": False, "error": str(e)}
 
 
+def smart_search(raw_query: str) -> dict:
+    """
+    Resolve any input — artist name, Spotify ID, track name, album name —
+    to a canonical artist name plus match metadata.
+
+    Returns:
+      {
+        "resolved_artist": str,          # name to use for downstream lookup
+        "match_type": str,               # "spotify_id" | "neo4j_name" | "kaggle_artist"
+                                         # | "kaggle_track" | "kaggle_album" | "raw"
+        "match_label": str,              # human-readable match description
+        "track_row": dict | None,        # set when matched via track name (audio features)
+        "found": bool,
+      }
+    """
+    q = raw_query.strip()
+    q_lower = q.lower()
+
+    # ── Step 1: Spotify ID (22-char alphanumeric) ─────────────────────────────
+    import re
+    if re.fullmatch(r"[A-Za-z0-9]{22}", q):
+        try:
+            from src.graph.neo4j_client import Neo4jClient
+            rows = Neo4jClient().run(
+                "MATCH (a:Artist {spotify_id: $id}) RETURN a.name AS name LIMIT 1", id=q
+            )
+            if rows:
+                return {"resolved_artist": rows[0]["name"], "match_type": "spotify_id",
+                        "match_label": f"Spotify ID → Artist: {rows[0]['name']}", "track_row": None, "found": True}
+        except Exception:
+            pass
+
+    # ── Step 2: Neo4j artist name match ──────────────────────────────────────
+    try:
+        from src.graph.neo4j_client import Neo4jClient
+        rows = Neo4jClient().run(
+            "MATCH (a:Artist) WHERE toLower(a.name) CONTAINS toLower($q) RETURN a.name AS name LIMIT 1",
+            q=q,
+        )
+        if rows:
+            return {"resolved_artist": rows[0]["name"], "match_type": "neo4j_name",
+                    "match_label": f"Artist name (Neo4j): {rows[0]['name']}", "track_row": None, "found": True}
+    except Exception:
+        pass
+
+    # ── Steps 3a-3c: Kaggle dataset search ───────────────────────────────────
+    try:
+        df = _load_kaggle_df()
+
+        # 3a: artist column — word-boundary match; pick the matching artist from
+        #     the semicolon-separated list rather than always taking the first one
+        mask_artist = df["artists"].str.lower().str.contains(
+            r"(?<![a-z])" + re.escape(q_lower) + r"(?![a-z])", na=False, regex=True
+        )
+        if mask_artist.any():
+            raw_artists = df.loc[mask_artist, "artists"].iloc[0]
+            # Find which part of the ';'-separated list actually matches the query
+            parts = [p.strip() for p in raw_artists.split(";")]
+            artist_name = next(
+                (p for p in parts if q_lower in p.lower()),
+                parts[0],
+            )
+            return {"resolved_artist": artist_name, "match_type": "kaggle_artist",
+                    "match_label": f"Artist name (Kaggle): {artist_name}", "track_row": None, "found": True}
+
+        # 3b: track name column
+        mask_track = df["track_name"].str.lower().str.contains(q_lower, na=False)
+        if mask_track.any():
+            row = df[mask_track].iloc[0]
+            artist_name = str(row["artists"]).split(";")[0].strip()
+            track_row = {
+                "track_name": str(row["track_name"]),
+                "album_name": str(row.get("album_name", "")),
+                "danceability": float(row.get("danceability", 0)),
+                "energy": float(row.get("energy", 0)),
+                "valence": float(row.get("valence", 0)),
+                "acousticness": float(row.get("acousticness", 0)),
+                "popularity": int(row.get("popularity", 0)),
+                "track_genre": str(row.get("track_genre", "")),
+            }
+            return {"resolved_artist": artist_name, "match_type": "kaggle_track",
+                    "match_label": f"Track \"{row['track_name']}\" → Artist: {artist_name}",
+                    "track_row": track_row, "found": True}
+
+        # 3c: album name column
+        if "album_name" in df.columns:
+            mask_album = df["album_name"].str.lower().str.contains(q_lower, na=False)
+            if mask_album.any():
+                row = df[mask_album].iloc[0]
+                artist_name = str(row["artists"]).split(";")[0].strip()
+                return {"resolved_artist": artist_name, "match_type": "kaggle_album",
+                        "match_label": f"Album \"{row['album_name']}\" → Artist: {artist_name}",
+                        "track_row": None, "found": True}
+    except Exception:
+        pass
+
+    # ── Step 4 & 5: fall back — treat raw input as artist name for YT/iTunes ──
+    return {"resolved_artist": q, "match_type": "raw",
+            "match_label": f"Searching as artist name: {q}", "track_row": None, "found": True}
+
+
 def search_youtube_for_artist(artist_name: str) -> dict:
-    """Search YouTube for total channel views."""
+    """Search YouTube for a top video view count. Two-pass: 'official' then bare name."""
     try:
         cache_path = ROOT / "data" / "raw" / "cache" / f"yt_artist_{artist_name.replace(' ','_')[:40]}.json"
         if cache_path.exists():
@@ -310,15 +417,50 @@ def search_youtube_for_artist(artist_name: str) -> dict:
 
         from src.api.youtube_client import YouTubeClient
         yt = YouTubeClient()
-        result = yt.search_video(artist_name, "")
-        if result:
-            data = {"found": True, "video_title": result.get("title", ""), "views": result.get("view_count", 0)}
+
+        def _fetch(query_suffix: str) -> dict | None:
+            """Search with given suffix, resolve video_id → view count."""
+            snippet = yt.search_video(artist_name, query_suffix)
+            if not snippet:
+                return None
+            # search_video returns the raw search item; video_id is nested
+            vid_id = None
+            if isinstance(snippet.get("id"), dict):
+                vid_id = snippet["id"].get("videoId")
+            elif isinstance(snippet.get("id"), str):
+                vid_id = snippet["id"]
+            if not vid_id:
+                return None
+            title = snippet.get("snippet", {}).get("title", "")
+            views = yt.get_view_count(vid_id)
+            return {"video_id": vid_id, "title": title, "views": views}
+
+        # Pass 1: search "<artist> official"
+        result = _fetch("official")
+
+        # Pass 2 fallback: if no result or 0 views, try bare name
+        if not result or result["views"] == 0:
+            result2 = _fetch("")
+            if result2 and result2["views"] > (result["views"] if result else 0):
+                result = result2
+
+        if result and result["views"] > 0:
+            data = {
+                "found": True,
+                "video_title": result["title"],
+                "video_id": result["video_id"],
+                "views": result["views"],
+            }
         else:
-            data = {"found": False, "views": 0}
+            data = {
+                "found": bool(result),
+                "video_title": result["title"] if result else "",
+                "views": 0,
+            }
         cache_path.write_text(json.dumps(data))
         return data
     except Exception as e:
-        return {"found": False, "error": str(e)}
+        return {"found": False, "error": str(e), "views": 0}
 
 
 def search_itunes_for_artist(artist_name: str) -> dict:
@@ -454,15 +596,12 @@ if page == "🏠 Home":
     st.markdown("# 🎵 Exploratory Data Analysis for Music")
     st.markdown("### A Layered Framework for Public-API Discovery of Ghost Artists on Streaming Platforms")
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown("<div class='metric-card'><div class='number'>3</div><div class='label'>Ghost Artists Analyzed</div></div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<div class='metric-card'><div class='number'>490</div><div class='label'>Tracks in Neo4j</div></div>", unsafe_allow_html=True)
-    with col3:
-        st.markdown("<div class='metric-card'><div class='number'>7</div><div class='label'>Detection Signals</div></div>", unsafe_allow_html=True)
-    with col4:
-        st.markdown("<div class='metric-card'><div class='number'>114K</div><div class='label'>Kaggle Training Tracks</div></div>", unsafe_allow_html=True)
+    st.markdown("""<div style='display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;'>
+        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>3</div><div class='label'>Ghost Artists Analyzed</div></div>
+        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>490</div><div class='label'>Tracks in Neo4j</div></div>
+        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>7</div><div class='label'>Detection Signals</div></div>
+        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>114K</div><div class='label'>Kaggle Training Tracks</div></div>
+    </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -540,40 +679,57 @@ elif page == "📊 Exercise Gallery":
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# ARTIST ANALYZER (AI-Powered)
+# ARTIST ANALYZER
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🔍 Artist Analyzer":
     st.markdown("# 🔍 Artist Analyzer")
-    st.markdown("Search **any artist** across YouTube, Apple Music, Kaggle, and Neo4j. Optionally run a GPT-4o deep-dive.")
+    st.markdown("Search by artist name, Spotify ID, album, or track. We search across YouTube, Apple Music, Kaggle (114K tracks), and our Neo4j graph to assess ghost artist probability.")
 
-    search_col, btn_col = st.columns([4, 1])
-    with search_col:
-        artist_input = st.text_input(
-            "Artist name or Spotify ID",
-            placeholder='e.g. "Drake", "Calmo", "Relaxing White Noise", or paste a Spotify ID',
-            label_visibility="collapsed",
-        )
-    with btn_col:
-        analyze_btn = st.button("🔍 Search", type="primary", use_container_width=True)
+    artist_input = st.text_input(
+        "Search anything",
+        placeholder="Artist name, Spotify ID, album name, track name...",
+        label_visibility="collapsed",
+    )
+    analyze_btn = st.button("🔍 Search", type="primary", use_container_width=True)
 
-    # Quick-pick
+    # Quick-pick — 2×2 grid so labels don't get squeezed into vertical text
     st.markdown("<div style='color:#64748b;font-size:0.8rem;margin-bottom:4px;'>Quick-pick:</div>", unsafe_allow_html=True)
-    qp_cols = st.columns(4)
-    quick_picks = ["Relaxing White Noise", "Meditation Relax Club", "Calmo", "Nils Frahm"]
-    for i, qp in enumerate(quick_picks):
-        if qp_cols[i].button(qp, key=f"qp_{i}"):
-            artist_input = qp
+    qp_row1 = st.columns(2)
+    qp_row2 = st.columns(2)
+    quick_picks = [
+        (qp_row1[0], "Relaxing White Noise", "Relaxing White Noise"),
+        (qp_row1[1], "Meditation Relax Club", "Meditation Relax Club"),
+        (qp_row2[0], "Calmo", "Calmo"),
+        (qp_row2[1], "Nils Frahm", "Nils Frahm"),
+    ]
+    for col, label, full_name in quick_picks:
+        if col.button(label, key=f"qp_{label}", use_container_width=True):
+            artist_input = full_name
             analyze_btn = True
 
     if analyze_btn and artist_input.strip():
-        artist_query = artist_input.strip()
+        raw_query = artist_input.strip()
 
-        with st.spinner(f"Collecting data for **{artist_query}**…"):
+        with st.spinner(f"Searching for **{raw_query}**…"):
 
-            # ── Data collection (no OpenAI) ───────────────────────────────────
-            collected_data = {"artist_name": artist_query, "sources": {}}
+            # ── Step 1-3: Smart search — resolve to artist name ───────────────
+            st.caption("🔎 Resolving input (Spotify ID / Neo4j / Kaggle track / album)…")
+            search_meta = smart_search(raw_query)
+            artist_query = search_meta["resolved_artist"]
 
-            st.caption("🔍 Checking Neo4j cache…")
+            # ── Steps 4-5 + pipeline: collect all sources ─────────────────────
+            collected_data = {
+                "artist_name": artist_query,
+                "original_query": raw_query,
+                "search_meta": search_meta,
+                "sources": {},
+            }
+
+            # If matched via track, store the specific track's audio features
+            if search_meta.get("track_row"):
+                collected_data["matched_track"] = search_meta["track_row"]
+
+            st.caption("🔍 Checking Neo4j graph…")
             neo4j_data = check_neo4j_for_artist(artist_query)
             collected_data["neo4j"] = neo4j_data
             collected_data["sources"]["neo4j"] = neo4j_data["found"]
@@ -583,12 +739,12 @@ elif page == "🔍 Artist Analyzer":
             collected_data["kaggle"] = kaggle_data
             collected_data["sources"]["kaggle"] = kaggle_data["found"]
 
-            st.caption("🔍 Searching YouTube…")
+            st.caption("▶️ Searching YouTube…")
             yt_data = search_youtube_for_artist(artist_query)
             collected_data["youtube"] = yt_data
             collected_data["sources"]["youtube"] = yt_data.get("found", False)
 
-            st.caption("🔍 Checking Apple Music (iTunes)…")
+            st.caption("🎵 Checking Apple Music…")
             itunes_data = search_itunes_for_artist(artist_query)
             collected_data["apple_music"] = itunes_data
             collected_data["sources"]["apple_music"] = itunes_data.get("found", False)
@@ -615,76 +771,229 @@ elif page == "🔍 Artist Analyzer":
                 except Exception as e:
                     collected_data["pipeline_error"] = str(e)
 
-        # Store collected data in session state for optional AI analysis
+            # Check if nothing at all was found
+            nothing_found = (
+                not neo4j_data["found"]
+                and not kaggle_data.get("found")
+                and not yt_data.get("found")
+                and not itunes_data.get("found")
+            )
+            collected_data["nothing_found"] = nothing_found
+
+        # Store in session state
         st.session_state["analyzer_data"] = collected_data
         st.session_state["analyzer_query"] = artist_query
+        st.session_state["analyzer_raw_query"] = raw_query
         st.session_state["analyzer_signal_scores"] = signal_scores
         st.session_state["analyzer_gnn_score"] = gnn_score
         st.session_state["analyzer_rule_score"] = rule_score
 
     # ── Display results whenever we have collected data ───────────────────────
     if st.session_state.get("analyzer_data") and st.session_state.get("analyzer_query"):
-        artist_query = st.session_state["analyzer_query"]
+        artist_query  = st.session_state["analyzer_query"]
+        raw_query     = st.session_state.get("analyzer_raw_query", artist_query)
         collected_data = st.session_state["analyzer_data"]
         signal_scores = st.session_state.get("analyzer_signal_scores")
-        gnn_score = st.session_state.get("analyzer_gnn_score")
-        rule_score = st.session_state.get("analyzer_rule_score")
+        gnn_score     = st.session_state.get("analyzer_gnn_score")
+        rule_score    = st.session_state.get("analyzer_rule_score")
+        search_meta   = collected_data.get("search_meta", {})
 
         st.markdown("---")
+
+        # Nothing found anywhere
+        if collected_data.get("nothing_found"):
+            st.error(f"No results found for **\"{raw_query}\"**. Try searching by artist name.")
+            st.stop()
+
+        # "Matched as" pill + results heading
+        match_label = search_meta.get("match_label", f"Artist name: {artist_query}")
+        st.markdown(
+            f"<div style='display:inline-block;background:#1e1b4b;border:1px solid #4c1d95;"
+            f"border-radius:20px;padding:4px 14px;font-size:0.8rem;color:#a5b4fc;"
+            f"margin-bottom:10px;'>🔎 Matched as: {match_label}</div>",
+            unsafe_allow_html=True,
+        )
         st.markdown(f"## Results: {artist_query}")
 
-        # Data sources checklist
-        sources = collected_data.get("sources", {})
-        src_cols = st.columns(5)
-        src_cols[0].markdown(f"{'✅' if sources.get('neo4j') else '❌'} Neo4j cache")
-        src_cols[1].markdown(f"{'✅' if sources.get('kaggle') else '❌'} Kaggle dataset")
-        src_cols[2].markdown(f"{'✅' if sources.get('youtube') else '❌'} YouTube")
-        src_cols[3].markdown(f"{'✅' if sources.get('apple_music') else '❌'} Apple Music")
-        src_cols[4].markdown(f"{'✅' if signal_scores else '❌'} Signal pipeline")
+        # If matched via a specific track, show that track's audio features
+        matched_track = collected_data.get("matched_track")
+        if matched_track:
+            tn = matched_track.get("track_name", "")
+            alb = matched_track.get("album_name", "")
+            tg = matched_track.get("track_genre", "")
+            pop = matched_track.get("popularity", 0)
+            st.markdown(
+                f"<div style='background:#1a1a2e;border:1px solid #4c1d95;border-radius:8px;"
+                f"padding:12px 16px;margin-bottom:12px;'>"
+                f"<div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:6px;'>🎵 MATCHED TRACK</div>"
+                f"<div style='color:#e2e8f0;font-weight:600;'>{tn}</div>"
+                f"<div style='color:#94a3b8;font-size:0.85rem;margin-top:2px;'>"
+                f"{('Album: ' + alb + ' · ') if alb else ''}"
+                f"{('Genre: ' + tg + ' · ') if tg else ''}"
+                f"Popularity: {pop}/100</div>"
+                f"<div style='display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;'>"
+                + "".join(
+                    f"<span style='color:#94a3b8;font-size:0.8rem;'>"
+                    f"<span style='color:#a78bfa;font-weight:600;'>{k.title()}</span> {v:.3f}</span>"
+                    for k, v in {
+                        "dance": matched_track.get("danceability", 0),
+                        "energy": matched_track.get("energy", 0),
+                        "valence": matched_track.get("valence", 0),
+                        "acoustic": matched_track.get("acousticness", 0),
+                    }.items()
+                )
+                + "</div></div>",
+                unsafe_allow_html=True,
+            )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # ── Rule-based summary (no OpenAI) ────────────────────────────────────
-        yt_views = collected_data.get("youtube", {}).get("views", 0)
+        # ── Shared data extraction ────────────────────────────────────────────
+        yt_views  = collected_data.get("youtube", {}).get("views", 0)
+        yt_found  = collected_data.get("youtube", {}).get("found", False)
+        yt_title  = collected_data.get("youtube", {}).get("video_title", "")
         apple_found = collected_data.get("apple_music", {}).get("found", False)
-        kaggle_found = collected_data.get("kaggle", {}).get("found", False)
+        kaggle_data = collected_data.get("kaggle", {})
+        neo4j_found = collected_data.get("neo4j", {}).get("found", False)
 
-        rule_cols = st.columns(3)
-        # YouTube presence
-        if not collected_data.get("youtube", {}).get("found"):
-            yt_label, yt_color = "Not found", "#64748b"
+        # ── Verdict logic ─────────────────────────────────────────────────────
+        if neo4j_found and (gnn_score is not None or rule_score is not None):
+            # Pipeline path: use numeric score
+            _score = gnn_score if gnn_score is not None else rule_score
+            _score_src = "GNN" if gnn_score is not None else "rule-based"
+            if _score > 0.7:
+                _verdict, _icon, _bg, _border, _conf = "LIKELY GHOST",     "🚨", "#4a1a1a", "#e74c3c", int(60 + _score * 35)
+                _reason = f"{_score_src} score {_score:.3f} exceeds ghost threshold (>0.7)"
+            elif _score > 0.4:
+                _verdict, _icon, _bg, _border, _conf = "SUSPICIOUS",       "⚠️", "#3d2a0a", "#f59e0b", int(40 + _score * 30)
+                _reason = f"{_score_src} score {_score:.3f} in ambiguous range (0.4–0.7)"
+            else:
+                _verdict, _icon, _bg, _border, _conf = "LIKELY ORGANIC",   "✅", "#0a2e14", "#22c55e", int(70 + (0.4 - _score) * 60)
+                _reason = f"{_score_src} score {_score:.3f} below ghost threshold (<0.4)"
+        else:
+            # Cross-platform-only path for artists not in Neo4j
+            _views_fmt = f"{yt_views/1e6:.1f}M" if yt_views >= 1_000_000 else (f"{yt_views:,}" if yt_views > 0 else "0")
+            if yt_views < 1_000 and not apple_found:
+                _verdict, _icon, _bg, _border, _conf = "LIKELY GHOST",     "🚨", "#4a1a1a", "#e74c3c", 82
+                _reason = f"{_views_fmt} YouTube views + not on Apple Music — invisible outside Spotify"
+            elif yt_views < 10_000 and not apple_found:
+                _verdict, _icon, _bg, _border, _conf = "SUSPICIOUS",       "⚠️", "#3d2a0a", "#f59e0b", 61
+                _reason = f"{_views_fmt} YouTube views + not on Apple Music — minimal cross-platform presence"
+            elif yt_views >= 10_000_000 and apple_found:
+                _verdict, _icon, _bg, _border, _conf = "LIKELY ORGANIC",   "✅", "#0a2e14", "#22c55e", 92
+                _reason = f"{_views_fmt} YouTube views + Apple Music presence — consistent cross-platform footprint"
+            else:
+                _verdict, _icon, _bg, _border, _conf = "INSUFFICIENT DATA","❓", "#1e1e2e", "#475569", 30
+                _reason = "Moderate presence — full Spotify signal analysis needed for classification"
+
+        st.markdown(
+            f"<div style='background:{_bg};border:2px solid {_border};border-radius:10px;"
+            f"padding:18px 24px;margin:12px 0 20px 0;'>"
+            f"<div style='font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:0.02em;'>"
+            f"{_icon} {_verdict} &nbsp;<span style='font-size:1rem;font-weight:500;color:#cbd5e1;'>"
+            f"— {_conf}% confidence</span></div>"
+            f"<div style='color:#e2e8f0;font-size:0.92rem;margin-top:6px;'>{_reason}</div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+        def _src_row(icon: str, source: str, detail: str, ok: bool) -> str:
+            border = "#22c55e" if ok else "#475569"
+            bg     = "#0f1f14" if ok else "#1a1a1a"
+            return (
+                f"<div style='display:flex;align-items:flex-start;gap:10px;background:{bg};"
+                f"border-left:3px solid {border};border-radius:6px;padding:10px 14px;margin-bottom:6px;'>"
+                f"<span style='font-size:1.1rem;line-height:1.4;'>{icon}</span>"
+                f"<div><span style='color:#e2e8f0;font-weight:600;'>{source}</span>"
+                f"<span style='color:#94a3b8;font-size:0.88rem;margin-left:8px;'>{detail}</span></div></div>"
+            )
+
+        # Neo4j row
+        if neo4j_found:
+            tc = collected_data.get("neo4j", {}).get("cached_track_count", "?")
+            neo4j_detail = f"Found — {tc} tracks in graph, full 7-signal pipeline available"
+            neo4j_ok = True
+        else:
+            neo4j_detail = "Not cached — would need Spotify API ingestion (rate limited)"
+            neo4j_ok = False
+
+        # Kaggle row
+        if kaggle_data.get("found"):
+            ktc = kaggle_data.get("track_count", 0)
+            kvar = kaggle_data.get("total_variance", None)
+            var_str = f", audio variance={kvar:.4f}" if kvar is not None else ""
+            kaggle_detail = f"Found {ktc} tracks with audio features{var_str}"
+            kaggle_ok = True
+        else:
+            kaggle_detail = "Artist not in 114K Kaggle dataset (likely non-mainstream or ambient genre)"
+            kaggle_ok = False
+
+        # YouTube row
+        if not yt_found:
+            yt_detail = "Not found on YouTube"
+            yt_ok = False
         elif yt_views >= 10_000_000:
-            yt_label, yt_color = f"{yt_views/1e6:.1f}M views — Strong", "#22c55e"
+            yt_detail = f"{yt_views/1e6:.1f}M views — Strong cross-platform presence"
+            if yt_title:
+                yt_detail += f" · top video: \"{yt_title[:50]}\""
+            yt_ok = True
         elif yt_views >= 1_000:
-            yt_label, yt_color = f"{yt_views:,} views — Moderate", "#f59e0b"
+            yt_detail = f"{yt_views:,} views — Moderate presence"
+            yt_ok = True
+        elif yt_views > 0:
+            yt_detail = f"{yt_views} views — Minimal presence (suspicious)"
+            yt_ok = False
         else:
-            yt_label, yt_color = f"{yt_views} views — Minimal", "#e74c3c"
-        rule_cols[0].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
-            <div style='color:#94a3b8;font-size:0.75rem;'>YouTube</div>
-            <div style='color:{yt_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{yt_label}</div>
-        </div>""", unsafe_allow_html=True)
-        # Apple Music
-        ap_label = "Found" if apple_found else "Not found"
-        ap_color = "#22c55e" if apple_found else "#e74c3c"
-        rule_cols[1].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
-            <div style='color:#94a3b8;font-size:0.75rem;'>Apple Music</div>
-            <div style='color:{ap_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{"✅ " if apple_found else "❌ "}{ap_label}</div>
-        </div>""", unsafe_allow_html=True)
-        # GNN / rule score
-        if gnn_score is not None:
-            score_val = gnn_score
-            score_label = f"GNN Score: {score_val:.3f}"
-            score_color = "#e74c3c" if score_val > 0.7 else ("#f59e0b" if score_val > 0.4 else "#22c55e")
-        elif rule_score is not None:
-            score_val = rule_score
-            score_label = f"Rule Score: {score_val:.3f}"
-            score_color = "#e74c3c" if score_val > 0.7 else ("#f59e0b" if score_val > 0.4 else "#22c55e")
+            yt_detail = "Found but 0 views reported"
+            yt_ok = False
+
+        # Apple Music row
+        if apple_found:
+            genre_str = collected_data.get("apple_music", {}).get("primary_genre", "")
+            ap_detail = f"Found on Apple Music" + (f" · genre: {genre_str}" if genre_str else "")
+            ap_ok = True
         else:
-            score_label, score_color = "No pipeline score", "#64748b"
-        rule_cols[2].markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:14px;text-align:center;'>
-            <div style='color:#94a3b8;font-size:0.75rem;'>Detection Score</div>
-            <div style='color:{score_color};font-weight:700;font-size:0.95rem;margin-top:4px;'>{score_label}</div>
-        </div>""", unsafe_allow_html=True)
+            ap_detail = "Not found on Apple Music"
+            ap_ok = False
+
+        # Pipeline row
+        if signal_scores:
+            if gnn_score is not None:
+                pipe_detail = f"Full 7-signal run complete · GNN score: {gnn_score:.3f}"
+            else:
+                pipe_detail = f"Full 7-signal run complete · rule score: {rule_score:.3f}"
+            pipe_ok = True
+        else:
+            pipe_detail = "Full 7-signal scoring requires Neo4j data — not available for this artist"
+            pipe_ok = False
+
+        st.markdown(
+            _src_row("🗄️", "Neo4j",       neo4j_detail,  neo4j_ok)
+            + _src_row("📊", "Kaggle",     kaggle_detail, kaggle_ok)
+            + _src_row("▶️", "YouTube",    yt_detail,     yt_ok)
+            + _src_row("🎵", "Apple Music", ap_detail,    ap_ok)
+            + _src_row("⚙️", "Pipeline",   pipe_detail,   pipe_ok),
+            unsafe_allow_html=True,
+        )
+
+        # ── "What would full analysis show?" block (new artists only) ────────
+        if not neo4j_found:
+            with st.expander("ℹ️ What would full analysis show?"):
+                st.markdown("""
+**To run all 7 detection signals, this artist needs to be ingested into Neo4j via the Spotify API.**
+
+Full analysis would compute:
+- **S1** Audio fingerprint similarity — requires audio features per track
+- **S2** Release cadence synchrony — requires album/track release dates
+- **S3** Playlist co-occurrence — requires playlist membership data
+- **S4** Catalog density anomaly — tracks per day upload velocity
+- **S5** Metadata similarity — track name embedding clusters
+- **S6** Graph density / HHI — ISRC production company concentration
+- **S7** Cross-platform discrepancy — YouTube + Apple Music (available above)
+
+**Required Spotify API calls:** artist albums → album tracks → track ISRC → related artists graph
+
+**Current constraint:** Spotify Developer Mode limits to ~30 API calls/day per app. Ingesting a new artist requires ~50–200 calls depending on catalog size. Ingestion is possible but not automated in this demo.
+""")
+
 
         # Pipeline signal scores if available
         if signal_scores:
@@ -814,10 +1123,10 @@ elif page == "🔍 Artist Analyzer":
                         st.markdown(f"- {m}")
 
     elif analyze_btn and not artist_input.strip():
-        st.error("Please enter an artist name.")
+        st.error("Please enter a search term.")
 
     elif not st.session_state.get("analyzer_data"):
-        st.markdown("<div style='color:#64748b;text-align:center;padding:40px;'>Enter an artist name above and click Search to collect data.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color:#64748b;text-align:center;padding:40px;'>Enter an artist name, Spotify ID, track, or album above and click Search.</div>", unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -826,6 +1135,81 @@ elif page == "🔍 Artist Analyzer":
 elif page == "🌐 Network Explorer":
     st.markdown("# 🌐 Network Explorer")
     st.markdown("ISRC-based production company graph. High HHI concentration (> 0.6) signals bulk-upload operations.")
+    st.markdown("---")
+
+    # ── Search Artist Network ─────────────────────────────────────────────────
+    st.markdown("### Search Artist Network")
+    st.caption("Compare any artist's cross-platform footprint against the 4 seed artists. Full graph analysis requires Neo4j ingestion.")
+
+    net_search_col, net_btn_col = st.columns([4, 1])
+    with net_search_col:
+        net_artist_input = st.text_input(
+            "Artist name",
+            placeholder='e.g. "Karan Aujla", "Taylor Swift", "Brian Eno"',
+            key="net_search_input",
+            label_visibility="collapsed",
+        )
+    with net_btn_col:
+        net_search_btn = st.button("🔍 Compare", type="primary", use_container_width=True, key="net_search_btn")
+
+    if net_search_btn and net_artist_input.strip():
+        with st.spinner(f"Fetching cross-platform data for **{net_artist_input.strip()}**…"):
+            _ns_yt    = search_youtube_for_artist(net_artist_input.strip())
+            _ns_itunes = search_itunes_for_artist(net_artist_input.strip())
+        st.session_state["net_search_result"] = {
+            "name": net_artist_input.strip(),
+            "yt": _ns_yt,
+            "itunes": _ns_itunes,
+        }
+
+    if st.session_state.get("net_search_result"):
+        _ns = st.session_state["net_search_result"]
+        _ns_name = _ns["name"]
+        _ns_views = _ns["yt"].get("views", 0)
+        _ns_apple = _ns["itunes"].get("found", False)
+
+        # Reference data for seed artists
+        _seed = [
+            ("Relaxing White Noise", 353_775_028, True,  "LIKELY_GHOST"),
+            ("Meditation Relax Club", 157_581_269, True,  "LIKELY_GHOST"),
+            ("Calmo",                 155,         False, "SUSPICIOUS"),
+            ("Nils Frahm",            9_107_596,   True,  "LIKELY_ORGANIC"),
+            (_ns_name,                _ns_views,   _ns_apple, "SEARCHED"),
+        ]
+
+        import plotly.graph_objects as go
+        import pandas as pd
+
+        # Bar chart — YouTube views comparison
+        _colors = {
+            "LIKELY_GHOST":    "#e74c3c",
+            "SUSPICIOUS":      "#f59e0b",
+            "LIKELY_ORGANIC":  "#22c55e",
+            "SEARCHED":        "#a78bfa",
+        }
+        bar_fig = go.Figure(go.Bar(
+            x=[r[0] for r in _seed],
+            y=[r[1] for r in _seed],
+            marker_color=[_colors[r[3]] for r in _seed],
+            text=[f"{r[1]/1e6:.1f}M" if r[1] >= 1_000_000 else str(r[1]) for r in _seed],
+            textposition="outside",
+        ))
+        bar_fig.update_layout(
+            title=f"YouTube Views: {_ns_name} vs Seed Artists",
+            yaxis_title="Views",
+            plot_bgcolor="#12121f", paper_bgcolor="#12121f", font_color="#e2e8f0",
+            title_font_color="#a78bfa", yaxis=dict(gridcolor="#2a2a4a"),
+            showlegend=False, margin=dict(t=50, b=40),
+        )
+        st.plotly_chart(bar_fig, use_container_width=True)
+
+        # Apple Music comparison table
+        _rows = [{"Artist": r[0], "YouTube Views": f"{r[1]/1e6:.1f}M" if r[1] >= 1_000_000 else str(r[1]),
+                  "Apple Music": "✅" if r[2] else "❌", "Status": r[3]} for r in _seed]
+        st.dataframe(pd.DataFrame(_rows), use_container_width=True, hide_index=True)
+
+        st.info("Full graph analysis (ISRC, HHI, release cadence) requires Spotify API ingestion into Neo4j. Currently showing cross-platform comparison only.")
+
     st.markdown("---")
 
     try:
@@ -1018,7 +1402,7 @@ elif page == "🤖 AI Research Assistant":
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Example questions
+    # Example questions — full-width vertical stack (avoids text compression in narrow layouts)
     st.markdown("**Quick questions:**")
     examples = [
         "What makes Relaxing White Noise a ghost artist?",
@@ -1030,10 +1414,9 @@ elif page == "🤖 AI Research Assistant":
         "Draft an abstract for the paper",
         "Explain the 7-layer framework to a non-technical audience",
     ]
-    ex_cols = st.columns(4)
     selected_example = None
     for i, ex in enumerate(examples):
-        if ex_cols[i % 4].button(ex[:35] + ("…" if len(ex) > 35 else ""), key=f"ex_{i}"):
+        if st.button(ex, key=f"ex_{i}", use_container_width=True):
             selected_example = ex
 
     # Chat input

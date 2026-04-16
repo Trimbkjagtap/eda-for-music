@@ -151,18 +151,39 @@ async def analyze_artist(req: AnalyzeRequest):
         logger.error(f"/analyze failed for {req.artist_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+    # Augment with GNN score (non-fatal — falls back gracefully)
+    rule_score = result.get("overall_score", 0.0)
+    gnn_score = None
+    gnn_available = False
+    combined_score = rule_score
+    try:
+        from src.signals.verdict import compute_verdict_gnn
+        gnn_result = compute_verdict_gnn(
+            artist_id=req.artist_id,
+            artist_name=result.get("artist_name"),
+            run_s7=False,
+        )
+        gnn_score = gnn_result.get("gnn_score")
+        gnn_available = gnn_result.get("gnn_available", False)
+        combined_score = gnn_result.get("combined_score", rule_score)
+        # Use the GNN-combined verdict label and score
+        result["verdict"] = gnn_result.get("verdict", result.get("verdict"))
+        result["overall_score"] = combined_score
+    except Exception as e:
+        logger.warning(f"GNN augmentation failed for {req.artist_id}: {e}")
+
     return AnalyzeResponse(
         artist_id=result["artist_id"],
         artist_name=result["artist_name"],
         signals=result.get("signal_scores", {}),
-        verdict_score=result.get("overall_score", 0.0),
+        verdict_score=combined_score,
         verdict_label=result.get("verdict", "UNKNOWN"),
         confidence=result.get("confidence", 0.0),
         explanation=result.get("explanation", ""),
         timing_seconds=result.get("timing", {}).get("total_seconds", 0.0),
-        rule_based_score=result.get("rule_based_score"),
-        gnn_score=result.get("gnn_score"),
-        gnn_available=result.get("gnn_available", False),
+        rule_based_score=rule_score,
+        gnn_score=gnn_score,
+        gnn_available=gnn_available,
     )
 
 
