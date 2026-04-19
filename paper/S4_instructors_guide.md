@@ -128,7 +128,7 @@ Students must be made aware that the Spotify API underwent significant restricti
 - Relaxing White Noise: 81.0% closure, median gap 0.0 days, 280 tracks over 1156 days
 - Meditation Relax Club: 94.7% closure, median gap 0.0 days, 172 tracks over 1240 days
 - Calmo: 32.4% closure, median gap 29.0 days, 38 tracks over 2030 days
-- Nils Frahm: 3.6% closure, median gap 98.0 days, 56 tracks over 7566 days
+- Nils Frahm: 0.0% closure, median gap 98.0 days, 56 tracks over 7566 days
 
 **Common pitfall:** Students compute closure rate as "same-day releases / total days" instead of "same-day release gaps / total release gaps." The denominator is the number of consecutive track-to-track gaps, not the number of days in the artist's career.
 
@@ -194,7 +194,7 @@ Students must be made aware that the Spotify API underwent significant restricti
 **Expected values:**
 - Relaxing White Noise: 353,775,028 YouTube views, Apple Music: Yes
 - Meditation Relax Club: 157,581,269 YouTube views, Apple Music: Yes
-- Calmo: 155 YouTube views, Apple Music: No
+- Calmo: 319 YouTube views, Apple Music: No
 - Nils Frahm: 9,107,596 YouTube views, Apple Music: Yes
 
 **Key grading insight:** The surprise finding (ghost artists ARE cross-platform prominent) is the pedagogically important result of this exercise. A student who correctly observes and explains this — that ghost behavior is Spotify-economic stream farming, not fabricated identity — should receive full credit for interpretation even if their exact view counts differ slightly.

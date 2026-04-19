@@ -117,7 +117,7 @@ All figures saved to `paper/figures/`:
 ### Signal 2 (S2): Release Cadence Synchrony
 - **Method:** Compute all consecutive release date gaps per artist; fraction with gap ≤ 1 day
 - **Threshold:** Closure rate > 20% → suspicious
-- **Key values:** MRC=94.7%, RWN=81.0%, Calmo=32.4%, Nils Frahm=3.6%
+- **Key values:** MRC=94.7%, RWN=81.0%, Calmo=32.4%, Nils Frahm=0.0%
 
 ### Signal 3 (S3): ISRC Attribution
 - **Method:** Count unique ISRC prefixes (first 5 chars) per artist
@@ -140,7 +140,7 @@ All figures saved to `paper/figures/`:
 ### Signal 7 (S7): Cross-Platform Discrepancy
 - **Method:** YouTube view count via Data API v3 + iTunes Search API presence
 - **Note:** High views ≠ organic. RWN has 353M YouTube views but is still classified as ghost. S7 is an *additional* signal, not a disconfirming signal.
-- **Key values:** RWN=353M views (Apple Music: Yes), MRC=157M (Yes), Calmo=155 (No), NF=9M (Yes)
+- **Key values:** RWN=353M views (Apple Music: Yes), MRC=157M (Yes), Calmo=319 (No), NF=9M (Yes)
 
 ---
 
