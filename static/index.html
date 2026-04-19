@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GhostTrack | Ghost Artist Detection Framework</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/styles.css"/>
+</head>
+<body>
+
+  <!-- ── Fixed Navbar ── -->
+  <nav id="navbar">
+    <div class="nav-logo" onclick="navigate('home')">
+      <div class="nav-logo-icon">♪</div>
+      <span class="nav-logo-text">GhostTrack</span>
+    </div>
+    <div class="nav-links">
+      <span class="nav-link active" data-page="home"     onclick="navigate('home')">Home</span>
+      <span class="nav-link"        data-page="about"    onclick="navigate('about')">About</span>
+      <span class="nav-link"        data-page="gallery"  onclick="navigate('gallery')">Gallery</span>
+      <span class="nav-link"        data-page="analyzer" onclick="navigate('analyzer')">Analyzer</span>
+      <span class="nav-link"        data-page="network"  onclick="navigate('network')">Network</span>
+      <span class="nav-link"        data-page="ai"       onclick="navigate('ai')">AI Assistant</span>
+    </div>
+    <button class="nav-demo-btn" onclick="navigate('analyzer')">▶&nbsp; Demo</button>
+  </nav>
+
+  <!-- ── Page Container ── -->
+  <main id="page-root"></main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

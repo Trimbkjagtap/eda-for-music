@@ -26,7 +26,8 @@ load_dotenv(ROOT / ".env")
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from loguru import logger
 
@@ -42,7 +43,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS — allow Streamlit frontend on any local port
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,6 +51,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static files (CSS, JS) and paper figures
+STATIC_DIR = ROOT / "static"
+FIGURES_DIR = ROOT / "paper" / "figures"
+STATIC_DIR.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/figures", StaticFiles(directory=str(FIGURES_DIR)), name="figures")
+
+
+@app.get("/app", include_in_schema=False)
+@app.get("/app/{rest_of_path:path}", include_in_schema=False)
+async def serve_spa(rest_of_path: str = ""):
+    """Serve the SPA index for all frontend routes."""
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 # ── Request/Response models ───────────────────────────────────────────────────
 
@@ -93,15 +108,15 @@ def _get_neo4j():
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@app.get("/", summary="Health check")
+@app.get("/", include_in_schema=False)
 async def root():
-    """Health check endpoint."""
-    return {
-        "status": "ok",
-        "project": "EDA for Music",
-        "version": "1.0.0",
-        "description": "Ghost Artist Detection API",
-    }
+    """Serve the SPA."""
+    return FileResponse(str(STATIC_DIR / "index.html"))
+
+
+@app.get("/health", summary="Health check (API)")
+async def api_health():
+    return {"status": "ok", "project": "EDA for Music", "version": "1.0.0"}
 
 
 @app.get("/health", summary="Detailed health check")
@@ -503,6 +518,46 @@ async def get_model_info():
         "training_summary": summary,
         "model_available": model_path.exists(),
     }
+
+
+class ChatRequest(BaseModel):
+    question: str
+    history: list[dict] = []
+
+
+@app.post("/chat", summary="AI research assistant")
+async def chat(req: ChatRequest):
+    """Answer research questions about the GhostTrack project using GPT-4o."""
+    try:
+        from openai import OpenAI
+        client = OpenAI()
+        PROJECT_CONTEXT = """
+PROJECT: EDA for Music — Ghost Artist Detection on Spotify | INFO 7390, Spring 2026
+
+EXERCISE RESULTS:
+- Ex1: Ghost catalog variance 12.5x lower (Levene p<0.001)
+- Ex2: Shannon entropy: editorial=2.59, fan=2.89, ghost-suspect=2.51 bits
+- Ex3: 8 production companies, 490 tracks, 0 cross-artist ISRC sharing
+- Ex4: HHI: RWN=0.88, MRC=0.66, Calmo=0.54
+- Ex5: Walk closure: RWN=81%, MRC=95%, Calmo=32%, Nils Frahm=0%
+- Ex6: S2 cadence + S4 catalog density + S6 HHI most discriminative
+- Ex7: GAT 100% test accuracy on 65-node graph (14 ghost, 51 organic)
+
+SIGNAL SCORES: RWN→GHOST(0.771), MRC→SUSPICIOUS, Calmo→ORGANIC(rule), NF→ORGANIC
+CROSS-PLATFORM: RWN=353M YT views, MRC=157M, Calmo=155, NF=9M
+KEY INSIGHT: Ghost behavior = Spotify-economic stream farming, NOT cross-platform absence.
+"""
+        messages = [
+            {"role": "system", "content": f"You are a PhD-level research assistant for the GhostTrack project.\n{PROJECT_CONTEXT}\nRespond at PhD level. Use markdown."},
+        ]
+        for turn in req.history[-6:]:
+            messages.append({"role": "user", "content": turn.get("user", "")})
+            messages.append({"role": "assistant", "content": turn.get("assistant", "")})
+        messages.append({"role": "user", "content": req.question})
+        resp = client.chat.completions.create(model="gpt-4o", messages=messages, temperature=0.4, max_tokens=1500)
+        return {"answer": resp.choices[0].message.content}
+    except Exception as e:
+        return {"answer": f"AI unavailable: {e}"}
 
 
 @app.get("/artists", summary="List all artists in the database")

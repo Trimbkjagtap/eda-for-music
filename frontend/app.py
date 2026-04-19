@@ -18,77 +18,343 @@ load_dotenv(ROOT / ".env")
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="EDA for Music",
-    page_icon="🎵",
+    page_title="EDA for Music | Ghost Artist Detection Framework",
+    page_icon="👻",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
+# ── Custom CSS — GhostTrack theme ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    [data-testid="stSidebar"] {
-        background-color: #0f0f1a;
-        border-right: 1px solid #2a2a4a;
+    /* ── Global ── */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+    .main .block-container {
+        background-color: #0a0a0a; padding-top: 1rem !important;
+        padding-left: 2rem; padding-right: 2rem; max-width: 1200px;
     }
-    [data-testid="stSidebar"] .stRadio label { color: #ccc; font-size: 15px; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 { color: #a78bfa; }
-    .main .block-container { background-color: #12121f; padding-top: 1.5rem; }
-    h1 { color: #a78bfa; font-weight: 800; }
-    h2 { color: #818cf8; }
-    h3 { color: #94a3b8; }
-    .metric-card {
-        background: linear-gradient(135deg, #1e1e3f 0%, #16213e 100%);
-        border: 1px solid #2a2a5a; border-radius: 12px;
-        padding: 20px; text-align: center;
+    /* Remove Streamlit's default top gap above first element */
+    .main .block-container > div:first-child { margin-top: 0 !important; }
+    h1 { color: #ffffff; font-weight: 900; letter-spacing: -0.02em; }
+    h2 { color: #ffffff; font-weight: 800; }
+    h3 { color: #e5e5e5; font-weight: 700; }
+    p, li { color: #a3a3a3; }
+
+    /* Hide Streamlit's auto-injected heading anchor icons */
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { display: none !important; }
+    [data-testid="stHeadingWithActionElements"] a { display: none !important; }
+    .gt-hero-title a { display: none !important; }
+
+    /* ── Hide sidebar + toggle completely ── */
+    [data-testid="stSidebar"],
+    [data-testid="collapsedControl"],
+    button[kind="header"] { display: none !important; }
+    .main .block-container {
+        margin-left: 0 !important;
+        padding-top: 0 !important;
     }
-    .metric-card .number { font-size: 2.4rem; font-weight: 800; color: #a78bfa; }
-    .metric-card .label { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
-    .signal-card {
-        background: #1a1a2e; border-left: 4px solid #a78bfa;
-        border-radius: 8px; padding: 14px 18px; margin: 6px 0;
+
+    /* ── Fixed top navbar ── */
+    #gt-navbar {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+        background: #0a0a0a;
+        border-bottom: 1px solid #1e1e1e;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 40px; height: 60px;
+        font-family: 'Inter', sans-serif;
     }
-    .signal-card .score { font-size: 1.5rem; font-weight: 700; color: #f59e0b; float: right; }
-    .signal-card .name { color: #e2e8f0; font-weight: 600; }
-    .signal-card .desc { color: #94a3b8; font-size: 0.82rem; margin-top: 3px; }
-    .layer-card {
-        background: #1e1e3f; border: 1px solid #2a2a5a;
-        border-radius: 8px; padding: 12px 16px; margin: 5px 0;
+    #gt-navbar .gt-logo {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        text-decoration: none;
     }
-    .fig-frame {
-        background: #1a1a2e; border: 1px solid #2a2a5a;
-        border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    #gt-navbar .gt-logo-icon {
+        width: 34px; height: 34px; background: #00ff88; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; color: #000; font-weight: 900; flex-shrink: 0;
     }
-    .tag {
-        display: inline-block; background: #312e81; color: #a5b4fc;
-        border-radius: 20px; padding: 2px 12px; font-size: 0.75rem; margin: 2px;
+    #gt-navbar .gt-logo-text {
+        color: #ffffff; font-size: 1.05rem; font-weight: 800;
+        letter-spacing: -0.01em;
     }
+    #gt-navbar .gt-nav-links {
+        display: flex; align-items: center; gap: 32px;
+    }
+    #gt-navbar .gt-nav-link {
+        color: #737373; font-size: 0.875rem; font-weight: 500;
+        cursor: pointer; transition: color 0.15s; user-select: none;
+        white-space: nowrap;
+    }
+    #gt-navbar .gt-nav-link:hover { color: #ffffff; }
+    #gt-navbar .gt-nav-link.active { color: #ffffff; font-weight: 600; }
+    #gt-navbar .gt-demo-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: transparent; border: 1px solid #333; border-radius: 20px;
+        padding: 7px 18px; color: #ffffff; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; transition: border-color 0.15s, background 0.15s;
+        white-space: nowrap;
+    }
+    #gt-navbar .gt-demo-btn:hover { border-color: #555; background: #111; }
+
+    /* Push content below fixed navbar */
+    .main .block-container { padding-top: 76px !important; }
+
+    /* Hide the real radio widget used for nav state */
+    #gt-nav-radio { display: none !important; }
+
+    /* ── Hero ── */
+    .gt-hero {
+        padding: 16px 0 48px 0; text-align: left;
+    }
+    .gt-hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 8px;
+        color: #00ff88; font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .gt-hero-eyebrow::before {
+        content: ""; display: inline-block; width: 20px; height: 2px; background: #00ff88;
+    }
+    .gt-hero-title {
+        font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900;
+        line-height: 1.05; letter-spacing: -0.03em; color: #ffffff;
+        margin: 0 0 24px 0;
+    }
+    .gt-hero-title .accent { color: #00ff88; }
+    .gt-hero-subtitle {
+        font-size: 1.1rem; color: #737373; max-width: 560px;
+        line-height: 1.7; margin-bottom: 36px;
+    }
+    .gt-hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .gt-btn-primary {
+        background: #00ff88; color: #000; border: none;
+        padding: 12px 24px; border-radius: 8px; font-weight: 700;
+        font-size: 0.9rem; cursor: pointer; display: inline-flex;
+        align-items: center; gap: 8px; text-decoration: none;
+    }
+    .gt-btn-secondary {
+        background: transparent; color: #e5e5e5;
+        border: 1px solid #333; padding: 12px 24px; border-radius: 8px;
+        font-weight: 600; font-size: 0.9rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 8px;
+        text-decoration: none;
+    }
+
+    /* ── Stat cards ── */
+    .gt-stats {
+        display: flex; flex-wrap: wrap; gap: 16px; margin: 40px 0;
+    }
+    .gt-stat-card {
+        flex: 1; min-width: 140px;
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 12px;
+        padding: 20px 24px;
+    }
+    .gt-stat-icon { font-size: 1.2rem; margin-bottom: 8px; }
+    .gt-stat-number {
+        font-size: 2.2rem; font-weight: 900; color: #00ff88;
+        letter-spacing: -0.02em; line-height: 1;
+    }
+    .gt-stat-label { font-size: 0.82rem; color: #737373; margin-top: 4px; }
+
+    /* ── Section headers ── */
+    .gt-section-header {
+        display: flex; align-items: center; gap: 10px;
+        margin: 40px 0 20px 0;
+    }
+    .gt-section-eyebrow {
+        color: #00ff88; font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .gt-section-title {
+        font-size: 1.8rem; font-weight: 800; color: #ffffff; margin: 0 0 6px 0;
+    }
+    .gt-section-subtitle { color: #737373; font-size: 0.92rem; margin: 0 0 24px 0; }
+
+    /* ── Finding cards ── */
+    .gt-finding-card {
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 12px;
+        padding: 20px 24px; margin: 10px 0;
+        display: flex; align-items: flex-start; gap: 16px;
+        transition: border-color 0.2s;
+    }
+    .gt-finding-card:hover { border-color: #00ff88; }
+    .gt-finding-icon {
+        width: 44px; height: 44px; background: #0d2818; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+    }
+    .gt-finding-title { color: #ffffff; font-weight: 700; font-size: 0.95rem; }
+    .gt-finding-body { color: #737373; font-size: 0.88rem; margin-top: 4px; line-height: 1.6; }
+
+    /* ── Layer cards ── */
+    .gt-layer-card {
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 10px;
+        padding: 16px 20px; margin: 8px 0;
+        display: flex; align-items: flex-start; gap: 16px; width: 100%;
+        box-sizing: border-box;
+    }
+    .gt-layer-num {
+        width: 32px; height: 32px; background: #0d2818; border: 1px solid #00ff88;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: #00ff88; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px;
+    }
+    .gt-layer-name { color: #ffffff; font-weight: 700; font-size: 0.95rem; }
+    .gt-layer-desc { color: #737373; font-size: 0.85rem; margin-top: 3px; }
+    .gt-layer-tag {
+        display: inline-block; background: #1a1a1a; color: #737373;
+        border: 1px solid #333; border-radius: 20px;
+        padding: 2px 10px; font-size: 0.72rem; margin-left: 8px; vertical-align: middle;
+    }
+
+    /* ── Impact cards ── */
+    .gt-impact-grid { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+    .gt-impact-card {
+        flex: 1; min-width: 260px;
+        background: #0d2818; border: 1px solid #1a4a2e; border-radius: 12px;
+        padding: 24px;
+    }
+    .gt-impact-icon {
+        width: 48px; height: 48px; background: #163a25; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; margin-bottom: 14px;
+    }
+    .gt-impact-title { color: #00ff88; font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
+    .gt-impact-body { color: #a3a3a3; font-size: 0.88rem; line-height: 1.6; }
+
+    /* ── Tags / badges ── */
+    .gt-tag {
+        display: inline-block; background: #1a1a1a; color: #00ff88;
+        border: 1px solid #1e3a28; border-radius: 20px;
+        padding: 3px 12px; font-size: 0.75rem; margin: 2px; font-weight: 600;
+    }
+    .gt-tag-gray {
+        display: inline-block; background: #1a1a1a; color: #737373;
+        border: 1px solid #333; border-radius: 20px;
+        padding: 3px 12px; font-size: 0.75rem; margin: 2px;
+    }
+
+    /* ── Figure frame ── */
+    .gt-fig-frame {
+        background: #111111; border: 1px solid #1e1e1e;
+        border-radius: 12px; padding: 20px; margin-bottom: 20px;
+    }
+    .gt-fig-caption { color: #737373; font-size: 0.85rem; margin-top: 10px; line-height: 1.6; }
+
+    /* ── Signal cards ── */
+    .gt-signal-card {
+        background: #111111; border-left: 3px solid #00ff88;
+        border-radius: 8px; padding: 14px 18px; margin: 8px 0;
+    }
+    .gt-signal-name { color: #e5e5e5; font-weight: 600; font-size: 0.92rem; }
+    .gt-signal-score { font-size: 1.4rem; font-weight: 800; float: right; }
+
+    /* ── Verdict banners ── */
     .verdict-ghost {
-        background: #7f1d1d; color: #fca5a5; border-radius: 8px;
-        padding: 10px 20px; font-size: 1.3rem; font-weight: 800; text-align: center; display: block;
+        background: #2a0a0a; border: 2px solid #e74c3c; color: #fca5a5;
+        border-radius: 10px; padding: 14px 24px; font-size: 1.3rem;
+        font-weight: 800; text-align: center; display: block;
     }
     .verdict-suspicious {
-        background: #78350f; color: #fcd34d; border-radius: 8px;
-        padding: 10px 20px; font-size: 1.3rem; font-weight: 800; text-align: center; display: block;
+        background: #2a1800; border: 2px solid #f59e0b; color: #fcd34d;
+        border-radius: 10px; padding: 14px 24px; font-size: 1.3rem;
+        font-weight: 800; text-align: center; display: block;
     }
     .verdict-organic {
-        background: #14532d; color: #86efac; border-radius: 8px;
-        padding: 10px 20px; font-size: 1.3rem; font-weight: 800; text-align: center; display: block;
+        background: #0a2a14; border: 2px solid #00ff88; color: #86efac;
+        border-radius: 10px; padding: 14px 24px; font-size: 1.3rem;
+        font-weight: 800; text-align: center; display: block;
     }
-    .ai-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #0f2027 100%);
-        border: 1px solid #4c1d95; border-radius: 12px; padding: 20px; margin: 12px 0;
+
+    /* ── AI / chat cards ── */
+    .gt-ai-card {
+        background: #111111; border: 1px solid #1e1e1e;
+        border-radius: 12px; padding: 20px; margin: 12px 0;
     }
+    .gt-ai-header { color: #00ff88; font-size: 0.78rem; font-weight: 700; margin-bottom: 12px; }
     .chat-user {
-        background: #1e1e3f; border-radius: 12px 12px 4px 12px;
-        padding: 12px 16px; margin: 8px 0; color: #e2e8f0;
+        background: #1a1a1a; border-radius: 12px 12px 4px 12px;
+        padding: 12px 16px; margin: 8px 0; color: #e5e5e5;
     }
     .chat-assistant {
-        background: #0f2027; border: 1px solid #4c1d95; border-radius: 12px 12px 12px 4px;
-        padding: 12px 16px; margin: 8px 0; color: #e2e8f0;
+        background: #0d2818; border: 1px solid #1a4a2e; border-radius: 12px 12px 12px 4px;
+        padding: 12px 16px; margin: 8px 0; color: #e5e5e5;
     }
+
+    /* ── Source rows ── */
+    .gt-src-row {
+        display: flex; align-items: flex-start; gap: 12px;
+        border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;
+    }
+    .gt-src-row.ok { background: #0d2818; border-left: 3px solid #00ff88; }
+    .gt-src-row.nok { background: #111111; border-left: 3px solid #333; }
+
+    /* ── Divider ── */
+    .gt-divider {
+        border: none; border-top: 1px solid #1a1a1a; margin: 32px 0;
+    }
+
+    /* ── Page header ── */
+    .gt-page-header {
+        padding: 20px 0 16px 0; border-bottom: 1px solid #1a1a1a; margin-bottom: 20px;
+    }
+    .gt-page-title { font-size: 2rem; font-weight: 900; color: #ffffff; margin: 0; }
+    .gt-page-subtitle { color: #737373; font-size: 0.92rem; margin-top: 6px; }
+
+    /* ── Architecture pipeline ── */
+    .gt-pipeline {
+        display: flex; gap: 0; align-items: stretch;
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 12px;
+        overflow: hidden; margin: 20px 0; flex-wrap: wrap;
+    }
+    .gt-pipe-step {
+        flex: 1; min-width: 130px; padding: 20px 16px;
+        border-right: 1px solid #1e1e1e; position: relative;
+    }
+    .gt-pipe-step:last-child { border-right: none; }
+    .gt-pipe-num {
+        width: 28px; height: 28px; background: #00ff88; border-radius: 50%;
+        color: #000; font-weight: 800; font-size: 0.82rem;
+        display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+    }
+    .gt-pipe-title { color: #ffffff; font-weight: 700; font-size: 0.88rem; margin-bottom: 6px; }
+    .gt-pipe-items { color: #737373; font-size: 0.78rem; line-height: 1.8; }
+
+    /* ── Tech stack grid ── */
+    .gt-tech-grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+    .gt-tech-card {
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 10px;
+        padding: 16px 20px; flex: 1; min-width: 140px;
+    }
+    .gt-tech-cat {
+        color: #00ff88; font-size: 0.75rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+    }
+    .gt-tech-pkg { color: #a3a3a3; font-size: 0.82rem; line-height: 1.9; }
+
+    /* ── Streamlit overrides ── */
+    .stTextInput > div > div > input {
+        background: #111111 !important; border: 1px solid #333 !important;
+        color: #ffffff !important; border-radius: 8px !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #00ff88 !important; box-shadow: 0 0 0 2px rgba(0,255,136,0.15) !important;
+    }
+    .stButton > button {
+        background: #00ff88 !important; color: #000 !important;
+        border: none !important; font-weight: 700 !important;
+        border-radius: 8px !important; transition: opacity 0.2s !important;
+    }
+    .stButton > button:hover { opacity: 0.88 !important; }
+    .stButton > button[kind="secondary"] {
+        background: #1a1a1a !important; color: #e5e5e5 !important;
+        border: 1px solid #333 !important;
+    }
+    div[data-testid="stExpander"] {
+        background: #111111; border: 1px solid #1e1e1e; border-radius: 10px;
+    }
+    .stAlert { border-radius: 10px !important; }
     footer { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -543,147 +809,371 @@ Respond at PhD level with specific numbers and citations to the data. Be rigorou
     return response.choices[0].message.content
 
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 🎵 EDA for Music")
-    st.markdown("---")
-    page = st.radio(
-        "Navigate",
-        [
-            "🏠 Home",
-            "📊 Exercise Gallery",
-            "🔍 Artist Analyzer",
-            "🌐 Network Explorer",
-            "📡 Cross-Platform",
-            "🤖 AI Research Assistant",
-            "ℹ️ About",
-        ],
+# ── Navigation state ──────────────────────────────────────────────────────────
+_NAV_PAGES = [
+    ("Home",     "🏠 Home"),
+    ("About",    "ℹ️ About"),
+    ("Gallery",  "📊 Exercise Gallery"),
+    ("Analyzer", "🔍 Artist Analyzer"),
+    ("Network",  "🌐 Network Explorer"),
+    ("Cross-Platform", "📡 Cross-Platform"),
+    ("AI",       "🤖 AI Research Assistant"),
+]
+_NAV_LABEL_MAP = {label: full for label, full in _NAV_PAGES}
+_NAV_FULL_MAP  = {full: label for label, full in _NAV_PAGES}
+
+if "page" not in st.session_state:
+    st.session_state.page = "🏠 Home"
+
+# Hidden radio that actually drives page state — JS clicks its labels
+with st.container():
+    st.markdown('<div id="gt-nav-radio">', unsafe_allow_html=True)
+    _nav_choice = st.radio(
+        "nav", [label for label, _ in _NAV_PAGES],
+        index=[label for label, _ in _NAV_PAGES].index(
+            _NAV_FULL_MAP.get(st.session_state.page, "Home")
+        ),
+        key="nav_radio",
         label_visibility="collapsed",
     )
-    st.markdown("---")
-    # Project health
-    st.markdown("<div style='color:#a78bfa;font-size:0.8rem;font-weight:700;'>PROJECT HEALTH</div>", unsafe_allow_html=True)
-    try:
-        from src.graph.neo4j_client import Neo4jClient
-        _n = Neo4jClient(); _n.run("RETURN 1")
-        st.markdown("<div style='color:#22c55e;font-size:0.75rem;'>✅ Neo4j connected</div>", unsafe_allow_html=True)
-    except:
-        st.markdown("<div style='color:#e74c3c;font-size:0.75rem;'>❌ Neo4j offline</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    gnn_path = ROOT / "data" / "processed" / "gat_model.pt"
-    if gnn_path.exists():
-        st.markdown("<div style='color:#22c55e;font-size:0.75rem;'>✅ GNN model loaded</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div style='color:#f59e0b;font-size:0.75rem;'>⚠️ GNN model missing</div>", unsafe_allow_html=True)
+# Sync session state from radio
+st.session_state.page = _NAV_LABEL_MAP[_nav_choice]
+page = st.session_state.page
 
-    yt_key = os.getenv("YOUTUBE_API_KEY", "")
-    openai_key = os.getenv("OPENAI_API_KEY", "")
-    st.markdown(f"<div style='color:{'#22c55e' if yt_key else '#f59e0b'};font-size:0.75rem;'>{'✅' if yt_key else '⚠️'} YouTube API</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='color:{'#22c55e' if openai_key else '#e74c3c'};font-size:0.75rem;'>{'✅' if openai_key else '❌'} OpenAI API</div>", unsafe_allow_html=True)
-    st.markdown("<div style='color:#94a3b8;font-size:0.75rem;'>✅ Kaggle 114K tracks</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown(
-        "<div style='color:#64748b;font-size:0.78rem;'>INFO 7390 · Spring 2026<br>Fake Artist Detection<br>via Public API Analysis</div>",
-        unsafe_allow_html=True,
-    )
+# ── Fixed HTML navbar (pure CSS, JS clicks the hidden radio) ──────────────────
+def _navbar(active: str) -> None:
+    """Inject a fixed-position HTML navbar. Clicking a link JS-clicks the
+    matching hidden radio label so Streamlit re-renders on the correct page."""
+    active_label = _NAV_FULL_MAP.get(active, "Home")
+    nav_links_html = ""
+    for label, full in _NAV_PAGES[:4]:   # show Home / About / Gallery / Analyzer
+        cls = "gt-nav-link active" if label == active_label else "gt-nav-link"
+        nav_links_html += (
+            f'<span class="{cls}" '
+            f'onclick="(function(){{var ls=window.parent.document.querySelectorAll(\'[id*=gt-nav-radio] label\');'
+            f'for(var i=0;i<ls.length;i++){{if(ls[i].innerText.trim()===\'{label}\'){{ls[i].click();break;}}}}}})();">'
+            f'{label}</span>'
+        )
+
+    st.markdown(f"""
+    <nav id="gt-navbar">
+      <div class="gt-logo">
+        <div class="gt-logo-icon">♪</div>
+        <span class="gt-logo-text">GhostTrack</span>
+      </div>
+      <div class="gt-nav-links">{nav_links_html}</div>
+      <div class="gt-demo-btn"
+        onclick="(function(){{var ls=window.parent.document.querySelectorAll(\'[id*=gt-nav-radio] label\');
+        for(var i=0;i<ls.length;i++){{if(ls[i].innerText.trim()==='Analyzer'){{ls[i].click();break;}}}}}})();">
+        ▶&nbsp; Demo
+      </div>
+    </nav>
+    """, unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
 # HOME PAGE
 # ═════════════════════════════════════════════════════════════════════════════
 if page == "🏠 Home":
-    st.markdown("# 🎵 Exploratory Data Analysis for Music")
-    st.markdown("### A Layered Framework for Public-API Discovery of Ghost Artists on Streaming Platforms")
+    _navbar("Home")
 
-    st.markdown("""<div style='display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;'>
-        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>3</div><div class='label'>Ghost Artists Analyzed</div></div>
-        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>490</div><div class='label'>Tracks in Neo4j</div></div>
-        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>7</div><div class='label'>Detection Signals</div></div>
-        <div class='metric-card' style='flex:1;min-width:140px;'><div class='number'>114K</div><div class='label'>Kaggle Training Tracks</div></div>
-    </div>""", unsafe_allow_html=True)
+    # ── Hero ──────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class='gt-hero'>
+        <div class='gt-hero-eyebrow'>Streaming Platform Integrity</div>
+        <h1 class='gt-hero-title'>
+            Unmasking <span class='accent'>Ghost<br>Artists</span> in the<br>Streaming Era
+        </h1>
+        <p class='gt-hero-subtitle'>
+            A 7-layer exploratory data analysis framework that exposes fraudulent streaming
+            accounts using only public API endpoints. No insider data. No black boxes.
+        </p>
+        <div class='gt-hero-btns'>
+            <span class='gt-btn-primary'>Explore Framework &nbsp;→</span>
+            <span class='gt-btn-secondary'>🎧 View Case Study</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # ── Stats ─────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class='gt-stats'>
+        <div class='gt-stat-card'>
+            <div class='gt-stat-icon'>👻</div>
+            <div class='gt-stat-number'>3</div>
+            <div class='gt-stat-label'>Ghost Artists</div>
+        </div>
+        <div class='gt-stat-card'>
+            <div class='gt-stat-icon'>♪</div>
+            <div class='gt-stat-number'>490</div>
+            <div class='gt-stat-label'>Tracks</div>
+        </div>
+        <div class='gt-stat-card'>
+            <div class='gt-stat-icon'>📡</div>
+            <div class='gt-stat-number'>7</div>
+            <div class='gt-stat-label'>Detection</div>
+        </div>
+        <div class='gt-stat-card'>
+            <div class='gt-stat-icon'>📊</div>
+            <div class='gt-stat-number'>114K</div>
+            <div class='gt-stat-label'>Training</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Key Findings
-    st.markdown("## Key Findings")
-    findings_list = [
-        ("📊", "12.5× catalog variance ratio", "Ghost artists show 12.5× lower audio feature variance than organic controls (Levene's test p&lt;0.001)."),
-        ("⏱️", "81–95% cadence closure", "Ghost artists bulk-upload tracks with 81–95% same-day release clustering vs 0% for Nils Frahm."),
-        ("📺", "Ghost artists ARE on YouTube", "Relaxing White Noise has 353M YouTube views — fraud is Spotify-economic stream farming, not fabricated identity."),
-        ("🏭", "HHI 0.88 concentration", "Single production company controls 88% of RWN's catalog, revealing bulk-upload operations via ISRC attribution."),
-        ("🧠", "100% GNN test accuracy", "GAT model achieves 100% test accuracy on the proof-of-concept 65-node graph (note: synthetic graph structure)."),
-    ]
-    for icon, title, detail in findings_list:
-        st.markdown(f"""<div class='ai-card' style='padding:14px 18px;margin:8px 0;'>
-            <div style='display:flex;align-items:flex-start;gap:12px;'>
-                <span style='font-size:1.4rem;'>{icon}</span>
-                <div>
-                    <div style='color:#a78bfa;font-weight:700;font-size:0.95rem;'>{title}</div>
-                    <div style='color:#e2e8f0;font-size:0.88rem;margin-top:3px;line-height:1.5;'>{detail}</div>
+    # ── Case study callout ────────────────────────────────────────────────────
+    st.markdown("""
+    <div style='background:#111111;border:1px solid #1e1e1e;border-radius:14px;
+         padding:28px 32px;margin:8px 0 32px 0;display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;'>
+        <div style='flex:1;min-width:220px;'>
+            <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+                 text-transform:uppercase;margin-bottom:10px;'>⚠ Case Study</div>
+            <div style='color:#ffffff;font-size:1.5rem;font-weight:900;line-height:1.2;margin-bottom:14px;'>
+                Meet the Ghost:<br>Relaxing White Noise
+            </div>
+            <p style='color:#737373;font-size:0.88rem;line-height:1.7;margin-bottom:16px;'>
+                An account with 353 million YouTube views but zero verifiable human identity.
+                Our framework detected red flags across all 7 analysis layers.
+            </p>
+            <div style='display:flex;flex-direction:column;gap:8px;'>
+                <div style='color:#a3a3a3;font-size:0.85rem;'>● Feature variance <strong style='color:#00ff88;'>12.5×</strong> lower than organic artists</div>
+                <div style='color:#a3a3a3;font-size:0.85rem;'>● <strong style='color:#00ff88;'>81–95%</strong> same-day release cadence clustering</div>
+                <div style='color:#a3a3a3;font-size:0.85rem;'>● HHI concentration coefficient <strong style='color:#00ff88;'>0.88</strong></div>
+                <div style='color:#a3a3a3;font-size:0.85rem;'>● Single company controls <strong style='color:#00ff88;'>88%</strong> of catalog</div>
+            </div>
+        </div>
+        <div style='background:#0d2818;border:1px solid #1a4a2e;border-radius:12px;
+             padding:20px 28px;min-width:160px;text-align:center;'>
+            <div style='font-size:1.8rem;margin-bottom:4px;'>👻</div>
+            <div style='color:#737373;font-size:0.78rem;font-weight:600;margin-bottom:4px;'>Anomaly Score</div>
+            <div style='color:#00ff88;font-size:2.4rem;font-weight:900;'>0.94</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Key Findings ──────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style='text-align:center;margin:56px 0 32px 0;'>
+        <div style='margin-bottom:20px;'>
+            <svg width="80" height="40" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="30" width="6" height="10" fill="#00ff88" opacity="0.4"/>
+                <rect x="8" y="22" width="6" height="18" fill="#00ff88" opacity="0.5"/>
+                <rect x="16" y="14" width="6" height="26" fill="#00ff88" opacity="0.6"/>
+                <rect x="24" y="8" width="6" height="32" fill="#00ff88" opacity="0.7"/>
+                <rect x="32" y="4" width="6" height="36" fill="#00ff88" opacity="0.85"/>
+                <rect x="40" y="2" width="6" height="38" fill="#00ff88"/>
+                <rect x="48" y="6" width="6" height="34" fill="#00ff88" opacity="0.85"/>
+                <rect x="56" y="10" width="6" height="30" fill="#00ff88" opacity="0.7"/>
+                <rect x="64" y="18" width="6" height="22" fill="#00ff88" opacity="0.6"/>
+                <rect x="72" y="26" width="6" height="14" fill="#00ff88" opacity="0.5"/>
+            </svg>
+        </div>
+        <h2 style='color:#ffffff;font-size:2.2rem;font-weight:900;margin:0 0 10px 0;letter-spacing:-0.02em;'>Key Findings</h2>
+        <p style='color:#737373;font-size:0.95rem;max-width:600px;margin:0 auto;'>
+            Our analysis revealed striking patterns that distinguish ghost artists from legitimate musicians
+        </p>
+    </div>
+    <div style='display:flex;gap:16px;flex-wrap:wrap;margin-bottom:48px;'>
+        <div style='flex:1;min-width:180px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px 20px;'>
+            <div style='width:48px;height:48px;background:#1a3a1a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px;'>〰</div>
+            <div style='color:#e5e5e5;font-weight:700;font-size:0.92rem;margin-bottom:8px;'>Variance Ratio</div>
+            <div style='color:#00ff88;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:8px;'>12.5x</div>
+            <div style='color:#737373;font-size:0.82rem;line-height:1.6;'>Ghost artists show 12.5x lower feature variance compared to legitimate artists</div>
+        </div>
+        <div style='flex:1;min-width:180px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px 20px;'>
+            <div style='width:48px;height:48px;background:#2a2a0a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px;'>📡</div>
+            <div style='color:#e5e5e5;font-weight:700;font-size:0.92rem;margin-bottom:8px;'>Cadence Closure</div>
+            <div style='color:#00ff88;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:8px;'>81–95%</div>
+            <div style='color:#737373;font-size:0.82rem;line-height:1.6;'>Ghost accounts maintain impossibly perfect same-day release clustering</div>
+        </div>
+        <div style='flex:1;min-width:180px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px 20px;'>
+            <div style='width:48px;height:48px;background:#2a1a0a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px;'>📈</div>
+            <div style='color:#e5e5e5;font-weight:700;font-size:0.92rem;margin-bottom:8px;'>YouTube Presence</div>
+            <div style='color:#00ff88;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:8px;'>353M</div>
+            <div style='color:#737373;font-size:0.82rem;line-height:1.6;'>Suspicious accounts accumulate massive views with minimal engagement</div>
+        </div>
+        <div style='flex:1;min-width:180px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px 20px;'>
+            <div style='width:48px;height:48px;background:#1a0a2a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px;'>📊</div>
+            <div style='color:#e5e5e5;font-weight:700;font-size:0.92rem;margin-bottom:8px;'>GNN Accuracy</div>
+            <div style='color:#00ff88;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:8px;'>100%</div>
+            <div style='color:#737373;font-size:0.82rem;line-height:1.6;'>Graph Neural Network achieves perfect test accuracy on proof-of-concept</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── 7-Layer Framework ─────────────────────────────────────────────────────
+    st.markdown("""<hr class='gt-divider'>""", unsafe_allow_html=True)
+
+    layers_col, cards_col = st.columns([2, 3])
+    with layers_col:
+        st.markdown("""
+        <div style='padding-top:8px;'>
+            <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+                 text-transform:uppercase;margin-bottom:10px;'>🔗 Detection Framework</div>
+            <h2 style='color:#ffffff;font-size:1.8rem;font-weight:900;margin:0 0 14px 0;line-height:1.15;'>7 Layers of<br>Analysis</h2>
+            <p style='color:#737373;font-size:0.88rem;line-height:1.7;'>
+                Each layer adds another dimension to our detection capability, creating a
+                comprehensive fingerprint that reveals fraudulent accounts with high precision.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    with cards_col:
+        for layer in FRAMEWORK_LAYERS:
+            st.markdown(f"""
+            <div class='gt-layer-card'>
+                <div class='gt-layer-num'>{layer['num']}</div>
+                <div style='flex:1;'>
+                    <div style='display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;'>
+                        <div class='gt-layer-name'>{layer['name']}</div>
+                        <span class='gt-layer-tag'>{layer['data']}</span>
+                    </div>
+                    <div class='gt-layer-desc'>{layer['desc']}</div>
                 </div>
             </div>
-        </div>""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("## The 7-Layer Detection Framework")
-    st.markdown("Ghost artists leave detectable traces across Spotify's public API. This framework requires **only public, unauthenticated access**, making it replicable without special permissions.")
+    # ── Research Impact ───────────────────────────────────────────────────────
+    st.markdown("""<hr class='gt-divider'>
+    <div style='text-align:center;margin-bottom:20px;'>
+        <h2 style='color:#ffffff;font-size:1.8rem;font-weight:900;margin:0 0 8px 0;'>Research Impact</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
-    for layer in FRAMEWORK_LAYERS:
-        st.markdown(f"""<div class='layer-card'>
-            <span style='color:#a78bfa;font-weight:700;'>Layer {layer['num']}: {layer['name']}</span>
-            <span style='float:right;'><span class='tag'>{layer['data']}</span></span>
-            <div style='color:#94a3b8;font-size:0.85rem;margin-top:4px;'>{layer['desc']}</div>
-        </div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='gt-impact-grid'>
+        <div class='gt-impact-card'>
+            <div class='gt-impact-icon'>🔍</div>
+            <div class='gt-impact-title'>Key Contribution</div>
+            <div class='gt-impact-body'>This framework demonstrates that <strong style='color:#ffffff;'>independent
+            platform audit is possible</strong> using only public API endpoints — without access to
+            Spotify's internal fraud systems.</div>
+        </div>
+        <div class='gt-impact-card'>
+            <div class='gt-impact-icon'>⚠️</div>
+            <div class='gt-impact-title'>Surprise Finding</div>
+            <div class='gt-impact-body'>Ghost artists are <strong style='color:#ffffff;'>NOT cross-platform invisible</strong>.
+            Relaxing White Noise has 353M YouTube views. Ghost behavior is Spotify-economic stream farming,
+            not fabricated identity.</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='background:#0d2818;border:1px solid #1a4a2e;border-radius:10px;
+         padding:14px 20px;margin-top:16px;color:#a3a3a3;font-size:0.88rem;'>
+        <strong style='color:#00ff88;'>Status:</strong>
+        Exercises 1–10 complete · All 7 signals implemented · GAT/GCN trained (100% accuracy) · Streamlit dashboard deployed
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Research Impact
-    st.markdown("## Research Impact")
-    col_i1, col_i2 = st.columns(2)
-    with col_i1:
-        st.markdown("""<div style='background:#1a1a2e;border:1px solid #4c1d95;border-radius:10px;padding:16px;'>
-            <div style='color:#a78bfa;font-weight:700;margin-bottom:8px;'>💡 Key Contribution</div>
-            <div style='color:#e2e8f0;font-size:0.9rem;'>This framework demonstrates that <strong>independent platform audit is possible</strong> using only public API endpoints — without access to Spotify's internal fraud systems.</div>
-        </div>""", unsafe_allow_html=True)
-    with col_i2:
-        st.markdown("""<div style='background:#1a1a2e;border:1px solid #4c1d95;border-radius:10px;padding:16px;'>
-            <div style='color:#a78bfa;font-weight:700;margin-bottom:8px;'>🔍 Surprise Finding</div>
-            <div style='color:#e2e8f0;font-size:0.9rem;'>Ghost artists are <strong>NOT cross-platform invisible</strong>. Relaxing White Noise has 353M YouTube views. Ghost behavior is Spotify-economic stream farming, not fabricated identity.</div>
-        </div>""", unsafe_allow_html=True)
+    # ── Explore the Analysis ──────────────────────────────────────────────────
+    st.markdown("""<hr class='gt-divider'>
+    <div style='text-align:center;margin:32px 0 28px 0;'>
+        <h2 style='color:#ffffff;font-size:1.9rem;font-weight:900;margin:0 0 10px 0;letter-spacing:-0.02em;'>Explore the Analysis</h2>
+        <p style='color:#737373;font-size:0.92rem;'>Dive deeper into our research with interactive tools and visualizations</p>
+    </div>
+    <div style='display:flex;gap:16px;flex-wrap:wrap;margin-bottom:48px;'>
+        <div style='flex:1;min-width:200px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px;'>
+            <div style='background:#0d0d0d;border:1px solid #1e1e1e;border-radius:10px;
+                 height:120px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;'>
+                <div style='color:#00ff88;font-size:2.5rem;'>🔍</div>
+            </div>
+            <div style='display:flex;align-items:center;gap:8px;margin-bottom:8px;'>
+                <span style='color:#737373;font-size:1rem;'>🔍</span>
+                <span style='color:#ffffff;font-weight:700;font-size:0.95rem;'>Artist Analyzer</span>
+            </div>
+            <div style='color:#737373;font-size:0.84rem;line-height:1.6;'>Input any Spotify artist to see their authenticity score</div>
+        </div>
+        <div style='flex:1;min-width:200px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px;'>
+            <div style='background:#0d0d0d;border:1px solid #1e1e1e;border-radius:10px;
+                 height:120px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;'>
+                <div style='color:#00ff88;font-size:2.5rem;'>🌐</div>
+            </div>
+            <div style='display:flex;align-items:center;gap:8px;margin-bottom:8px;'>
+                <span style='color:#737373;font-size:1rem;'>🕸</span>
+                <span style='color:#ffffff;font-weight:700;font-size:0.95rem;'>Network Explorer</span>
+            </div>
+            <div style='color:#737373;font-size:0.84rem;line-height:1.6;'>Visualize artist collaboration networks in 3D</div>
+        </div>
+        <div style='flex:1;min-width:200px;background:#111111;border:1px solid #1e1e1e;border-radius:14px;padding:24px;'>
+            <div style='background:#0d0d0d;border:1px solid #1e1e1e;border-radius:10px;
+                 height:120px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;'>
+                <div style='color:#00ff88;font-size:2.5rem;'>🤖</div>
+            </div>
+            <div style='display:flex;align-items:center;gap:8px;margin-bottom:8px;'>
+                <span style='color:#00ff88;font-size:1rem;'>🤖</span>
+                <span style='color:#ffffff;font-weight:700;font-size:0.95rem;'>AI Assistant</span>
+            </div>
+            <div style='color:#737373;font-size:0.84rem;line-height:1.6;'>Ask questions about our methodology and findings</div>
+        </div>
+    </div>
 
-    st.info("**Status:** Exercises 1–7 complete · All 7 signals implemented · GAT/GCN models trained (100% test accuracy) · OpenAI GPT-4o integrated")
+    <div style='text-align:center;color:#333;font-size:0.78rem;padding:20px 0;border-top:1px solid #1a1a1a;'>
+        GhostTrack | INFO 7390 - Spring 2026 &nbsp;&nbsp;|&nbsp;&nbsp; By Trimbkeshwar Jagtap
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
 # EXERCISE GALLERY
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "📊 Exercise Gallery":
-    st.markdown("# 📊 Exercise Gallery")
-    st.markdown("Figures generated from Kaggle dataset (114K tracks) and Neo4j graph (490 tracks).")
-    st.markdown("---")
+    _navbar("Gallery")
+    st.markdown("""
+    <div class='gt-page-header'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:6px;'>Exercise Gallery</div>
+        <h1 class='gt-page-title'>Analysis Figures</h1>
+        <p class='gt-page-subtitle'>Publication-quality figures from Kaggle dataset (114K tracks) and Neo4j graph (490 tracks).</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     any_found = False
     for filename, meta in FIGURES_META.items():
         fig_path = FIGURES_DIR / filename
         if fig_path.exists():
             any_found = True
-            st.markdown(f"""<div class='fig-frame'><span class='tag'>{meta['exercise']}</span> <span class='tag'>{meta['signal']}</span>
-            <h3 style='margin-top:10px;'>{meta['title']}</h3></div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class='gt-fig-frame'>
+                <div style='display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;'>
+                    <span class='gt-tag'>{meta['exercise']}</span>
+                    <span class='gt-tag-gray'>{meta['signal']}</span>
+                </div>
+                <h3 style='color:#ffffff;margin:0 0 4px 0;font-size:1rem;'>{meta['title']}</h3>
+            </div>
+            """, unsafe_allow_html=True)
             st.image(str(fig_path), use_container_width=True)
-            st.markdown(f"<div style='color:#94a3b8;font-size:0.85rem;margin-bottom:24px;'>📌 {meta['caption']}</div>", unsafe_allow_html=True)
-            st.markdown("---")
+            st.markdown(f"<div class='gt-fig-caption'>📌 {meta['caption']}</div>", unsafe_allow_html=True)
+            st.markdown("<hr class='gt-divider'>", unsafe_allow_html=True)
 
     if not any_found:
-        st.warning("No figures found. Run notebooks 01–07 to generate figures.")
+        st.markdown("""
+        <div style='background:#111111;border:1px solid #1e1e1e;border-radius:10px;
+             padding:32px;text-align:center;color:#525252;'>
+            No figures found. Run notebooks 01–10 to generate figures.
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
 # ARTIST ANALYZER
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🔍 Artist Analyzer":
-    st.markdown("# 🔍 Artist Analyzer")
-    st.markdown("Search by artist name, Spotify ID, album, or track. We search across YouTube, Apple Music, Kaggle (114K tracks), and our Neo4j graph to assess ghost artist probability.")
+    _navbar("Analyzer")
+    st.markdown("""
+    <div class='gt-page-header'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:6px;'>Artist Analyzer</div>
+        <h1 class='gt-page-title'>Ghost Detection Tool</h1>
+        <p class='gt-page-subtitle'>
+            Search by artist name, Spotify ID, album, or track.
+            We scan YouTube, Apple Music, Kaggle (114K tracks), and our Neo4j graph.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     artist_input = st.text_input(
         "Search anything",
@@ -808,12 +1298,12 @@ elif page == "🔍 Artist Analyzer":
         # "Matched as" pill + results heading
         match_label = search_meta.get("match_label", f"Artist name: {artist_query}")
         st.markdown(
-            f"<div style='display:inline-block;background:#1e1b4b;border:1px solid #4c1d95;"
-            f"border-radius:20px;padding:4px 14px;font-size:0.8rem;color:#a5b4fc;"
-            f"margin-bottom:10px;'>🔎 Matched as: {match_label}</div>",
+            f"<div style='display:inline-block;background:#0d2818;border:1px solid #1a4a2e;"
+            f"border-radius:20px;padding:4px 14px;font-size:0.78rem;color:#00ff88;font-weight:600;"
+            f"margin-bottom:10px;'>🔎 {match_label}</div>",
             unsafe_allow_html=True,
         )
-        st.markdown(f"## Results: {artist_query}")
+        st.markdown(f"<h2 style='color:#ffffff;font-weight:900;margin-top:4px;'>Results: {artist_query}</h2>", unsafe_allow_html=True)
 
         # If matched via a specific track, show that track's audio features
         matched_track = collected_data.get("matched_track")
@@ -823,23 +1313,24 @@ elif page == "🔍 Artist Analyzer":
             tg = matched_track.get("track_genre", "")
             pop = matched_track.get("popularity", 0)
             st.markdown(
-                f"<div style='background:#1a1a2e;border:1px solid #4c1d95;border-radius:8px;"
-                f"padding:12px 16px;margin-bottom:12px;'>"
-                f"<div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:6px;'>🎵 MATCHED TRACK</div>"
-                f"<div style='color:#e2e8f0;font-weight:600;'>{tn}</div>"
-                f"<div style='color:#94a3b8;font-size:0.85rem;margin-top:2px;'>"
+                f"<div style='background:#0d2818;border:1px solid #1a4a2e;border-radius:10px;"
+                f"padding:14px 18px;margin-bottom:14px;'>"
+                f"<div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;"
+                f"text-transform:uppercase;margin-bottom:8px;'>🎵 Matched Track</div>"
+                f"<div style='color:#ffffff;font-weight:700;font-size:0.95rem;'>{tn}</div>"
+                f"<div style='color:#737373;font-size:0.85rem;margin-top:4px;'>"
                 f"{('Album: ' + alb + ' · ') if alb else ''}"
                 f"{('Genre: ' + tg + ' · ') if tg else ''}"
                 f"Popularity: {pop}/100</div>"
-                f"<div style='display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;'>"
+                f"<div style='display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;'>"
                 + "".join(
-                    f"<span style='color:#94a3b8;font-size:0.8rem;'>"
-                    f"<span style='color:#a78bfa;font-weight:600;'>{k.title()}</span> {v:.3f}</span>"
+                    f"<span style='color:#737373;font-size:0.82rem;'>"
+                    f"<span style='color:#00ff88;font-weight:600;'>{k.title()}</span> {v:.3f}</span>"
                     for k, v in {
-                        "dance": matched_track.get("danceability", 0),
-                        "energy": matched_track.get("energy", 0),
-                        "valence": matched_track.get("valence", 0),
-                        "acoustic": matched_track.get("acousticness", 0),
+                        "Dance": matched_track.get("danceability", 0),
+                        "Energy": matched_track.get("energy", 0),
+                        "Valence": matched_track.get("valence", 0),
+                        "Acoustic": matched_track.get("acousticness", 0),
                     }.items()
                 )
                 + "</div></div>",
@@ -896,14 +1387,15 @@ elif page == "🔍 Artist Analyzer":
         )
 
         def _src_row(icon: str, source: str, detail: str, ok: bool) -> str:
-            border = "#22c55e" if ok else "#475569"
-            bg     = "#0f1f14" if ok else "#1a1a1a"
+            border = "#00ff88" if ok else "#333333"
+            bg     = "#0d2818" if ok else "#111111"
+            src_color = "#ffffff" if ok else "#737373"
             return (
-                f"<div style='display:flex;align-items:flex-start;gap:10px;background:{bg};"
-                f"border-left:3px solid {border};border-radius:6px;padding:10px 14px;margin-bottom:6px;'>"
-                f"<span style='font-size:1.1rem;line-height:1.4;'>{icon}</span>"
-                f"<div><span style='color:#e2e8f0;font-weight:600;'>{source}</span>"
-                f"<span style='color:#94a3b8;font-size:0.88rem;margin-left:8px;'>{detail}</span></div></div>"
+                f"<div style='display:flex;align-items:flex-start;gap:12px;background:{bg};"
+                f"border-left:3px solid {border};border-radius:8px;padding:12px 16px;margin-bottom:8px;'>"
+                f"<span style='font-size:1.1rem;line-height:1.5;'>{icon}</span>"
+                f"<div><span style='color:{src_color};font-weight:600;font-size:0.9rem;'>{source}</span>"
+                f"<span style='color:#737373;font-size:0.85rem;margin-left:10px;'>{detail}</span></div></div>"
             )
 
         # Neo4j row
@@ -997,7 +1489,7 @@ Full analysis would compute:
 
         # Pipeline signal scores if available
         if signal_scores:
-            st.markdown("### Signal Scores (pipeline)")
+            st.markdown("<h3 style='color:#ffffff;font-weight:700;margin:20px 0 12px 0;'>Signal Scores</h3>", unsafe_allow_html=True)
             SIGNAL_META_DISPLAY = [
                 ("s1_audio_similarity",      "S1", "Audio Fingerprint"),
                 ("s2_cadence_sync",          "S2", "Release Cadence"),
@@ -1010,23 +1502,24 @@ Full analysis would compute:
             for pipeline_key, num, name in SIGNAL_META_DISPLAY:
                 val = signal_scores.get(pipeline_key)
                 if val is None:
-                    score_str, score_color, bar_pct = "N/A", "#64748b", 0
+                    score_str, score_color, bar_pct = "N/A", "#525252", 0
                 else:
                     score_str = f"{val:.3f}"
                     bar_pct = int(val * 100)
-                    score_color = "#e74c3c" if val > 0.7 else ("#f59e0b" if val > 0.4 else "#22c55e")
-                st.markdown(f"""<div class='signal-card'>
-                    <span class='score' style='color:{score_color};'>{score_str}</span>
-                    <div class='name'>{num}: {name}</div>
-                    <div style='margin-top:6px;background:#2a2a4a;border-radius:4px;height:6px;'>
-                        <div style='width:{bar_pct}%;background:{score_color};border-radius:4px;height:6px;'></div>
+                    score_color = "#e74c3c" if val > 0.7 else ("#f59e0b" if val > 0.4 else "#00ff88")
+                st.markdown(f"""
+                <div class='gt-signal-card'>
+                    <span class='gt-signal-score' style='color:{score_color};'>{score_str}</span>
+                    <div class='gt-signal-name'>{num}: {name}</div>
+                    <div style='margin-top:8px;background:#1a1a1a;border-radius:4px;height:5px;'>
+                        <div style='width:{bar_pct}%;background:{score_color};border-radius:4px;height:5px;'></div>
                     </div>
                 </div>""", unsafe_allow_html=True)
 
         # ── Optional AI deep-dive ─────────────────────────────────────────────
-        st.markdown("---")
-        st.markdown("### 🤖 AI Deep-Dive Analysis *(optional)*")
-        st.caption("Calls GPT-4o once to generate a PhD-level ghost detection analysis from the data above.")
+        st.markdown("<hr class='gt-divider'>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#ffffff;font-weight:700;'>AI Deep-Dive Analysis <span style='color:#525252;font-size:0.85rem;font-weight:400;'>(optional)</span></h3>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#737373;font-size:0.85rem;margin-top:-8px;'>Calls GPT-4o once to generate a PhD-level ghost detection analysis from the data above.</p>", unsafe_allow_html=True)
         ai_btn = st.button("Get AI Analysis", type="secondary")
 
         if ai_btn:
@@ -1082,15 +1575,16 @@ Full analysis would compute:
                     },
                     number={"font": {"color": gauge_color, "size": 36}, "suffix": "%"},
                 ))
-                gauge_fig.update_layout(paper_bgcolor="#12121f", height=220, margin=dict(t=40, b=0, l=30, r=30))
+                gauge_fig.update_layout(paper_bgcolor="#0a0a0a", height=220, margin=dict(t=40, b=0, l=30, r=30))
                 st.plotly_chart(gauge_fig, use_container_width=True)
             except ImportError:
                 st.progress(ghost_prob / 100)
 
             analysis_text = ai_result.get("analysis", "")
-            st.markdown(f"""<div class='ai-card'>
-                <div style='color:#a78bfa;font-size:0.8rem;font-weight:700;margin-bottom:12px;'>GPT-4o ANALYSIS — {artist_query.upper()}</div>
-                <div style='color:#e2e8f0;line-height:1.8;font-size:0.92rem;'>{analysis_text.replace(chr(10), "<br>")}</div>
+            st.markdown(f"""
+            <div class='gt-ai-card'>
+                <div class='gt-ai-header'>GPT-4o ANALYSIS — {artist_query.upper()}</div>
+                <div style='color:#a3a3a3;line-height:1.8;font-size:0.9rem;'>{analysis_text.replace(chr(10), "<br>")}</div>
             </div>""", unsafe_allow_html=True)
 
             comparison = ai_result.get("comparison", "")
@@ -1126,16 +1620,30 @@ Full analysis would compute:
         st.error("Please enter a search term.")
 
     elif not st.session_state.get("analyzer_data"):
-        st.markdown("<div style='color:#64748b;text-align:center;padding:40px;'>Enter an artist name, Spotify ID, track, or album above and click Search.</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='background:#111111;border:1px solid #1e1e1e;border-radius:12px;
+             padding:48px;text-align:center;margin-top:20px;'>
+            <div style='font-size:2rem;margin-bottom:12px;'>🔍</div>
+            <div style='color:#525252;font-size:0.95rem;'>
+                Enter an artist name, Spotify ID, track, or album above and click Search.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
 # NETWORK EXPLORER
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🌐 Network Explorer":
-    st.markdown("# 🌐 Network Explorer")
-    st.markdown("ISRC-based production company graph. High HHI concentration (> 0.6) signals bulk-upload operations.")
-    st.markdown("---")
+    _navbar("Network")
+    st.markdown("""
+    <div class='gt-page-header'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:6px;'>Network Explorer</div>
+        <h1 class='gt-page-title'>Production Company Graph</h1>
+        <p class='gt-page-subtitle'>ISRC-based attribution network. HHI &gt; 0.6 signals bulk-upload operations via a single registrant.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Search Artist Network ─────────────────────────────────────────────────
     st.markdown("### Search Artist Network")
@@ -1197,8 +1705,8 @@ elif page == "🌐 Network Explorer":
         bar_fig.update_layout(
             title=f"YouTube Views: {_ns_name} vs Seed Artists",
             yaxis_title="Views",
-            plot_bgcolor="#12121f", paper_bgcolor="#12121f", font_color="#e2e8f0",
-            title_font_color="#a78bfa", yaxis=dict(gridcolor="#2a2a4a"),
+            plot_bgcolor="#0a0a0a", paper_bgcolor="#0a0a0a", font_color="#a3a3a3",
+            title_font_color="#ffffff", yaxis=dict(gridcolor="#1e1e1e"),
             showlegend=False, margin=dict(t=50, b=40),
         )
         st.plotly_chart(bar_fig, use_container_width=True)
@@ -1287,10 +1795,22 @@ elif page == "🌐 Network Explorer":
 # CROSS-PLATFORM
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "📡 Cross-Platform":
-    st.markdown("# 📡 Cross-Platform Discrepancy (Signal 7)")
-    st.warning("**Key finding:** Relaxing White Noise has **353M YouTube views** — ghost behavior is Spotify-stream-farming, not cross-platform absence.")
-
-    st.markdown("---")
+    _navbar("Cross-Platform")
+    st.markdown("""
+    <div class='gt-page-header'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:6px;'>Signal 7</div>
+        <h1 class='gt-page-title'>Cross-Platform Discrepancy</h1>
+        <p class='gt-page-subtitle'>YouTube + Apple Music presence vs Spotify behavior.</p>
+    </div>
+    <div style='background:#2a1200;border:1px solid #f59e0b;border-radius:10px;padding:14px 20px;margin-bottom:24px;'>
+        <span style='color:#fcd34d;font-weight:700;'>Key Finding:</span>
+        <span style='color:#a3a3a3;font-size:0.9rem;margin-left:8px;'>
+            Relaxing White Noise has <strong style='color:#fcd34d;'>353M YouTube views</strong> —
+            ghost behavior is Spotify-stream-farming, not cross-platform absence.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("### Analyze Any Artist Cross-Platform")
     cp_input = st.text_input("Artist name", placeholder='e.g. "Drake", "Calmo", "Brian Eno"', key="cp_input")
     cp_btn = st.button("🔍 Search", key="cp_btn")
@@ -1316,31 +1836,31 @@ elif page == "📡 Cross-Platform":
         with col_yt:
             views_str = f"{views/1e6:.1f}M" if views >= 1_000_000 else (f"{views/1e3:.0f}K" if views >= 1_000 else str(views))
             color = "#22c55e" if views > 1_000_000 else ("#f59e0b" if views > 1_000 else "#e74c3c")
-            st.markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:16px;text-align:center;'>
-                <div style='color:#94a3b8;font-size:0.8rem;'>YouTube Views</div>
+            st.markdown(f"""<div style='background:#111111;border:1px solid #1e1e1e;border-radius:10px;padding:20px;text-align:center;'>
+                <div style='color:#737373;font-size:0.8rem;margin-bottom:8px;'>YouTube Views</div>
                 <div style='color:{color};font-size:2rem;font-weight:800;'>{views_str if yt_found else "Not found"}</div>
-                <div style='color:#64748b;font-size:0.75rem;'>{yt.get("video_title","")[:50]}</div>
+                <div style='color:#525252;font-size:0.75rem;margin-top:6px;'>{yt.get("video_title","")[:50]}</div>
             </div>""", unsafe_allow_html=True)
         with col_ap:
-            ap_color = "#22c55e" if apple_found else "#e74c3c"
-            st.markdown(f"""<div style='background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:16px;text-align:center;'>
-                <div style='color:#94a3b8;font-size:0.8rem;'>Apple Music</div>
+            ap_color = "#00ff88" if apple_found else "#e74c3c"
+            st.markdown(f"""<div style='background:#111111;border:1px solid #1e1e1e;border-radius:10px;padding:20px;text-align:center;'>
+                <div style='color:#737373;font-size:0.8rem;margin-bottom:8px;'>Apple Music</div>
                 <div style='color:{ap_color};font-size:2rem;font-weight:800;'>{"✅ Found" if apple_found else "❌ Not found"}</div>
-                <div style='color:#64748b;font-size:0.75rem;'>{itunes.get("primary_genre","")}</div>
+                <div style='color:#525252;font-size:0.75rem;margin-top:6px;'>{itunes.get("primary_genre","")}</div>
             </div>""", unsafe_allow_html=True)
 
         # Rule-based assessment (no OpenAI)
         if views >= 10_000_000:
-            presence_label, presence_color = "Strong presence", "#22c55e"
+            presence_label, presence_color = "Strong presence", "#00ff88"
         elif views >= 1_000:
             presence_label, presence_color = "Moderate presence", "#f59e0b"
         elif views > 0:
             presence_label, presence_color = "Minimal presence", "#f59e0b"
         else:
-            presence_label, presence_color = "Not found", "#64748b"
-        st.markdown(f"""<div style='background:#1a1a2e;border-left:4px solid {presence_color};border-radius:8px;padding:14px 18px;margin-top:12px;'>
+            presence_label, presence_color = "Not found", "#525252"
+        st.markdown(f"""<div style='background:#111111;border:1px solid #1e1e1e;border-left:4px solid {presence_color};border-radius:8px;padding:14px 18px;margin-top:12px;'>
             <span style='color:{presence_color};font-weight:700;'>{presence_label}</span>
-            <span style='color:#94a3b8;font-size:0.85rem;margin-left:12px;'>{cp_verdict}</span>
+            <span style='color:#737373;font-size:0.85rem;margin-left:12px;'>{cp_verdict}</span>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
@@ -1356,17 +1876,17 @@ elif page == "📡 Cross-Platform":
         yt_str = f"{yt_views/1e6:.0f}M" if yt_views >= 1_000_000 else str(yt_views)
         apple_str = "✅ Apple Music" if data["apple_music"] else "❌ No Apple Music"
         ch_str = f"📺 {data['youtube_channel']}" if data["youtube_channel"] else "No channel"
-        st.markdown(f"""<div style='background:#1a1a2e;border-left:4px solid {bc};border-radius:8px;padding:16px 20px;margin:10px 0;'>
+        st.markdown(f"""<div style='background:#111111;border-left:4px solid {bc};border-radius:8px;padding:16px 20px;margin:10px 0;border:1px solid #1e1e1e;'>
             <div style='display:flex;justify-content:space-between;align-items:center;'>
-                <span style='color:#e2e8f0;font-size:1.1rem;font-weight:700;'>{vi} {artist_name}</span>
+                <span style='color:#ffffff;font-size:1.1rem;font-weight:700;'>{vi} {artist_name}</span>
                 <span style='color:{s7c};font-weight:700;'>S7: {s7:.2f}</span>
             </div>
             <div style='margin-top:8px;display:flex;gap:24px;flex-wrap:wrap;'>
-                <span style='color:#a78bfa;'>▶ {yt_str} views</span>
-                <span style='color:#a78bfa;'>{ch_str}</span>
-                <span style='color:#a78bfa;'>{apple_str}</span>
+                <span style='color:#a3a3a3;'>▶ {yt_str} views</span>
+                <span style='color:#a3a3a3;'>{ch_str}</span>
+                <span style='color:#a3a3a3;'>{apple_str}</span>
             </div>
-            <div style='margin-top:8px;color:#94a3b8;font-size:0.85rem;'>{data["note"]}</div>
+            <div style='margin-top:8px;color:#737373;font-size:0.85rem;'>{data["note"]}</div>
         </div>""", unsafe_allow_html=True)
 
     try:
@@ -1378,8 +1898,8 @@ elif page == "📡 Cross-Platform":
         bar_fig = go.Figure(go.Bar(x=artists_list, y=views_list, marker_color=colors_list,
             text=[f"{v/1e6:.0f}M" if v > 1e6 else str(v) for v in views_list], textposition="outside"))
         bar_fig.update_layout(title="YouTube Views by Artist", yaxis_title="Views",
-            plot_bgcolor="#12121f", paper_bgcolor="#12121f", font_color="#e2e8f0",
-            title_font_color="#a78bfa", yaxis=dict(gridcolor="#2a2a4a"), showlegend=False)
+            plot_bgcolor="#0a0a0a", paper_bgcolor="#0a0a0a", font_color="#a3a3a3",
+            title_font_color="#ffffff", yaxis=dict(gridcolor="#1e1e1e"), showlegend=False)
         st.plotly_chart(bar_fig, use_container_width=True)
     except ImportError:
         pass
@@ -1394,9 +1914,18 @@ elif page == "📡 Cross-Platform":
 # AI RESEARCH ASSISTANT
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🤖 AI Research Assistant":
-    st.markdown("# 🤖 AI Research Assistant")
-    st.markdown("Ask any research question about the project. Powered by GPT-4o with full project context.")
-    st.info("Each question uses one OpenAI API call.")
+    _navbar("AI Assistant")
+    st.markdown("""
+    <div class='gt-page-header'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:6px;'>AI Assistant</div>
+        <h1 class='gt-page-title'>Research Assistant</h1>
+        <p class='gt-page-subtitle'>Ask any research question about the project. Powered by GPT-4o with full project context.</p>
+    </div>
+    <div style='background:#0d2818;border:1px solid #1a4a2e;border-radius:10px;padding:12px 18px;margin-bottom:20px;'>
+        <span style='color:#00ff88;font-size:0.82rem;font-weight:600;'>Each question uses one OpenAI API call.</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Initialize chat history
     if "chat_history" not in st.session_state:
@@ -1450,51 +1979,144 @@ elif page == "🤖 AI Research Assistant":
 # ABOUT
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "ℹ️ About":
-    st.markdown("# ℹ️ About This Project")
+    _navbar("About")
 
-    col1, col2 = st.columns([3, 2])
-    with col1:
-        st.markdown("## Abstract")
+    # ── Header ────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style='padding:20px 0 16px 0;border-bottom:1px solid #1a1a1a;margin-bottom:24px;'>
+        <div style='color:#00ff88;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;
+             text-transform:uppercase;margin-bottom:8px;'>About the Research</div>
+        <h1 style='color:#ffffff;font-size:2.2rem;font-weight:900;margin:0 0 12px 0;
+             letter-spacing:-0.02em;'>Methodology &amp; Architecture</h1>
+        <p style='color:#737373;font-size:1rem;max-width:580px;line-height:1.7;'>
+            A deep dive into how we built a framework to detect streaming platform fraud
+            using publicly available data and cutting-edge machine learning.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Abstract + Course card ────────────────────────────────────────────────
+    ab_col, card_col = st.columns([3, 1])
+    with ab_col:
         st.markdown("""
-        This project presents a **7-layer exploratory data analysis framework** for detecting
-        ghost artists — AI-generated or fraudulent accounts used to inflate streaming revenue —
-        using only Spotify's public, unauthenticated API endpoints.
+        <h2 style='color:#ffffff;font-size:1.4rem;font-weight:800;margin-bottom:14px;'>Abstract</h2>
+        <p style='color:#737373;line-height:1.8;font-size:0.92rem;'>
+            This project presents a <strong style='color:#ffffff;'>7-layer exploratory data analysis framework</strong>
+            for detecting ghost artists — AI-generated or fraudulent accounts used to inflate streaming revenue —
+            using only Spotify's public, unauthenticated API endpoints.
+        </p>
+        <p style='color:#737373;line-height:1.8;font-size:0.92rem;margin-top:12px;'>
+            Prior detection work relies on internal data unavailable to researchers. We demonstrate that
+            <strong style='color:#00ff88;'>catalog coherence, playlist entropy, ISRC attribution, release cadence,
+            metadata similarity, and graph topology</strong> each provide independent discriminative signal,
+            and that their combination yields robust classification without any proprietary access.
+        </p>
+        <p style='color:#737373;line-height:1.8;font-size:0.92rem;margin-top:12px;'>
+            The framework is validated on three seed artists and scaled using the Kaggle Spotify Audio Features
+            dataset (114,000 tracks, 114 genres). Our Graph Attention Network achieves
+            <strong style='color:#ffffff;'>100% test accuracy</strong> on the proof-of-concept 65-node collaboration graph.
+        </p>
+        """, unsafe_allow_html=True)
+    with card_col:
+        st.markdown("""
+        <div style='background:#0d2818;border:1px solid #1a4a2e;border-radius:12px;padding:20px;'>
+            <div style='font-size:1.5rem;margin-bottom:8px;'>🎓</div>
+            <div style='color:#00ff88;font-weight:700;font-size:0.95rem;margin-bottom:4px;'>INFO 7390</div>
+            <div style='color:#a3a3a3;font-size:0.82rem;line-height:1.7;'>
+                Advances in Data Science<br>Spring 2026<br>Northeastern University
+            </div>
+            <div style='border-top:1px solid #1a4a2e;margin:12px 0;'></div>
+            <div style='color:#ffffff;font-size:0.85rem;font-weight:600;'>Trimbkeshwar Jagtap</div>
+            <div style='color:#525252;font-size:0.78rem;'>Researcher</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        Prior detection work relies on internal data unavailable to researchers.
-        We demonstrate that catalog coherence, playlist entropy, ISRC attribution,
-        release cadence, metadata similarity, and graph topology each provide
-        independent discriminative signal, and that their combination yields robust
-        classification without any proprietary access.
+    # ── Architecture pipeline ─────────────────────────────────────────────────
+    st.markdown("""
+    <h2 style='color:#ffffff;font-size:1.4rem;font-weight:800;margin:36px 0 14px 0;'>System Architecture</h2>
+    <p style='color:#737373;font-size:0.88rem;margin-bottom:16px;'>
+        Data flows from multiple sources through our 7-layer analysis pipeline to produce ghost artist probability scores.
+    </p>
+    <div class='gt-pipeline'>
+        <div class='gt-pipe-step'>
+            <div class='gt-pipe-num'>1</div>
+            <div class='gt-pipe-title'>Data Sources</div>
+            <div class='gt-pipe-items'>Spotify API<br>Kaggle CSV<br>YouTube API<br>iTunes API</div>
+        </div>
+        <div class='gt-pipe-step'>
+            <div class='gt-pipe-num'>2</div>
+            <div class='gt-pipe-title'>Processing</div>
+            <div class='gt-pipe-items'>Feature Extraction<br>Graph Construction<br>Neo4j Ingestion<br>Signal Scoring</div>
+        </div>
+        <div class='gt-pipe-step'>
+            <div class='gt-pipe-num'>3</div>
+            <div class='gt-pipe-title'>Analysis</div>
+            <div class='gt-pipe-items'>7-Layer Framework<br>GNN Classification<br>CrewAI Pipeline<br>Verdict Engine</div>
+        </div>
+        <div class='gt-pipe-step'>
+            <div class='gt-pipe-num'>4</div>
+            <div class='gt-pipe-title'>Output</div>
+            <div class='gt-pipe-items'>Ghost Score<br>Visualizations<br>paper/figures/<br>Reports</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        The framework is validated on three seed artists and scaled using the Kaggle
-        Spotify Audio Features dataset (114,000 tracks, 114 genres).
-        """)
-        st.markdown("## Architecture")
-        st.markdown("""```
-DATA SOURCES        PROCESSING           OUTPUTS
-──────────          ──────────           ───────
-Spotify API  ──►    SpotifyClient        Neo4j Graph
-Kaggle CSV   ──►    7 Signal Modules ──► Signal Scores
-YouTube API  ──►    Neo4j Ingestion      Research Paper
-iTunes API   ──►    CrewAI Pipeline      paper/figures/
-OpenAI GPT-4o ──►  FastAPI Backend      paper/draft.md
-                    (this dashboard)
-```""")
+    # ── Tech Stack ────────────────────────────────────────────────────────────
+    st.markdown("""
+    <h2 style='color:#ffffff;font-size:1.4rem;font-weight:800;margin:36px 0 8px 0;'>Tech Stack</h2>
+    <p style='color:#737373;font-size:0.88rem;margin-bottom:16px;'>
+        Built with modern data science tools and frameworks for scalability and reproducibility.
+    </p>
+    <div class='gt-tech-grid'>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Data</div>
+            <div class='gt-tech-pkg'>Python 3.14<br>pandas 3.0<br>numpy 2.4</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>APIs</div>
+            <div class='gt-tech-pkg'>spotipy 2.26<br>httpx 0.28<br>openai 1.x</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Graph</div>
+            <div class='gt-tech-pkg'>Neo4j 6.1<br>networkx 3.6</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>ML</div>
+            <div class='gt-tech-pkg'>scikit-learn 1.8<br>torch 2.11<br>torch_geometric 2.7</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Viz</div>
+            <div class='gt-tech-pkg'>matplotlib 3.10<br>plotly 6.7<br>seaborn 0.13</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Backend</div>
+            <div class='gt-tech-pkg'>FastAPI 0.135<br>uvicorn 0.44</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Frontend</div>
+            <div class='gt-tech-pkg'>Streamlit 1.56</div>
+        </div>
+        <div class='gt-tech-card'>
+            <div class='gt-tech-cat'>Agents</div>
+            <div class='gt-tech-pkg'>crewai 1.14<br>GPT-4o</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("## Tech Stack")
-        stack = {
-            "Data": ["Python 3.14", "pandas 3.0", "numpy 2.4"],
-            "APIs": ["spotipy 2.26", "httpx 0.28", "openai 1.x"],
-            "Graph": ["Neo4j 6.1", "networkx 3.6"],
-            "ML": ["scikit-learn 1.8", "torch 2.11", "torch_geometric 2.7"],
-            "Viz": ["matplotlib 3.10", "plotly 6.7", "seaborn 0.13"],
-            "Backend": ["FastAPI 0.135", "uvicorn 0.44"],
-            "Frontend": ["Streamlit 1.56"],
-            "Agents": ["crewai 1.14", "GPT-4o"],
-        }
-        for category, packages in stack.items():
-            st.markdown(f"**{category}:** {' · '.join(packages)}")
-        st.markdown("---")
-        st.markdown("## Course")
-        st.markdown("**INFO 7390** — Advances in Data Science  \nSpring 2026  \nSubmitted by: Trimbkeshwar Jagtap")
+    # ── CTA ───────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style='background:linear-gradient(135deg,#0d2818 0%,#111111 100%);
+         border:1px solid #1a4a2e;border-radius:14px;padding:36px;text-align:center;margin-top:36px;'>
+        <h2 style='color:#ffffff;font-size:1.6rem;font-weight:900;margin:0 0 8px 0;'>Ready to Explore?</h2>
+        <p style='color:#737373;font-size:0.92rem;margin:0 0 20px 0;'>
+            Dive into our interactive tools and see the framework in action.
+        </p>
+        <div style='display:flex;gap:12px;justify-content:center;flex-wrap:wrap;'>
+            <span class='gt-btn-primary'>→ Try Artist Analyzer</span>
+            <span class='gt-btn-secondary'>📊 View Exercise Gallery</span>
+        </div>
+    </div>
+    <div style='text-align:center;color:#333;font-size:0.78rem;margin-top:24px;'>
+        GhostTrack | INFO 7390 — Spring 2026 | By Trimbkeshwar Jagtap
+    </div>
+    """, unsafe_allow_html=True)
