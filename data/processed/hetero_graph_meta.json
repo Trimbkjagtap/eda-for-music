@@ -1,0 +1,34 @@
+{
+  "n_artist_nodes": 76,
+  "n_ghost_nodes": 3,
+  "n_organic_nodes": 73,
+  "n_registrant_nodes": 12,
+  "n_edges": 81,
+  "artist_feature_dim": 8,
+  "registrant_feature_dim": 4,
+  "artist_feature_names": [
+    "track_count",
+    "mean_duration_ms",
+    "var_danceability",
+    "var_energy",
+    "var_valence",
+    "var_acousticness",
+    "total_variance",
+    "genre_count"
+  ],
+  "registrant_feature_names": [
+    "total_tracks_managed",
+    "n_artists_served",
+    "is_known_ghost_prefix",
+    "is_known_aggregator"
+  ],
+  "train_nodes": 46,
+  "val_nodes": 15,
+  "test_nodes": 15,
+  "seed": 42,
+  "data_caveats": [
+    "Only 3 ghost artists have real ISRC edges from Neo4j; others use synthetic pooled registrants.",
+    "Audio features for 97 ghost artists imputed from class median (no Kaggle match).",
+    "Temporal split approximated: high-confidence/Smith ghosts = pre-2024, rest = 2024+."
+  ]
+}

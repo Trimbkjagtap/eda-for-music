@@ -1,0 +1,47 @@
+registrant_name,isrc_prefix,country_code,country,typical_volume_tier,category,notes,source
+DistroKid,TCACM,US,United States,very_high,AGGREGATOR,"DistroKid primary US prefix (TC=TuneCore-class block). Handles millions of indie tracks. Any artist can register for ~$20/yr.",https://distrokid.com; ISRC-RA database
+DistroKid,TCADR,US,United States,very_high,AGGREGATOR,"DistroKid secondary US prefix. Same operator as TCACM.",https://distrokid.com
+DistroKid,QM6P4,US,United States,very_high,AGGREGATOR,"DistroKid prefix block QM series.",Community documentation
+TuneCore,SE6I9,SE,Sweden,high,AGGREGATOR,"TuneCore Swedish registrant prefix.",https://www.tunecore.com; ISRC-RA
+TuneCore,USSM9,US,United States,high,AGGREGATOR,"TuneCore US prefix block.",https://www.tunecore.com
+CD Baby,QM3FZ,US,United States,high,AGGREGATOR,"CD Baby (formerly CDBaby) US registrant. Major indie distributor since 1998.",https://cdbaby.com
+CD Baby,USBN7,US,United States,high,AGGREGATOR,"CD Baby secondary US prefix block.",https://cdbaby.com
+AWAL,GBUM7,GB,United Kingdom,high,AGGREGATOR,"AWAL (Artists Without A Label) UK prefix. Now part of Sony Music.",https://www.awal.com; PPL database
+AWAL,GBBKS,GB,United Kingdom,high,AGGREGATOR,"AWAL/Kobalt secondary prefix.",https://www.awal.com
+Believe Digital,FR6V8,FR,France,high,AGGREGATOR,"Believe Digital French registrant. One of Europe's largest indie distributors.",https://www.believe.com; SCPP database
+ONErpm,USRC1,US,United States,high,AGGREGATOR,"ONErpm (One RPM) US registrant prefix.",https://onerpm.com
+Symphonic Distribution,USUAN,US,United States,medium,AGGREGATOR,"Symphonic Distribution US prefix. Tampa-based indie distributor.",https://symphonicdistribution.com
+EmuBands,GBAYE,GB,United Kingdom,medium,AGGREGATOR,"EmuBands UK registrant. Scottish indie distributor.",https://www.emubands.com
+Routenote,GBUM7,GB,United Kingdom,medium,AGGREGATOR,"Routenote shares UK prefix blocks with other aggregators.",https://routenote.com
+Stem,USUM7,US,United States,medium,AGGREGATOR,"Stem Disintermedia US prefix. Artist-first distributor.",https://stem.is
+Amuse,SE3PZ,SE,Sweden,medium,AGGREGATOR,"Amuse Swedish mobile-first distributor.",https://amuse.io
+Ditto Music,GBDMC,GB,United Kingdom,medium,AGGREGATOR,"Ditto Music UK registrant. Belfast-based distributor.",https://dittomusic.com
+Record Union,SE7PQ,SE,Sweden,low_medium,AGGREGATOR,"Record Union Swedish distributor.",https://www.recordunion.com
+iMusician,CH3MB,CH,Switzerland,low_medium,AGGREGATOR,"iMusician Digital AG Swiss registrant. Zurich-based.",https://imusician.pro
+Soundrop,USSD9,US,United States,low_medium,AGGREGATOR,"Soundrop (Spotify subsidiary) US registrant.",https://soundrop.com
+Universal Music Group,USUM7,US,United States,very_high,MAJOR_LABEL,"UMG US master prefix. Controls largest catalog globally.",IFPI; RIAA
+Universal Music Group,GBUM7,GB,United Kingdom,very_high,MAJOR_LABEL,"UMG UK prefix. Shared with AWAL which UMG doesn't own.",IFPI
+Sony Music Entertainment,USSM1,US,United States,very_high,MAJOR_LABEL,"Sony Music US primary prefix.",IFPI; RIAA
+Sony Music Entertainment,GBBKS,GB,United Kingdom,very_high,MAJOR_LABEL,"Sony Music UK prefix.",IFPI
+Warner Music Group,USRC1,US,United States,very_high,MAJOR_LABEL,"WMG US prefix. Shares with some distributors.",IFPI; RIAA
+Columbia Records,QMFME,US,United States,very_high,MAJOR_LABEL,"Columbia/Epic (Sony) US prefix.",IFPI
+Interscope,USUG1,US,United States,very_high,MAJOR_LABEL,"Interscope (UMG) US prefix.",IFPI
+Atlantic Records,USAT2,US,United States,very_high,MAJOR_LABEL,"Atlantic (WMG) US prefix.",IFPI
+Firefly Entertainment AB,SEWA,SE,Sweden,low,CUSTOM_REGISTRANT,"Swedish ISRC registrant associated with Johan Röhr (Dagens Nyheter investigation). Not a known aggregator — custom registrant serving only Röhr's 656+ pseudonyms.",Dagens Nyheter 2024; Music Business Worldwide
+Lucille AB,SEWB,SE,Sweden,low,CUSTOM_REGISTRANT,"Secondary Swedish registrant in Röhr network (Dagens Nyheter investigation).",Dagens Nyheter 2024
+Tombola Music,SEZZ,SE,Sweden,low,CUSTOM_REGISTRANT,"Swedish registrant in Röhr/Firefly network.",Dagens Nyheter 2024
+Catfish Music Group,SEXX,SE,Sweden,low,CUSTOM_REGISTRANT,"Swedish registrant associated with Röhr ghost artist network.",Dagens Nyheter 2024; internal research
+Calm and Collected Music Publishing,SECC,SE,Sweden,low,CUSTOM_REGISTRANT,"Swedish registrant in ghost artist network.",Internal research; ISRC pattern matching
+DEPI8 Registrant,DEPI8,DE,Germany,low,CUSTOM_REGISTRANT,"German custom registrant serving primarily Relaxing White Noise (DOJ indictment). 222 tracks. No public distributor identity found.",DOJ indictment Sept 2024; Neo4j data
+DE1QW Registrant,DE1QW,DE,Germany,low,CUSTOM_REGISTRANT,"Secondary German registrant for Relaxing White Noise. 58 tracks. Custom registrant, not a known aggregator.",DOJ indictment Sept 2024; Neo4j data
+ITO10 Registrant,ITO10,IT,Italy,low,CUSTOM_REGISTRANT,"Italian custom registrant serving Meditation Relax Club (DOJ indictment). 101 tracks.",DOJ indictment Sept 2024; Neo4j data
+ITLU5 Registrant,ITLU5,IT,Italy,low,CUSTOM_REGISTRANT,"Secondary Italian registrant for Meditation Relax Club. 71 tracks.",DOJ indictment Sept 2024; Neo4j data
+ITIWE Registrant,ITIWE,IT,Italy,low,CUSTOM_REGISTRANT,"Italian custom registrant for Calmo (DOJ indictment). 19 tracks.",DOJ indictment Sept 2024; Neo4j data
+CH654 Registrant,CH654,CH,Switzerland,low,CUSTOM_REGISTRANT,"Swiss custom registrant for Calmo. 17 tracks. iMusician-adjacent prefix range but separate registrant.",DOJ indictment Sept 2024; Neo4j data
+ITI5B Registrant,ITI5B,IT,Italy,very_low,CUSTOM_REGISTRANT,"Italian micro-registrant for Calmo. 1 track only.",Neo4j data
+ITQV2 Registrant,ITQV2,IT,Italy,very_low,CUSTOM_REGISTRANT,"Italian micro-registrant for Calmo. 1 track only.",Neo4j data
+Epidemic Sound,SEPI1,SE,Sweden,high,AGGREGATOR,"Epidemic Sound — major stock music platform. Legitimate aggregator serving content creators. High volume does not indicate fraud.",https://www.epidemicsound.com
+Musicbed,USMBR,US,United States,medium,AGGREGATOR,"Musicbed — licensed music platform for video creators.",https://www.musicbed.com
+Artlist,IL2AR,IL,Israel,medium,AGGREGATOR,"Artlist — Israeli stock music platform, legitimate aggregator.",https://artlist.io
+SoundExchange,USSX1,US,United States,high,AGGREGATOR,"SoundExchange — US digital rights collection society, issues some ISRC prefixes.",https://soundexchange.com
+PPL,GBPPL,GB,United Kingdom,high,AGGREGATOR,"PPL — UK neighbouring rights body, issues ISRC prefixes for UK labels.",https://ppluk.com

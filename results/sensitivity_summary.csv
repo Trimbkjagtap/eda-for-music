@@ -1,0 +1,5 @@
+signal,best_threshold,best_f1,precision_at_best,recall_at_best
+S2_variance,0.001,1.0,1.0,1.0
+S4_catalog,0.001,0.16260162601626016,0.08849557522123894,1.0
+S6_hhi,0.3012562814070352,1.0,1.0,1.0
+composite,0.07946153846153846,1.0,1.0,1.0

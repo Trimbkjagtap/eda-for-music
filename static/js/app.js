@@ -34,13 +34,13 @@ const FRAMEWORK_LAYERS = [
 
 const FIGURES = [
   { file:'fig1_catalog_coherence.png',     ex:'Exercise 1', sig:'Catalog Variance',  title:'Figure 1: Catalog Coherence in Audio Feature Space', caption:'PCA projection of per-track audio features for ghost-like vs organic artists. Ghost-like artists cluster into tight compact ellipses. Data: Kaggle 114K-track dataset.' },
-  { file:'fig2_playlist_entropy.png',      ex:'Exercise 2', sig:'Playlist Entropy',  title:'Figure 2: Playlist Aesthetic Coherence', caption:'Energy vs Valence scatter for three simulated playlist archetypes. TIGHT playlists show low Shannon entropy — hallmark of a fraud target zone.' },
+  { file:'fig2_playlist_entropy.png',      ex:'Exercise 2', sig:'Playlist Entropy',  title:'Figure 2: Playlist Aesthetic Coherence', caption:'7-feature marginal entropy across 30 Kaggle-proxy playlists (editorial, fan-curated, ghost-suspect). ANOVA F=0.25, p=0.78 — no significant entropy difference between groups (honest negative result).' },
   { file:'fig3_isrc_join.png',             ex:'Exercise 3', sig:'ISRC Attribution',  title:'Figure 3: Artist to Production Company Attribution via ISRC', caption:'Bipartite graph connecting artists to production companies via ISRC prefix. 3 seed artists, 490 tracks, 8 production companies.' },
-  { file:'fig4_bipartite_neighborhood.png',ex:'Exercise 4', sig:'Graph Centrality',  title:'Figure 4: Artist × Production Company Bipartite Neighborhood', caption:'HHI scores: RWN=0.88, MRC=0.66, Calmo=0.54 — ghost artists show extreme ISRC concentration.' },
+  { file:'fig4_bipartite_neighborhood.png',ex:'Exercise 4', sig:'Graph Centrality',  title:'Figure 4: ISRC Registrant HHI Distribution', caption:'Real HHI from ISRC data: RWN=0.672, MRC=0.515, Calmo=0.452. Mann-Whitney p=0.003, r=1.000 vs 30 organic artists. Youden threshold: HHI ≥ 0.353.' },
   { file:'fig5_recommendation_walk.png',   ex:'Exercise 5', sig:'Release Cadence',   title:'Figure 5: Recommendation Walk — Release Cadence as Walk Closure Signal', caption:'Ghost artists: RWN=81%, MRC=95% closure. Organic control (Nils Frahm): 0% closure, median gap 105 days.' },
   { file:'fig6_signal_radar.png',          ex:'Exercise 6', sig:'Aggregate Score',   title:'Figure 6: Seven-Signal Ghost Artist Detection Radar', caption:'S2 Release Cadence, S4 Catalog Density, and S6 Graph/HHI are the most discriminative signals.' },
   { file:'fig6b_signal_heatmap.png',       ex:'Exercise 6', sig:'Signal Heatmap',    title:'Figure 6b: Signal Report Card Heatmap', caption:'Heatmap of all 7 signal scores across 4 artists. S2/S4/S6 cleanly separate ghost from organic.' },
-  { file:'fig7_gnn_performance.png',       ex:'Exercise 7', sig:'GNN Model',         title:'Figure 7: GNN Ghost Artist Detection Performance', caption:'GAT vs GCN training curves, ROC, confusion matrix. Dataset: 65 nodes (14 ghost, 51 organic), 692 edges.' },
+  { file:'fig7_gnn_performance.png',       ex:'Exercise 7', sig:'GNN Model',         title:'Figure 7: GNN Ghost Artist Detection Performance', caption:'GAT vs GCN training curves, ROC curves (AUC=1.000), confusion matrix, SHAP feature importance. Dataset: 65 nodes (14 ghost, 51 organic), 692 edges. Top features: total_variance, closure_rate, tracks_per_day.' },
 ];
 
 const SIGNAL_NAMES = {
@@ -191,7 +191,7 @@ function renderHome(root) {
           </div>
           <div class="case-bullet">
             <span class="bullet-dot"></span>
-            HHI concentration coefficient of <strong>0.88</strong>
+            HHI concentration coefficient of <strong>0.67</strong> (real ISRC data)
           </div>
           <div class="case-bullet">
             <span class="bullet-dot"></span>

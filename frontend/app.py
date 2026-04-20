@@ -380,8 +380,8 @@ FIGURES_META = {
         "exercise": "Exercise 3", "signal": "ISRC Attribution",
     },
     "fig4_bipartite_neighborhood.png": {
-        "title": "Figure 4: Artist × Production Company Bipartite Neighborhood",
-        "caption": "HHI scores: RWN=0.88, MRC=0.66, Calmo=0.54 — ghost artists show extreme ISRC concentration consistent with bulk-upload operations.",
+        "title": "Figure 4: ISRC Registrant HHI Distribution",
+        "caption": "Real HHI from ISRC data: RWN=0.672, MRC=0.515, Calmo=0.452 — ghost artists show extreme registrant concentration (Mann-Whitney p=0.003, r=1.000 vs 30 organic artists).",
         "exercise": "Exercise 4", "signal": "Graph Centrality",
     },
     "fig5_recommendation_walk.png": {
@@ -401,7 +401,7 @@ FIGURES_META = {
     },
     "fig7_gnn_performance.png": {
         "title": "Figure 7: GNN Ghost Artist Detection Performance",
-        "caption": "GAT vs GCN training curves, ROC, confusion matrix, feature importance. Dataset: 65 nodes (14 ghost, 51 organic), 692 edges, 8 node features.",
+        "caption": "GAT vs GCN training curves, ROC curves (AUC=1.000), confusion matrix, and SHAP feature importance. Dataset: 65 nodes (14 ghost, 51 organic), 692 edges. Top features: total_variance, closure_rate, tracks_per_day.",
         "exercise": "Exercise 7", "signal": "GNN Model",
     },
 }

@@ -1,0 +1,151 @@
+spotify_artist_id,name,source,confidence,notes
+5gqhueRUZEa7VDnQt4HODp,Nils Frahm,verified,high,Neo4j seed; 0% cadence closure; Pitchfork 8.5/10
+7MSUfLeTdDEoZiJPDSBXgi,Brian Eno,verified,high,Father of ambient; verified organic
+5oOhM2DFWab8XhSoAkacgR,Tycho,verified,high,Ambient electronic; organic
+4Z8W4fKeB5YxbusRsdQVPb,Radiohead,verified,high,Verified organic control
+4LEiUm1SRbFMgfqnQTwUbQ,Bon Iver,verified,high,Verified organic control
+36pCa1JHc6hlGbfEmLzJQc,Stars of the Lid,verified,high,Drone ambient; established Texas duo; Kranky Records
+0VOR7Ie9xUSb45fzIIVJQ1,Hammock,verified,high,Ambient post-rock; Nashville; multiple full-length albums
+1DGpHnPOpMYY780hcQHmPB,Hiroshi Yoshimura,verified,high,Japanese ambient pioneer; Music for Nine Post Cards (1982)
+3uOCouLFR4bVx0XeiQJSbl,Harold Budd,verified,high,Ambient classical; collaborator with Brian Eno
+2VZNmg4vCnew4Pavo8zDdW,Max Richter,verified,high,Neo-classical; Sleep album; Deutsche Grammophon
+7MxNQJfnGLxjw6RBOHf0Lz,Ólafur Arnalds,verified,high,Icelandic neo-classical; verified Kaggle variance=0.049
+,Jóhann Jóhannsson,verified,high,Icelandic composer; deceased 2018; Deutsche Grammophon
+3GxKJNfBt7b7dXEMrIEVvS,Dustin O'Halloran,verified,high,Neo-classical pianist; film composer
+2VKfXEWzhUi9siHBDTI02Y,Joep Beving,verified,high,Dutch pianist; Kaggle variance=0.022; ambient/classical
+,Fabrizio Paterlini,verified,high,"Italian pianist; despite low variance, has press coverage and live shows"
+2uFUBdaVGtyMqckSeCl0Qj,Ludovico Einaudi,verified,high,Italian neo-classical pianist; One album sold 5M copies
+4NJhFmfw43RLBLjQvxDuRS,Erik Satie,verified,high,French composer (1866-1925); public domain works
+1Uff91EOsvd99rtAupatMP,Claude Debussy,verified,high,French impressionist composer; public domain
+69lxxQvsfAIoQbB20bEPFC,Philip Glass,verified,high,Minimalist composer; Orange Mountain Music
+2mA4EhMFNRpTFu7hXMSFd9,Arvo Pärt,verified,high,Estonian tintinnabuli composer; ECM Records
+5aIqB5nayyj8muvaAa0bMD,Johann Sebastian Bach,verified,high,Baroque composer; public domain works
+3VEG6gxFIMfl4Cdog26avS,Bill Evans Trio,verified,high,Classic jazz trio; Riverside/Fantasy Records
+7gXUrN8vgmVhKVCkw9pavV,Vince Guaraldi,verified,high,Pianist; Charlie Brown composer; Fantasy Records
+0kbYTNQb4Pb1rPbbaF0pT4,Miles Davis,verified,high,Jazz legend; Columbia Records; Kind of Blue
+2hGh5VOeeqimQFxqXvfCUf,John Coltrane,verified,high,Jazz saxophonist; Impulse Records; A Love Supreme
+3S0D9GCVXqVwHrTmMNKWD7,Keith Jarrett,verified,high,Jazz pianist; ECM Records; Köln Concert
+7G1GBhoKtEPnP86X2PvEYO,Nina Simone,verified,high,Jazz/soul singer; Kaggle variance=0.050; well-documented
+5l4vdsF3HmFTiHYoQ5ovEe,Dean Martin,verified,high,Rat Pack; Capitol Records; Kaggle variance=0.029
+6IROqe9FHMIqOMeI1PBJHq,Jamie Cullum,verified,high,Contemporary jazz; Verve; Kaggle variance=0.056
+0cmWgDlu9CwTgxPhf403hb,Bonobo,verified,high,Trip-hop/electronic; Ninja Tune; Simon Green
+2VAvhf61GgLYmC6C8anyX1,Boards of Canada,verified,high,IDM/ambient; Warp Records; Kaggle variance=0.278
+6kBDZFXuLrZgHnvmPu9NsG,Aphex Twin,verified,high,IDM/ambient; Warp Records; Kaggle variance=0.294
+3OsRAKCvk37zwYcnzRf5XF,Moby,verified,high,Electronic/ambient; Play album; Mute Records
+6k3yUF3IIcqMFkQ4HicMQe,Plaid,verified,high,IDM; Warp Records; Kaggle variance=0.301
+6WH1V41LwGDGmlPUhSZLHO,Autechre,verified,high,IDM; Warp Records; 30+ year career
+,Susumu Yokota,verified,high,Japanese IDM/ambient; Kaggle variance=0.332
+,Rei Harakami,verified,high,Japanese IDM/ambient; Kaggle variance=0.322
+3scLMYKe6REvhVv4UrJNS9,Bogdan Raczynski,verified,high,IDM; Rephlex Records; Kaggle variance=0.286
+,Kettel,verified,high,IDM; Sending Orbs; Kaggle variance=0.247
+,Rival Consoles,verified,high,Ambient IDM; Erased Tapes; Kaggle variance=0.211
+,Datassette,verified,high,IDM; Kaggle variance=0.268
+,The Black Dog,verified,high,IDM; Dust Science; Kaggle variance=0.392
+,Ilkae,verified,high,IDM; Kaggle variance=0.337
+,Casino Versus Japan,verified,high,IDM; Kaggle variance=0.277
+,Mouse On Mars,verified,high,IDM; Thrill Jockey; Kaggle variance=0.270
+,alva noto,verified,high,Minimal electronic; Raster-Noton; Kaggle variance=0.280
+4MXUO7sVCaFgFjoTI5ox5c,Sufjan Stevens,verified,high,Indie folk; Asthmatic Kitty; Illinois album
+4EVpmkEwrLYEg6jIsiPMIb,Fleet Foxes,verified,high,Indie folk; Sub Pop; critical acclaim
+4M5nCE77Qaxayuhp3fVn4V,Iron & Wine,verified,high,Folk; Sub Pop/Nonesuch; Sam Beam
+0YrtvWJMgSdVrk3SfNjTbx,Death Cab for Cutie,verified,high,Indie rock; Atlantic; Kaggle variance=0.347
+,KT Tunstall,verified,high,Acoustic singer-songwriter; Kaggle variance=0.305
+,Ray LaMontagne,verified,high,Acoustic folk; Kaggle variance=0.202
+,Clairo,verified,high,Indie pop; Republic Records; Kaggle variance=0.278
+3WrFJ7ztbogyGnTHbHJFl2,The Beatles,verified,high,Reference artist; EMI/Apple Records; wide variance
+0k17h0D3J5VfsdmQ1iZtE9,Pink Floyd,verified,high,Reference artist; Columbia/EMI; wide variance
+,Elton John,verified,high,Pop/piano; Kaggle variance=0.216
+,Ed Sheeran,verified,high,Pop; Atlantic; Kaggle variance=0.269
+,The Velvet Underground,verified,high,Alt-rock; Verve; Kaggle variance=0.279
+,Billy Joel,verified,high,Piano pop; Columbia; Kaggle variance=0.221
+,Corie Asbury,verified,high,Christian/world-music; Kaggle variance=0.232
+,Rain Sounds,Kaggle-variance,med,sleep; variance=0.315 — high enough to classify as organic; natural variation
+,Nature Sounds,Kaggle-variance,med,sleep; variance=0.289 — organic by variance threshold
+,Silent Knights,Kaggle-variance,med,sleep; variance=0.283 — organic by variance threshold
+,Ocean Waves For Sleep,Kaggle-variance,med,sleep; variance=0.256 — organic by variance threshold
+,White Noise for Babies,Kaggle-variance,med,sleep; variance=0.232 — organic by variance threshold
+,White Noise Baby Sleep,Kaggle-variance,med,sleep; variance=0.269 — organic by variance threshold
+,Pink Noise,Kaggle-variance,med,sleep; variance=0.233 — organic by variance threshold
+4BoRxUdrcgbbq0hnYnvmKY,Yanni,Kaggle-variance,high,new-age; variance=0.209; major label; live concerts
+,Karunesh,Kaggle-variance,med,new-age; variance=0.248; Real Music Records
+,Reiki Armonía,Kaggle-variance,med,world-music; variance=0.333
+5HNP6LMQH3LoI0VVp9MRTy,Enigma,Kaggle-variance,high,new-age; variance=0.201; Virgin Records; MCMXC a.D.
+6uothxMWeLWIhsGeF7cyo4,Enya,verified,high,Celtic ambient; Warner; Orinoco Flow; established artist
+4P70aqttdpJ9vuYFDmf7f6,Vangelis,verified,high,Electronic/orchestral; Chariots of Fire; RCA
+1BGN1IdyiSR0ZYrkoKNchl,Tangerine Dream,verified,high,Electronic/ambient; Virgin Records; 50-year career
+3U2U4TR03ZuStsizrv0EJB,Klaus Schulze,verified,high,Electronic/ambient; Brain Records; Krautrock pioneer
+5DlDHMOdKFMGvbIwrsIfCX,Ravi Shankar,verified,high,Indian classical sitar; George Harrison collaborator
+,Ali Farka Touré,verified,high,Malian blues; World Circuit Records
+,Everything But The Girl,Kaggle-variance,high,Electronic/trip-hop; variance=0.222
+,aswekeepsearching,Kaggle-variance,med,ambient; variance=0.204
+,Nathan Kawanishi,Kaggle-variance,med,study; variance=0.204
+,A Great Big World,Kaggle-variance,med,acoustic/piano; variance=0.221
+,The Fray,Kaggle-variance,high,piano rock; variance=0.223; Epic Records
+,Eddie Vedder,Kaggle-variance,high,acoustic; variance=0.218; Pearl Jam vocalist
+,Hillsong Young & Free,Kaggle-variance,high,Christian; variance=0.201; Hillsong Records
+,Cory Asbury,Kaggle-variance,med,world-music; variance=0.232
+,arai tasuku,Kaggle-variance,med,IDM; variance=0.247
+,Yasuharu Takanashi,Kaggle-variance,med,anime composer; Kaggle variance=0.346
+,The Wiggles,Kaggle-variance,high,children's music; Kaggle variance=0.323; EMI
+,Hanare Gumi,Kaggle-variance,med,acoustic; Kaggle variance=0.249
+,George Bruns,Kaggle-variance,high,Disney composer; variance=0.334
+,Nils Petter Molvær,verified,high,Norwegian jazz-ambient; ECM Records
+,Peteris Vasks,verified,high,Latvian composer; BIS Records
+,Henryk Górecki,verified,high,Polish composer; Nonesuch; Symphony No. 3
+,Johann Johannsson,verified,high,Alternate spelling; Deutsche Grammophon; Arrival OST
+,Nico Muhly,verified,high,American neo-classical; Decca/Universal
+,A Winged Victory for the Sullen,verified,high,Ambient neo-classical; Kranky/Erased Tapes
+1YDNFLQLRFruQBFijYuBz6,Tim Hecker,verified,high,Drone ambient; Kranky Records; Ravedeath 1972
+5gHFBVaLtLXKdCOoIVT2e3,William Basinski,verified,high,Tape-loop ambient; 2062; Disintegration Loops
+,The Caretaker,verified,high,Hauntological ambient; Leyland James Kirby
+4tS7q9gWTCJ0GKFAO1KGSF,Grouper,verified,high,Lo-fi ambient; Kranky Records; Liz Harris
+,Machinedrum,verified,high,Electronic; Planet Mu/Ninja Tune; Travis Stewart
+,Arca,verified,high,Experimental electronic; XL Recordings; Alejandra Ghersi
+,Lawrence English,verified,high,Drone ambient; Room40 Records; Brisbane
+,Rafael Anton Irisarri,verified,high,Dark ambient; Room40/Western Vinyl
+4YRxDV8wJFPHPTeXepOstw,José González,verified,high,Swedish indie folk; Peacefrog Records
+4LZ4De1MoTn7UFQ5KQMR6Q,Nick Drake,verified,high,Folk; Island Records; Three albums
+,John Fahey,verified,high,American primitive guitar; Vanguard Records
+5hW8LNYQ0K7HWjBTVfHAjJ,Joni Mitchell,verified,high,Folk/pop; Reprise Records; Blue album
+6L3valXDmFMzqYZoLsGGY3,Nick Cave,verified,high,Post-punk/alternative; Mute Records
+,Leonard Cohen,verified,high,Folk/singer-songwriter; Columbia Records
+,Elliott Smith,verified,high,Indie folk; Kill Rock Stars/DreamWorks
+,Neutral Milk Hotel,verified,high,Indie folk; Merge Records; In the Aeroplane
+,Mount Eerie,verified,high,Indie folk; P.W. Elverum & Sun; Phil Elverum
+5RCPsfzmEpTXMCTNk7wEfQ,Burial,verified,high,UK Garage/dubstep; Hyperdub; William Bevan
+7Eu1txygG6nJttLHbZdQOh,Four Tet,verified,high,Electronic; Text Records; Kieran Hebden
+,Bibio,verified,high,Electronic folk; Warp Records; Stephen Wilkinson
+36arlNAeOcwpKYjQRrEeOz,Jon Hopkins,verified,high,Electronic; Domino Records; Immunity album
+,Nils Petter Molvaer,verified,high,Alternate spelling; Norwegian jazz-ambient; ECM
+4iqJaVfMxdpD7d0IOVOsPZ,Floating Points,verified,high,Electronic jazz; Ninja Tune; Sam Shepherd
+,Portico Quartet,verified,high,Jazz/ambient; Real World Records
+,Portico,verified,high,Ambient electronic; Mercury KX
+,Moderat,verified,high,Electronic; Monkeytown Records; Modeselektor+Apparat
+11WU2Xbg9pjIBJfUMNJgbX,Gold Panda,verified,high,Electronic; City Slang; Derwin Schlecker
+2AM62fOiicixGGn0DVUIJH,Glenn Gould,verified,high,Canadian pianist; Columbia Masterworks; Goldberg Variations
+,Evgeny Kissin,verified,high,Russian pianist; EMI Classics; world tours
+,Martha Argerich,verified,high,Argentine pianist; DG; Grammy winner
+,Dinu Lipatti,verified,high,Romanian pianist; Columbia; 1917-1950
+,Solomon,verified,high,British pianist Solomon Cutner; HMV; 1902-1988
+3T1K1UKizNHZGSFsEEPGbP,Dave Brubeck,verified,high,Jazz pianist; Columbia; Time Out album
+,Thelonious Monk,verified,high,Jazz pianist; Riverside/Columbia
+4LMTFabiHBBGPB8eReqNJi,Oscar Peterson,verified,high,Jazz pianist; Verve Records
+,Charles Mingus,verified,high,Jazz bassist/composer; Atlantic/Columbia
+,Sonny Rollins,verified,high,Jazz saxophonist; Blue Note/Prestige
+,Chet Baker,verified,high,Jazz trumpeter; Pacific Jazz; 1929-1988
+2ZvrvoBSBfMdMZSN6UQnKR,Herbie Hancock,verified,high,Jazz pianist; Blue Note/Columbia; Headhunters
+,Chick Corea,verified,high,Jazz pianist; Blue Note; Return to Forever
+6FXMGgJwohJLUSr5nVlf9X,Massive Attack,verified,high,Trip-hop; Virgin Records; Mezzanine
+3g2kKMmF9JeS93VC4oeB2o,Portishead,verified,high,Trip-hop; Go! Beat; Dummy album
+,Tricky,verified,high,Trip-hop; Island Records; Maxinquaye
+,Unkle,verified,high,Trip-hop; Mo Wax; James Lavelle
+6MWsAGFMmqUPoojyoipiE7,DJ Shadow,verified,high,Trip-hop; Mo Wax; Endtroducing...
+,Nightmares on Wax,verified,high,Trip-hop/downtempo; Warp Records
+4tpUmLEVLCGFr93o8hFFIB,Air,verified,high,French electronic; Source; Moon Safari
+4tZwfgrHOc3mvqYlEYSvVi,Daft Punk,verified,high,French electronic; Virgin/Columbia; Random Access Memories
+6UUrUCIZtQeOf8tGgf3Nnd,Sigur Rós,verified,high,Post-rock; XL Recordings; Ágætis byrjun
+6TXuDPBkQVFdDpMoFmwLm6,Godspeed You! Black Emperor,verified,high,Post-rock; Constellation Records
+3YkVOfZNDNAlkYDuNhS02W,Explosions in the Sky,verified,high,Post-rock; Temporary Residence; Friday Night Lights
+34UhPkLbtFSPlSMJ5SHM0P,Mogwai,verified,high,Post-rock; Rock Action; Chemikal Underground
+,Labradford,verified,high,Drone/ambient post-rock; Kranky Records
+7zlg9jOKMSG7RGRqHFAW7o,Low,verified,high,Slowcore; Sub Pop; Double Negative

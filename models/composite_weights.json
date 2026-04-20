@@ -1,0 +1,55 @@
+{
+  "formula": "score = sigmoid(bias + w_S2*S2_norm + w_S4*S4_norm + w_S5*S5_norm)",
+  "signals_used": [
+    "S2_bulk_proxy",
+    "S4_catalog_density",
+    "S5_genre_concentration"
+  ],
+  "signals_dropped": {
+    "S1": "audio fingerprint unavailable at Kaggle scale",
+    "S3": "playlist co-occurrence: d=0.00 (non-discriminative)",
+    "S6": "ISRC HHI: only 3 artists have real ISRC data",
+    "S7": "cross-platform: available for 4 Neo4j artists only"
+  },
+  "training_data": {
+    "n_organic": 1030,
+    "n_ghost_proxy": 100,
+    "ghost_proxy_definition": "Kaggle artists with total_variance < 0.010",
+    "caveat": "Ghost-proxy labels are NOT confirmed ghost artists"
+  },
+  "cv_performance": {
+    "auc_mean": 1.0,
+    "auc_std": 0.0,
+    "f1_mean": 1.0,
+    "f1_std": 0.0,
+    "ap_mean": 1.0,
+    "ap_std": 1.790180836524724e-16
+  },
+  "optimal_threshold": {
+    "value": 0.9825349977611191,
+    "method": "Youden J = argmax(TPR - FPR)",
+    "tpr_at_threshold": 1.0,
+    "fpr_at_threshold": 0.0
+  },
+  "weights": {
+    "S2_bulk_proxy": {
+      "coef": 5.176176278655187,
+      "ci_lo": 4.980373645063746,
+      "ci_hi": 5.321941340870814,
+      "z_score": 60.49601552561078
+    },
+    "S4_catalog_density": {
+      "coef": -0.3154566419218317,
+      "ci_lo": -0.4458868292608631,
+      "ci_hi": -0.19074138596732412,
+      "z_score": -4.709623428506334
+    },
+    "S5_genre_concentration": {
+      "coef": -0.5043031159089904,
+      "ci_lo": -0.6579701934960234,
+      "ci_hi": -0.37669765258685456,
+      "z_score": -6.893591060964431
+    },
+    "bias": -7.2080562764503355
+  }
+}
