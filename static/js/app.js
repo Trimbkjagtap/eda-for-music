@@ -9,10 +9,10 @@ const API = '';   // same origin; prefix all calls with /
 // ── Static data ──────────────────────────────────────────────────────────────
 
 const KNOWN_ARTISTS = [
-  { label: 'Relaxing White Noise (ghost)',    id: '6bo3atMVp3qFECNALVwq9N' },
-  { label: 'Meditation Relax Club (ghost)',   id: '3BqBPFLxBkzKQTkuBPGMNF' },
-  { label: 'Calmo (candidate)',               id: '4Wx3ZL6d6p1gVMtwQ2YWsz' },
-  { label: 'Nils Frahm (organic)',            id: '5hVghJ3sCFHFJoLnSHySjL' },
+  { label: 'Relaxing White Noise (ghost)',    id: '6bo3atMVp3qFECNALVwq9N', name: 'Relaxing White Noise' },
+  { label: 'Meditation Relax Club (ghost)',   id: '3BqBPFLxBkzKQTkuBPGMNF', name: 'Meditation Relax Club' },
+  { label: 'Calmo (candidate)',               id: '4Wx3ZL6d6p1gVMtwQ2YWsz', name: 'Calmo' },
+  { label: 'Nils Frahm (organic)',            id: '5hVghJ3sCFHFJoLnSHySjL', name: 'Nils Frahm' },
 ];
 
 const CROSS_PLATFORM = [
@@ -405,19 +405,24 @@ function renderAnalyzer(root) {
     <div class="page-header">
       <div class="eyebrow">Artist Analyzer</div>
       <h1>Ghost Detection Tool</h1>
-      <p>Enter a Spotify Artist ID to run the full 7-signal detection pipeline.</p>
+      <p>Search any artist by name — or pick from the study panel below.</p>
     </div>
 
-    <div class="search-box">
+    <div class="search-box" style="position:relative">
       <input id="artist-input" class="search-input" type="text"
-             placeholder="Spotify Artist ID  e.g. 6bo3atMVp3qFECNALVwq9N"
+             placeholder="Artist name  e.g. Arijit Singh, Nils Frahm…"
+             autocomplete="off"
+             oninput="onArtistInput(this.value)"
              onkeydown="if(event.key==='Enter') runAnalysis()"/>
       <button class="btn-primary" onclick="runAnalysis()">Analyze →</button>
+      <div id="search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:80px;
+           background:#111;border:1px solid var(--border);border-radius:8px;z-index:100;
+           overflow:hidden;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.6)"></div>
     </div>
 
     <div class="quick-picks">
       ${KNOWN_ARTISTS.map(a => `
-        <button class="quick-pill" onclick="setAndAnalyze('${a.id}')">${a.label}</button>
+        <button class="quick-pill" onclick="setAndAnalyze('${a.id}','${a.name}')">${a.label}</button>
       `).join('')}
     </div>
 
@@ -426,31 +431,98 @@ function renderAnalyzer(root) {
   `;
 }
 
-function setAndAnalyze(id) {
-  document.getElementById('artist-input').value = id;
+let _searchTimer = null;
+let _selectedArtistId = null;
+let _selectedArtistName = null;
+
+function onArtistInput(val) {
+  _selectedArtistId = null;
+  _selectedArtistName = null;
+  clearTimeout(_searchTimer);
+  const dd = document.getElementById('search-dropdown');
+  if (!val || val.length < 2) { dd.style.display = 'none'; return; }
+  _searchTimer = setTimeout(() => _fetchSuggestions(val), 350);
+}
+
+async function _fetchSuggestions(q) {
+  const dd = document.getElementById('search-dropdown');
+  try {
+    const resp = await fetch(`/search?q=${encodeURIComponent(q)}&limit=5`);
+    if (!resp.ok) { dd.style.display = 'none'; return; }
+    const data = await resp.json();
+    const items = data.results || [];
+    if (!items.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = items.map(a => `
+      <div onclick="_selectArtist('${a.id}','${a.name.replace(/'/g,"\\'")}','${a.image||''}')"
+           style="display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;
+                  border-bottom:1px solid var(--border);transition:background 0.15s"
+           onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background=''">
+        ${a.image ? `<img src="${a.image}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`
+                  : `<div style="width:36px;height:36px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;color:var(--green)">♪</div>`}
+        <div>
+          <div style="color:#fff;font-size:0.9rem;font-weight:600">${a.name}</div>
+          <div style="color:#666;font-size:0.75rem">${a.followers ? a.followers.toLocaleString() + ' followers' : ''}</div>
+        </div>
+      </div>
+    `).join('');
+    dd.style.display = 'block';
+  } catch(e) { dd.style.display = 'none'; }
+}
+
+function _selectArtist(id, name, image) {
+  _selectedArtistId = id;
+  _selectedArtistName = name;
+  document.getElementById('artist-input').value = name;
+  document.getElementById('search-dropdown').style.display = 'none';
+  runAnalysis();
+}
+
+function setAndAnalyze(id, name) {
+  _selectedArtistId = id;
+  _selectedArtistName = name || id;
+  document.getElementById('artist-input').value = name || id;
+  document.getElementById('search-dropdown').style.display = 'none';
   runAnalysis();
 }
 
 async function runAnalysis() {
-  const id = document.getElementById('artist-input').value.trim();
-  if (!id) return;
+  document.getElementById('search-dropdown').style.display = 'none';
+  const inputVal = document.getElementById('artist-input').value.trim();
+  if (!inputVal) return;
   const result = document.getElementById('analyzer-result');
-  result.innerHTML = `<div class="loading-state"><span class="spinner"></span> Running 7-signal pipeline…</div>`;
+
+  // Use selected artist ID if available, otherwise treat input as Spotify ID
+  const artistId = _selectedArtistId || inputVal;
+  const artistName = _selectedArtistName || null;
+  const isStudyPanel = KNOWN_ARTISTS.some(a => a.id === artistId);
+  const endpoint = isStudyPanel ? '/analyze' : '/analyze-live';
+
+  result.innerHTML = `<div class="loading-state"><span class="spinner"></span> ${isStudyPanel ? 'Running full 7-signal pipeline' : 'Fetching live data from Spotify'}…</div>`;
 
   try {
-    const resp = await fetch(`/analyze`, {
+    const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ artist_id: id, run_cross_platform: false }),
+      body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
     });
-    if (!resp.ok) throw new Error(`API error ${resp.status}`);
     const d = await resp.json();
+    if (!resp.ok) {
+      const msg = d.detail || `API error ${resp.status}`;
+      result.innerHTML = `
+        <div style="background:#1a1a0a;border:1px solid #f59e0b;border-radius:10px;padding:20px;color:#fde68a;font-size:0.88rem;">
+          <strong>Error:</strong> ${msg}
+        </div>`;
+      return;
+    }
+    if (!isStudyPanel) {
+      d._liveMode = true;
+    }
     renderAnalysisResult(result, d);
   } catch (e) {
     result.innerHTML = `
       <div style="background:#2a0a0a;border:1px solid #e74c3c;border-radius:10px;padding:20px;color:#fca5a5;font-size:0.88rem;">
         <strong>Analysis failed:</strong> ${e.message}<br>
-        <span style="color:var(--gray4);font-size:0.8rem;">Make sure the FastAPI backend is running and Neo4j has this artist ingested.</span>
+        <span style="color:var(--gray4);font-size:0.8rem;">Make sure the FastAPI backend is running.</span>
       </div>`;
   }
 }
@@ -492,9 +564,15 @@ function renderAnalysisResult(container, d) {
     <h3 style="color:var(--white);font-size:0.95rem;margin-bottom:14px;">Signal Breakdown</h3>
     <div class="signals-grid">${signalRows}</div>
 
+    ${d._liveMode ? `
+    <div style="background:#0d1a10;border:1px solid #00ff8844;border-radius:10px;padding:14px 18px;margin-top:16px;font-size:0.82rem;color:#a0cfaa;line-height:1.6">
+      <strong style="color:var(--green)">Live analysis mode</strong> — S2 (cadence) and S5 (title similarity) computed from real Spotify data.
+      S1, S3, S4, S6 unavailable (Spotify audio-features / ISRC endpoints restricted Apr 2026).
+      Confidence capped at 85% with partial signals.
+    </div>` : `
     <div class="info-box">
       <strong>Timing:</strong> Analysis completed in ${d.timing_seconds.toFixed(2)}s using cached Neo4j data.
-    </div>
+    </div>`}
   `;
 }
 

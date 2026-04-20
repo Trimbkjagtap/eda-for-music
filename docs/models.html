@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — AI Models</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.layer-box {
+  border: 1px solid #333; border-radius: 8px; padding: 1rem 1.5rem;
+  margin: 0.5rem 0; position:relative;
+}
+.layer-box .layer-label { font-size:0.75rem; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.25rem; }
+.layer-box .layer-desc { font-size:0.9rem; color:#ccc; }
+.layer-box.input { border-color:#4da6ff44; background:#0d0d1a; }
+.layer-box.hidden { border-color:#b088f944; background:#0d0a1a; }
+.layer-box.output { border-color:#00ff8844; background:#0d1a0d; }
+.layer-arrow { text-align:center; color:#555; font-size:1.4rem; margin:0.1rem 0; }
+.model-compare { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin:1.5rem 0; }
+.model-card { border:1px solid #333; border-radius:10px; padding:1.5rem; }
+.model-card.gat { border-color:#00ff8844; background:#0a1a0d; }
+.model-card.gcn { border-color:#4da6ff44; background:#0a0d1a; }
+.model-card h3 { margin-top:0; }
+.model-card.gat h3 { color:#00ff88; }
+.model-card.gcn h3 { color:#4da6ff; }
+.feature-row { display:flex; gap:1rem; align-items:center; padding:0.5rem 0; border-bottom:1px solid #1a1a1a; font-size:0.9rem; }
+.feature-icon { font-size:1.2rem; width:30px; text-align:center; }
+.feature-name { font-weight:600; color:#ddd; width:200px; }
+.feature-desc { color:#888; flex:1; }
+.accuracy-card { background:#0d1a0d; border:2px solid #00ff8844; border-radius:12px; padding:2rem; text-align:center; margin:1.5rem 0; }
+.accuracy-card .big-num { font-size:4rem; font-weight:900; color:#00ff88; line-height:1; }
+.accuracy-card .label { color:#888; font-size:0.9rem; margin-top:0.5rem; }
+.confusion-matrix { display:grid; grid-template-columns:auto auto auto; gap:0; max-width:280px; margin:1rem auto; text-align:center; font-size:0.85rem; }
+.cm-cell { padding:0.75rem; border:1px solid #333; }
+.cm-header { background:#111; color:#888; font-weight:700; }
+.cm-tp { background:#0d2a0d; color:#00ff88; font-size:1.4rem; font-weight:800; }
+.cm-tn { background:#0d2a0d; color:#00ff88; font-size:1.4rem; font-weight:800; }
+.cm-fp { background:#2a0d0d; color:#e74c3c; font-size:1.4rem; font-weight:800; }
+.cm-fn { background:#2a0d0d; color:#e74c3c; font-size:1.4rem; font-weight:800; }
+@media(max-width:600px){ .model-compare { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html" class="active">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › AI Models</div>
+  <h1>The AI Models</h1>
+  <p class="section-intro">GhostTrack uses two types of AI models: rule-based signal scoring (always available) and a Graph Neural Network (for artists in our database). This page explains both, from scratch.</p>
+
+  <h2>Level 1: What Is a Neural Network?</h2>
+
+  <div class="analogy">
+    <strong>Think of it like learning to recognize faces.</strong><br><br>
+    When you were a baby, you learned to recognize your parents' faces. You didn't follow a rulebook — you just saw their faces thousands of times and your brain learned the pattern. Neural networks work the same way: instead of being programmed with rules, they <em>learn patterns from examples</em>.<br><br>
+    We show the network 65 examples of artists (14 ghosts, 51 organic). For each one, we give it 8 numbers describing that artist and tell it the right answer (ghost or organic). The network adjusts itself until it can correctly classify every example — then we use it on new, unknown artists.
+  </div>
+
+  <h2>Level 2: What Is a Graph?</h2>
+
+  <div class="analogy">
+    <strong>Think of it like a social network.</strong><br><br>
+    Facebook is a graph. Each person is a <strong>node</strong>. Each friendship is an <strong>edge</strong>. A Graph Neural Network (GNN) is a neural network that understands graphs — it doesn't just look at one person in isolation, it also looks at who they're connected to and what <em>their</em> connections look like.<br><br>
+    In GhostTrack, each <strong>artist is a node</strong>, and the <strong>edges connect artists that share production companies</strong> or have similar audio profiles. Ghost artists all cluster together — they share the same few production registrants. That clustering is a massive red flag, and GNNs are specifically designed to detect it.
+  </div>
+
+  <div class="diagram">
+        [RWN] ──── [MRC]
+         |  \    /  |
+         |   [Calmo] |
+         |          |
+      [DE-A4X]   [IT-B7Z]
+     (company)  (company)
+
+  Ghost artists share production companies → dense cluster
+  Organic artists spread across many different companies
+  </div>
+
+  <h2>The Two Models: GAT vs GCN</h2>
+
+  <div class="model-compare">
+    <div class="model-card gat">
+      <h3>🥇 GAT — Primary Model</h3>
+      <p style="font-size:0.88rem;color:#a0e8b0;"><strong>Graph Attention Network</strong></p>
+      <p style="font-size:0.88rem;color:#888;margin-top:0.5rem;">The main model. Uses <em>attention</em> to decide which neighbors matter more. When classifying an artist, it asks: "which of this artist's connections are the most suspicious?"</p>
+      <ul style="font-size:0.85rem;color:#a0d0a0;margin-top:0.75rem;">
+        <li>4 attention heads (4 parallel views)</li>
+        <li>32 hidden units per head</li>
+        <li>ELU activation + 30% dropout</li>
+        <li>200 training epochs</li>
+        <li>100% test accuracy</li>
+      </ul>
+    </div>
+    <div class="model-card gcn">
+      <h3>📊 GCN — Baseline Model</h3>
+      <p style="font-size:0.88rem;color:#a0c0f0;"><strong>Graph Convolutional Network</strong></p>
+      <p style="font-size:0.88rem;color:#888;margin-top:0.5rem;">The simpler comparison model. Treats all neighbors equally — no attention. Included to show that <em>even a simple GNN outperforms</em> non-graph approaches on this task.</p>
+      <ul style="font-size:0.85rem;color:#a0b8e0;margin-top:0.75rem;">
+        <li>Standard neighborhood aggregation</li>
+        <li>32 hidden units</li>
+        <li>ReLU activation + 30% dropout</li>
+        <li>100% test accuracy (same as GAT)</li>
+        <li>No attention = less interpretable</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>The GAT Architecture (Layer by Layer)</h2>
+
+  <div class="layer-box input">
+    <div class="layer-label">Input Layer</div>
+    <div class="layer-desc">8 numbers per artist node (see features below). Shape: [65 nodes × 8 features]</div>
+  </div>
+  <div class="layer-arrow">↓</div>
+
+  <div class="layer-box hidden">
+    <div class="layer-label">GATConv Layer 1 — "Look around you"</div>
+    <div class="layer-desc">Each node looks at its neighbors and decides (via 4 attention heads) which ones to pay attention to. Output: 32 × 4 = 128 values per node. Then ELU activation + 30% dropout (randomly zeroes 30% of values to prevent overfitting).</div>
+  </div>
+  <div class="layer-arrow">↓</div>
+
+  <div class="layer-box hidden">
+    <div class="layer-label">GATConv Layer 2 — "Make a decision"</div>
+    <div class="layer-desc">Collapses the 128 values into a single attention head (1 head). Output: 1 value per node.</div>
+  </div>
+  <div class="layer-arrow">↓</div>
+
+  <div class="layer-box output">
+    <div class="layer-label">Sigmoid Output — "How likely is this a ghost?"</div>
+    <div class="layer-desc">Squishes the output to [0.0, 1.0]. A value &gt; 0.5 = predicted GHOST. This probability is the "GNN score" shown in the Analyzer.</div>
+  </div>
+
+  <h4>In Python code:</h4>
+  <pre>class GhostDetectorGAT(torch.nn.Module):
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)    # GATConv: aggregate neighbors
+        x = F.elu(x)                      # ELU activation
+        x = F.dropout(x, p=0.3)           # 30% dropout (training only)
+        x = self.conv2(x, edge_index)    # Second GATConv
+        return torch.sigmoid(x)           # 0.0 to 1.0 probability</pre>
+
+  <h2>The 8 Input Features</h2>
+  <p>Every artist node in the graph has exactly 8 numbers describing it:</p>
+
+  <div class="feature-row">
+    <div class="feature-icon">🎵</div>
+    <div class="feature-name">track_count</div>
+    <div class="feature-desc">Total number of tracks in the artist's catalog. Ghosts have very high counts.</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">📅</div>
+    <div class="feature-name">closure_rate</div>
+    <div class="feature-desc">Fraction of consecutive releases within 1 day (S2). Ghosts: 80–95%.</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">⚡</div>
+    <div class="feature-name">tracks_per_day</div>
+    <div class="feature-desc">Upload velocity. Ghosts produce at machine speed.</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">📊</div>
+    <div class="feature-name">hhi</div>
+    <div class="feature-desc">Herfindahl-Hirschman Index (S6). Ghosts: near 1.0 (one company controls everything).</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">🎼</div>
+    <div class="feature-name">total_variance</div>
+    <div class="feature-desc">Audio feature variance across the catalog (S1). Ghosts: near 0.0 (all songs sound identical).</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">⏱️</div>
+    <div class="feature-name">mean_duration_ms</div>
+    <div class="feature-desc">Average track length in milliseconds. Ghosts optimize for the ~60s streaming window.</div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-icon">🏭</div>
+    <div class="feature-name">isrc_prefix_count</div>
+    <div class="feature-desc">Number of distinct production companies used. Ghosts: 1–2 (concentrated).</div>
+  </div>
+  <div class="feature-row" style="border-bottom:none;">
+    <div class="feature-icon">🎸</div>
+    <div class="feature-name">genre_count</div>
+    <div class="feature-desc">Number of distinct genres. Ghosts stick to one niche (ambient/relaxation).</div>
+  </div>
+
+  <h2>The Training Dataset</h2>
+
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Total nodes (artists)</td><td>65</td></tr>
+      <tr><td>Ghost nodes</td><td>14 (3 from Neo4j + 11 from Kaggle)</td></tr>
+      <tr><td>Organic nodes</td><td>51 (1 from Neo4j + 50 from Kaggle)</td></tr>
+      <tr><td>Total edges</td><td>692</td></tr>
+      <tr><td>Edge construction</td><td>Ghosts: fully connected; Organics: k-NN k=5</td></tr>
+      <tr><td>Train / Val / Test split</td><td>80% / 10% / 10%, stratified</td></tr>
+      <tr><td>Node features</td><td>8 dimensions</td></tr>
+      <tr><td>File</td><td><code>data/processed/gnn_dataset.pt</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout yellow">
+    <strong>Label quality caveat:</strong> Only 3 of the 14 ghost nodes are journalist-confirmed (RWN, MRC, Calmo). The other 11 ghost candidates are identified by heuristic (very low audio variance + very high closure rate in the Kaggle dataset) — they have not been independently verified as fraudulent.
+  </div>
+
+  <h2>Results: How Well Does It Work?</h2>
+
+  <div class="accuracy-card">
+    <div class="big-num">100%</div>
+    <div class="label">Test Set Accuracy (GAT and GCN both)</div>
+  </div>
+
+  <p>The <strong>confusion matrix</strong> shows the model's predictions vs. reality on the held-out test set:</p>
+
+  <div class="confusion-matrix">
+    <div class="cm-cell cm-header"></div>
+    <div class="cm-cell cm-header">Predicted: Ghost</div>
+    <div class="cm-cell cm-header">Predicted: Organic</div>
+    <div class="cm-cell cm-header">Actual: Ghost</div>
+    <div class="cm-cell cm-tp">6 ✓</div>
+    <div class="cm-cell cm-fn" style="background:#111;color:#555;">0</div>
+    <div class="cm-cell cm-header">Actual: Organic</div>
+    <div class="cm-cell cm-fp" style="background:#111;color:#555;">0</div>
+    <div class="cm-cell cm-tn">7 ✓</div>
+  </div>
+  <p style="text-align:center;font-size:0.85rem;color:#888;">6 true positives (ghosts correctly identified), 7 true negatives (organics correctly cleared). Zero errors.</p>
+
+  <div class="callout yellow">
+    <strong>Honest caveat:</strong> 100% accuracy on a 13-sample test set (6 ghost + 7 organic) is encouraging but not proof of real-world generalizability. The graph structure was also carefully engineered — ghosts are fully connected to each other. In a real production setting, you'd need hundreds of verified ghost examples to make a robust claim. This is a proof-of-concept, not a production system.
+  </div>
+
+  <h2>What Is Attention (in GAT)?</h2>
+
+  <div class="analogy">
+    <strong>Think of it like reading a report while highlighting important parts.</strong><br><br>
+    When you read a long report, you don't give equal attention to every sentence. You skim, but slow down for the important paragraphs. GAT does the same: when analyzing artist A, it looks at all of A's neighbors (production companies, collaborators) but assigns a higher <strong>attention weight</strong> to the most suspicious neighbors. A neighbor that's a known ghost factory gets a high attention weight; a random collaborator gets a low one.<br><br>
+    This makes GAT <strong>interpretable</strong>: you can visualize which neighbors most influenced the ghost verdict for any given artist.
+  </div>
+
+  <h2>The Rule-Based Scorer (Always Available)</h2>
+
+  <p>Before the GNN runs, there's a simpler <strong>rule-based scorer</strong> that computes a weighted average of the 7 signal scores. This runs for any artist, including ones not in the graph:</p>
+
+  <pre># src/agents/verdict.py
+overall_score = np.mean([s1, s2, s3, s4, s5, s6, s7])  # only available signals
+
+if overall_score >= 0.65:   verdict = "LIKELY_GHOST"
+elif overall_score >= 0.40: verdict = "SUSPICIOUS"
+else:                       verdict = "LIKELY_ORGANIC"</pre>
+
+  <p>The GNN score is shown alongside this as a second opinion. When both agree, confidence is high.</p>
+
+  <div class="callout green">
+    Want to see these models trained step by step? → <a href="notebooks.html#ex8">Exercise 8: GNN Training (Notebook)</a>
+  </div>
+
+</div>
+</body>
+</html>

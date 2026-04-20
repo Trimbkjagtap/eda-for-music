@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — Code Tour</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.layer-section { margin-bottom: 2.5rem; }
+.layer-title {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;
+  padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-block; margin-bottom: 1rem;
+}
+.layer-api { background: #0d0d1a; color: #4da6ff; border: 1px solid #4da6ff44; }
+.layer-signals { background: #0d1a10; color: #00ff88; border: 1px solid #00ff8844; }
+.layer-models { background: #1a0d1a; color: #b088f9; border: 1px solid #b088f944; }
+.layer-agents { background: #1a1200; color: #f0b429; border: 1px solid #f0b42944; }
+.layer-backend { background: #001a1a; color: #00e5ff; border: 1px solid #00e5ff44; }
+.layer-frontend { background: #1a1a0d; color: #c8e63d; border: 1px solid #c8e63d44; }
+.layer-infra { background: #111; color: #888; border: 1px solid #333; }
+
+.file-row {
+  display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem;
+  padding: 0.85rem 0; border-bottom: 1px solid #1a1a1a; align-items: start;
+}
+.file-row:last-child { border-bottom: none; }
+.file-path { font-family: monospace; font-size: 0.82rem; color: #00ff88; word-break: break-all; }
+.file-desc { font-size: 0.9rem; color: #aaa; }
+.file-desc strong { color: #ddd; }
+
+.tree {
+  font-family: monospace; font-size: 0.82rem; line-height: 1.9;
+  color: #888; background: #0a0a0a; border: 1px solid #222;
+  border-radius: 8px; padding: 1.25rem 1.5rem; overflow-x: auto;
+  white-space: pre; margin: 1rem 0;
+}
+.tree .dir { color: #4da6ff; }
+.tree .file { color: #aaa; }
+.tree .highlight { color: #00ff88; }
+.tree .dim { color: #444; }
+
+.endpoint-row { padding: 0.75rem 0; border-bottom: 1px solid #1a1a1a; }
+.endpoint-row:last-child { border-bottom: none; }
+.method-badge { display: inline-block; padding: 0.2em 0.5em; border-radius: 3px; font-size: 0.75rem; font-weight: 700; font-family: monospace; margin-right: 0.5rem; }
+.method-get { background: #0d2a0d; color: #00ff88; }
+.method-post { background: #0d0d2a; color: #4da6ff; }
+.endpoint-path { font-family: monospace; font-size: 0.9rem; color: #ddd; }
+.endpoint-desc { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html" class="active">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Code Tour</div>
+  <h1>Code Tour — Every File Explained</h1>
+  <p class="section-intro">A complete annotated map of every file in the project. Color-coded by layer so you can quickly find what you're looking for.</p>
+
+  <h2>Full Directory Tree</h2>
+  <div class="tree"><span class="dir">eda-for-music/</span>
+<span class="dim">│</span>
+├── <span class="highlight">backend/</span>            ← FastAPI REST API server
+│   └── main.py
+├── <span class="highlight">src/</span>                ← Core Python library
+│   ├── <span class="dir">api/</span>             ← External API clients
+│   │   ├── spotify_client.py
+│   │   ├── youtube_client.py
+│   │   └── apple_music_client.py
+│   ├── <span class="dir">graph/</span>           ← Neo4j database interface
+│   │   └── neo4j_client.py
+│   ├── <span class="dir">signals/</span>         ← 7-signal detection modules
+│   │   ├── audio_similarity.py     (S1)
+│   │   ├── cadence_sync.py         (S2)
+│   │   ├── playlist_cooccurrence.py (S3)
+│   │   ├── follower_ratio.py       (S4)
+│   │   ├── metadata_similarity.py  (S5)
+│   │   ├── graph_density.py        (S6)
+│   │   ├── cross_platform.py       (S7)
+│   │   └── verdict.py              (combines all)
+│   ├── <span class="dir">models/</span>          ← Neural network architectures
+│   │   ├── gnn_detector.py
+│   │   └── dataset_builder.py
+│   ├── <span class="dir">agents/</span>          ← CrewAI orchestration
+│   │   ├── crew.py
+│   │   ├── crawler_agent.py
+│   │   ├── fingerprint_analyst.py
+│   │   ├── graph_builder.py
+│   │   └── verdict_agent.py
+│   ├── <span class="dir">ingest/</span>          ← Data ingestion pipelines
+│   │   ├── seed_ingest.py
+│   │   └── live_ingest.py
+│   └── <span class="dir">utils/</span>           ← Helpers
+│       ├── config.py
+│       ├── ground_truth.py
+│       ├── kaggle_loader.py
+│       └── rate_limiter.py
+├── <span class="highlight">static/</span>             ← SPA (web app)
+│   ├── index.html
+│   ├── css/styles.css
+│   └── js/app.js
+├── <span class="highlight">notebooks/</span>          ← 10 Jupyter exercises
+├── <span class="highlight">data/</span>               ← Datasets + model files
+│   ├── kaggle/dataset.csv
+│   ├── processed/         ← Exercise outputs
+│   └── raw/cache/         ← API response cache
+├── <span class="highlight">paper/</span>              ← Documentation + figures
+├── <span class="highlight">docs/</span>               ← This guide!
+├── .env                   ← API secrets (not in git)
+├── .env.example           ← Template for .env
+└── requirements.txt       ← Python dependencies</div>
+
+  <!-- BACKEND LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-backend">Backend — FastAPI REST API</div>
+
+    <div class="file-row">
+      <div class="file-path">backend/main.py</div>
+      <div class="file-desc">
+        <strong>The entire server in one file (668 lines).</strong> Defines all REST API endpoints, request/response models (Pydantic), and mounts the SPA static files. Also includes the 4-artist validation block that prevents unknown IDs from getting fake-organic verdicts.
+        <br><br>Key endpoints:
+        <div style="margin-top:0.75rem;">
+          <div class="endpoint-row">
+            <span class="method-post">POST</span>
+            <span class="endpoint-path">/analyze</span>
+            <div class="endpoint-desc">Full 7-signal analysis for the 4 study artists. Runs the complete pipeline with Neo4j + Kaggle data. Returns all 7 scores + GNN verdict.</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method-post">POST</span>
+            <span class="endpoint-path">/analyze-live</span>
+            <div class="endpoint-desc">3-signal live analysis for any Spotify artist. Fetches real data from Spotify + YouTube + iTunes. Returns S2, S5, S7 scores.</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method-get">GET</span>
+            <span class="endpoint-path">/search?q=artist+name</span>
+            <div class="endpoint-desc">Search Spotify by artist name. Returns top 5 matches with photo, follower count, popularity. Powers the search dropdown in the Analyzer.</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method-get">GET</span>
+            <span class="endpoint-path">/graph/neighborhood/{id}</span>
+            <div class="endpoint-desc">Returns ISRC bipartite neighborhood data for the Network page graph visualization.</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method-post">POST</span>
+            <span class="endpoint-path">/chat</span>
+            <div class="endpoint-desc">Sends a question to GPT-4o with research context injected. Powers the AI Research Assistant page.</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method-get">GET</span>
+            <span class="endpoint-path">/health</span>
+            <div class="endpoint-desc">Health check — returns Neo4j connection status and signal availability.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-api">API Clients — External Service Wrappers</div>
+
+    <div class="file-row">
+      <div class="file-path">src/api/spotify_client.py</div>
+      <div class="file-desc"><strong>Spotify API wrapper.</strong> Wraps the <code>spotipy</code> library with disk caching and rate limiting. All responses saved to <code>data/raw/cache/</code> as JSON. Key methods: <code>search_artists(name)</code>, <code>get_artist(id)</code>, <code>get_artist_albums(id)</code>, <code>get_album_tracks(id)</code>. Reads credentials from <code>.env</code>.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/api/youtube_client.py</div>
+      <div class="file-desc"><strong>YouTube Data API v3 wrapper.</strong> Searches for an artist name, finds the top video result, returns view count. Uses the "two-pass" approach: first search for artist channel, then get most-viewed video. Requires <code>YOUTUBE_API_KEY</code>.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/api/apple_music_client.py</div>
+      <div class="file-desc"><strong>iTunes Search API wrapper.</strong> No authentication needed — free public API. Queries <code>itunes.apple.com/search?term={name}&entity=musicArtist</code>. Returns whether the artist appears in Apple Music and their Apple Music genre/link if found.</div>
+    </div>
+  </div>
+
+  <!-- GRAPH LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-api">Graph Database — Neo4j Interface</div>
+
+    <div class="file-row">
+      <div class="file-path">src/graph/neo4j_client.py</div>
+      <div class="file-desc"><strong>Neo4j AuraDB connection wrapper.</strong> Connects to the cloud graph database using credentials from <code>.env</code>. Provides a <code>run(cypher_query, **params)</code> method that executes Cypher queries and returns results as Python dicts. Used by all signal modules that need album/track/ISRC data. Includes retry logic for connection drops.</div>
+    </div>
+  </div>
+
+  <!-- SIGNALS LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-signals">Signal Modules — The 7 Detection Algorithms</div>
+
+    <div class="file-row">
+      <div class="file-path">src/signals/audio_similarity.py</div>
+      <div class="file-desc"><strong>Signal 1: Audio Feature Variance.</strong> Loads the Kaggle dataset, filters to the target artist, computes total variance across [danceability, energy, valence, acousticness]. Returns a suspicion score: 0.0 (organic, high variance) to 1.0 (ghost, near-zero variance). Threshold: variance &lt; 0.050.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/cadence_sync.py</div>
+      <div class="file-desc"><strong>Signal 2: Release Cadence Synchrony.</strong> Queries Neo4j for album release dates. Computes closure rate (fraction of consecutive release pairs ≤ 1 day apart), burst ratio (max releases in 7-day window), and runs Isolation Forest anomaly detection on gap sequences. Includes pre-computed closure rates for the 4 known artists in <code>_KNOWN_CLOSURE</code> dict.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/playlist_cooccurrence.py</div>
+      <div class="file-desc"><strong>Signal 3: ISRC Attribution / Playlist Co-occurrence.</strong> Looks for shared ISRC prefixes between artists. Computes Jaccard overlap of ISRC prefix sets. Returns a network-level suspicion score. Currently a null result for the 4-artist seed set (no shared prefixes) — becomes meaningful at scale.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/follower_ratio.py</div>
+      <div class="file-desc"><strong>Signal 4: Catalog Density / Upload Velocity.</strong> Computes tracks_per_day = total tracks / career span in days. Threshold: &gt; 0.15 tracks/day is suspicious. Also looks at follower-to-track ratio (ghost artists have surprisingly few followers for their catalog size).</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/metadata_similarity.py</div>
+      <div class="file-desc"><strong>Signal 5: Metadata / Title Similarity.</strong> Two approaches: (1) keyword pattern matching (e.g., ambient/relaxation genre terms), and (2) sentence-transformers cosine similarity on track titles. Returns suspicion based on how cookie-cutter the title naming pattern is. Most effective for artists with template naming (e.g., "White Noise for Sleeping Vol. X").</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/graph_density.py</div>
+      <div class="file-desc"><strong>Signal 6: HHI Graph Density.</strong> Queries Neo4j for all tracks and their ISRC prefix (production company). Computes HHI = Σ(fraction²) per company. Returns suspicion score that scales with concentration. Also computes degree centrality of each artist in the bipartite graph.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/cross_platform.py</div>
+      <div class="file-desc"><strong>Signal 7: Cross-Platform Discrepancy.</strong> Calls the YouTube client to get view count, calls the iTunes client to check Apple Music presence. Returns a suspicion score: very low cross-platform presence = suspicious. Handles the ambient/relaxation exception (high views ≠ organic in this genre).</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/signals/verdict.py</div>
+      <div class="file-desc"><strong>Master verdict scorer.</strong> Calls all 7 signal modules, collects scores, computes weighted average (or simple mean for available signals), runs the trained GNN if available, and returns the final verdict dict: <code>{verdict_score, verdict_label, signals, confidence, explanation, gnn_score}</code>. This is the function called by <code>POST /analyze</code>.</div>
+    </div>
+  </div>
+
+  <!-- MODELS LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-models">Models — Neural Network Definitions</div>
+
+    <div class="file-row">
+      <div class="file-path">src/models/gnn_detector.py</div>
+      <div class="file-desc"><strong>GNN model class definitions.</strong> Contains <code>GhostDetectorGAT</code> (primary — Graph Attention Network with 4 attention heads) and <code>GhostDetectorGCN</code> (baseline — Graph Convolutional Network). Both take an 8-feature node feature matrix and an edge index, and output a probability per node. Load trained weights with <code>model.load_state_dict(torch.load('data/processed/gat_model.pt'))</code>.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/models/dataset_builder.py</div>
+      <div class="file-desc"><strong>Graph dataset constructor.</strong> Reads exercise outputs (closure rates, HHI, variance tables) + Kaggle ghost/organic lists. Builds the PyTorch Geometric <code>Data</code> object with node features, edge index, and train/val/test masks. Saves to <code>data/processed/gnn_dataset.pt</code>. Called once during setup; not needed at inference time.</div>
+    </div>
+  </div>
+
+  <!-- AGENTS LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-agents">Agents — CrewAI Orchestration</div>
+
+    <div class="file-row">
+      <div class="file-path">src/agents/crew.py</div>
+      <div class="file-desc"><strong>Main orchestration entry point.</strong> Provides two functions: <code>run_analysis(artist_id)</code> (fast, no LLM — just calls signal modules) and <code>run_analysis_with_crew(artist_id)</code> (slow, uses GPT-4o — full CrewAI pipeline). The former is what the FastAPI backend uses; the latter is experimental. Also provides <code>run_batch_analysis(artist_ids)</code> for processing multiple artists.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/agents/crawler_agent.py</div>
+      <div class="file-desc"><strong>Data fetching agent.</strong> In the CrewAI pipeline, this agent's job is to pull all raw data for an artist from Neo4j and the Spotify cache. Outputs a structured data bundle for the fingerprint analyst.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/agents/fingerprint_analyst.py</div>
+      <div class="file-desc"><strong>Signal computation agent.</strong> Receives the raw data bundle from the crawler, runs each signal module, and returns the 7 scores. The "analyst" persona makes it interpretable in LLM-backed mode — GPT-4o can reference it by role.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/agents/graph_builder.py</div>
+      <div class="file-desc"><strong>Graph analysis agent.</strong> Builds and analyzes the ISRC bipartite neighborhood for the target artist. Returns adjacency information and HHI scores for the verdict agent to use.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/agents/verdict_agent.py</div>
+      <div class="file-desc"><strong>Final verdict synthesis agent.</strong> Receives all 7 scores + graph analysis. Produces the final verdict label, confidence score, and natural language explanation. In LLM mode, this explanation is generated by GPT-4o. In pipeline mode, it's a template-filled string.</div>
+    </div>
+  </div>
+
+  <!-- INGEST LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-agents">Ingest — Data Loading Pipelines</div>
+
+    <div class="file-row">
+      <div class="file-path">src/ingest/seed_ingest.py</div>
+      <div class="file-desc"><strong>Seed data loader.</strong> Fetches the 3 known ghost artists + 1 organic control from Spotify and loads them into Neo4j. Run once during project setup to populate the database. Uses the Spotify API to get albums and tracks, then writes nodes and relationships to Neo4j via Cypher <code>MERGE</code> statements.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/ingest/live_ingest.py</div>
+      <div class="file-desc"><strong>Live artist pipeline.</strong> Provides <code>search_artist(name)</code> (searches Spotify by name, returns top 5 matches) and <code>analyze_live(artist_id, run_s7)</code> (fetches albums/tracks for any artist, runs S2+S5+S7, returns verdict dict in same format as <code>run_analysis()</code>). This is what powers the <code>POST /analyze-live</code> endpoint and the name search dropdown.</div>
+    </div>
+  </div>
+
+  <!-- UTILS LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-infra">Utilities — Helpers and Config</div>
+
+    <div class="file-row">
+      <div class="file-path">src/utils/config.py</div>
+      <div class="file-desc"><strong>Centralized configuration.</strong> Reads all environment variables from <code>.env</code> using python-dotenv. Provides typed constants: <code>SPOTIFY_CLIENT_ID</code>, <code>NEO4J_URI</code>, <code>OPENAI_API_KEY</code>, signal thresholds, file paths. All modules import from here instead of reading <code>.env</code> directly.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/utils/ground_truth.py</div>
+      <div class="file-desc"><strong>Ground truth labels.</strong> Python dict mapping the 4 artist Spotify IDs to their known labels (ghost/organic) and source citations. Used by signal modules for calibration and by the verdict module for label lookup. The 3 ghost labels are journalist-confirmed; the organic label (Nils Frahm) is from established critical reception.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/utils/kaggle_loader.py</div>
+      <div class="file-desc"><strong>Kaggle dataset loader.</strong> Reads <code>data/kaggle/dataset.csv</code> into a pandas DataFrame. Provides helper functions: <code>get_artist_tracks(artist_name)</code> (filter to one artist), <code>compute_variance(df)</code> (audio feature variance). Handles the multi-artist string format in the Kaggle dataset (artists stored as "[Artist1, Artist2]").</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">src/utils/rate_limiter.py</div>
+      <div class="file-desc"><strong>API rate limiter.</strong> Implements exponential backoff: if an API call fails (rate limit hit), wait 1s, then 2s, then 4s, up to a max. Wraps the Spotify and YouTube clients. Prevents the app from getting banned for making too many requests too fast.</div>
+    </div>
+  </div>
+
+  <!-- FRONTEND LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-frontend">Frontend — Single-Page Application</div>
+
+    <div class="file-row">
+      <div class="file-path">static/index.html</div>
+      <div class="file-desc"><strong>The HTML shell.</strong> Just 30 lines. Contains the nav bar (links that call <code>navigate()</code>), an empty <code>&lt;div id="page-root"&gt;</code>, and a <code>&lt;script&gt;</code> tag loading <code>app.js</code>. All actual content is injected by JavaScript.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">static/css/styles.css</div>
+      <div class="file-desc"><strong>All styling.</strong> Dark theme with CSS custom properties (variables) for colors. Includes the GhostTrack brand palette, animation keyframes (stat counters, waveform), responsive grid layouts, signal bar colors, badge styles. ~1,000 lines total.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">static/js/app.js</div>
+      <div class="file-desc">
+        <strong>The entire application in one file (~850 lines).</strong> Key sections:
+        <ul style="margin-top:0.5rem;font-size:0.88rem;color:#aaa;">
+          <li><code>KNOWN_ARTISTS</code> — Array of 4 study artist objects with Spotify IDs</li>
+          <li><code>navigate(page)</code> — Swaps page content without reload</li>
+          <li><code>renderHome()</code> — Hero + stat cards + findings</li>
+          <li><code>renderGallery()</code> — 8 figure cards with download links</li>
+          <li><code>renderAnalyzer()</code> — Search box + quick picks + results area</li>
+          <li><code>onArtistInput()</code> — Debounced search-as-you-type</li>
+          <li><code>_fetchSuggestions(q)</code> — Calls <code>GET /search?q=...</code></li>
+          <li><code>runAnalysis(artistId, isLive)</code> — Routes to <code>/analyze</code> or <code>/analyze-live</code></li>
+          <li><code>renderAnalysisResult(data)</code> — Renders signal bars, verdict badge, explanation</li>
+          <li><code>renderNetwork()</code> — ISRC graph + cross-platform table</li>
+          <li><code>renderAI()</code> — Chat interface, calls <code>POST /chat</code></li>
+          <li><code>renderAbout()</code> — Tech stack, architecture, limitations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAPER LAYER -->
+  <div class="layer-section">
+    <div class="layer-title layer-infra">Paper / Documentation</div>
+
+    <div class="file-row">
+      <div class="file-path">paper/SUPPLEMENTARY_MATERIALS.md</div>
+      <div class="file-desc"><strong>Academic supplementary materials index.</strong> Tables of all figures, datasets, signal computation details, known limitations, and reproducibility instructions. Submitted alongside the research paper for INFO 7390.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">paper/S4_instructors_guide.md</div>
+      <div class="file-desc"><strong>Full instructor rubric.</strong> Per-exercise rubrics with expected outputs, acceptable ranges, common student mistakes, grading notes, and FAQ. Every exercise's expected key metric is documented with tolerances.</div>
+    </div>
+    <div class="file-row">
+      <div class="file-path">paper/figures/</div>
+      <div class="file-desc"><strong>24 publication figures.</strong> PNG and PDF versions of all 8 main figures + supporting charts from exploration. Named <code>fig1_</code> through <code>fig8_</code> for the main figures, plus Kaggle EDA charts.</div>
+    </div>
+  </div>
+
+  <h2 id="running">Running the Project</h2>
+
+  <h3>Step 1: Install dependencies</h3>
+  <pre>cd /path/to/eda-for-music
+python -m venv venv           # Create virtual environment
+source venv/bin/activate       # Activate it (Mac/Linux)
+# or: venv\Scripts\activate   # (Windows)
+pip install -r requirements.txt</pre>
+
+  <h3>Step 2: Configure environment</h3>
+  <pre>cp .env.example .env
+# Open .env in any text editor and fill in your API keys</pre>
+
+  <h3>Step 3: Start the server</h3>
+  <pre>uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload</pre>
+  <p>Then open <a href="http://localhost:8000" target="_blank">http://localhost:8000</a> in your browser.</p>
+
+  <h3>Step 4: (Optional) Run the notebooks</h3>
+  <pre>jupyter notebook notebooks/</pre>
+  <p>Open each notebook in order (01 through 10) and run all cells.</p>
+
+  <h3>API documentation</h3>
+  <p>FastAPI auto-generates interactive API docs. Open <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a> to explore all endpoints, see request/response schemas, and test them live from the browser.</p>
+
+  <div class="callout yellow">
+    <strong>Minimum requirements:</strong> Python 3.10+, 4GB RAM (for sentence-transformers model), active Neo4j AuraDB connection, Spotify developer credentials. YouTube API key and OpenAI key are optional — the core analysis works without them.
+  </div>
+
+</div>
+</body>
+</html>

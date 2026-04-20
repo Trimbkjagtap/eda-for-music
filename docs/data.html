@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — Data</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.db-diagram {
+  background: #0a0a0f; border: 1px solid #333; border-radius: 10px;
+  padding: 1.5rem; font-family: monospace; font-size: 0.85rem;
+  line-height: 1.9; color: #a0c0a0; overflow-x: auto; white-space: pre;
+}
+.db-diagram .node { color: #00ff88; font-weight: 700; }
+.db-diagram .rel { color: #f0b429; }
+.db-diagram .prop { color: #888; }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+.file-card { background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 1rem 1.25rem; }
+.file-card code { display: block; color: #00ff88; font-size: 0.82rem; margin-bottom: 0.5rem; }
+.file-card p { font-size: 0.85rem; color: #888; margin: 0; }
+.source-card { border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+.source-card h3 { margin-top: 0; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html" class="active">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Data</div>
+  <h1>The Data</h1>
+  <p class="section-intro">GhostTrack pulls from 4 different data sources. Here's where each one comes from, what it contains, and why we need it.</p>
+
+  <h2>The 4 Data Sources</h2>
+
+  <div class="source-card">
+    <h3>1. Spotify API</h3>
+    <p>The official Spotify API provides metadata about artists, albums, and tracks. We use it to fetch release dates, track names, follower counts, and (when available) audio features.</p>
+    <p><strong>What still works (April 2026):</strong> artist search, album list, track list, artist metadata</p>
+    <p><strong>What was restricted (Feb 2026):</strong> <code>/audio-features</code>, <code>/recommendations</code>, related artists</p>
+    <p><strong>How we use it:</strong> Main source for the live pipeline (any artist search). Cached responses stored in <code>data/raw/cache/</code> as JSON files.</p>
+    <p><strong>Setup needed:</strong> <code>SPOTIFY_CLIENT_ID</code> and <code>SPOTIFY_CLIENT_SECRET</code> in <code>.env</code></p>
+  </div>
+
+  <div class="source-card">
+    <h3>2. Kaggle Dataset (114,000 Tracks)</h3>
+    <p>A public dataset of Spotify track audio features — downloaded once, stored as a CSV. This is our <strong>workaround for the restricted audio-features API</strong>.</p>
+    <p><strong>File:</strong> <code>data/kaggle/dataset.csv</code></p>
+    <p><strong>Size:</strong> 114,000 tracks × 21 columns, 114 genres</p>
+    <table style="margin-top:0.75rem;">
+      <thead><tr><th>Column</th><th>Description</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr><td>artists</td><td>Artist name(s)</td><td>S1, S4</td></tr>
+        <tr><td>track_name</td><td>Song title</td><td>S5</td></tr>
+        <tr><td>danceability</td><td>0–1, how danceable</td><td>S1 variance</td></tr>
+        <tr><td>energy</td><td>0–1, how energetic</td><td>S1 variance</td></tr>
+        <tr><td>valence</td><td>0–1, how happy/positive</td><td>S1 variance</td></tr>
+        <tr><td>acousticness</td><td>0–1, acoustic vs electronic</td><td>S1 variance</td></tr>
+        <tr><td>speechiness</td><td>0–1, spoken words</td><td>S1 variance</td></tr>
+        <tr><td>tempo</td><td>BPM</td><td>Context</td></tr>
+        <tr><td>track_genre</td><td>Genre label</td><td>Genre count feature</td></tr>
+        <tr><td>popularity</td><td>0–100 Spotify score</td><td>Context</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="source-card">
+    <h3>3. Neo4j AuraDB (Graph Database)</h3>
+    <p>A cloud graph database that stores our 4 seed artists and all their relationships.</p>
+
+    <div class="analogy">
+      <strong>What is a graph database?</strong><br>
+      A regular database (like Excel) stores rows and columns. A graph database stores <em>nodes</em> (things) and <em>edges</em> (relationships between things). It's perfect for questions like "which production company registered the most tracks for this artist?" because those are naturally graph-shaped questions.
+    </div>
+
+    <h4>Database schema (the shape of the data)</h4>
+    <div class="db-diagram"><span class="node">(Artist)</span> <span class="rel">-[:RELEASED]-></span> <span class="node">(Album)</span> <span class="rel">-[:CONTAINS]-></span> <span class="node">(Track)</span> <span class="rel">-[:REGISTERED_WITH]-></span> <span class="node">(ProductionCompany)</span>
+
+<span class="prop">Artist properties:</span>  spotify_id, name, followers, popularity
+<span class="prop">Album properties:</span>   spotify_id, name, release_date, total_tracks
+<span class="prop">Track properties:</span>   spotify_id, name, isrc, duration_ms
+<span class="prop">Company properties:</span> isrc_prefix, country_code, registrant_code</div>
+
+    <h4>What's in the database</h4>
+    <table>
+      <thead><tr><th>Node type</th><th>Count</th></tr></thead>
+      <tbody>
+        <tr><td>Artist nodes</td><td>3 (RWN, MRC, Calmo) + 1 control (Nils Frahm)</td></tr>
+        <tr><td>Album nodes</td><td>~150</td></tr>
+        <tr><td>Track nodes</td><td>~490</td></tr>
+        <tr><td>ProductionCompany nodes</td><td>8</td></tr>
+        <tr><td>Total relationships</td><td>~1,000</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Setup needed:</strong> <code>NEO4J_URI</code>, <code>NEO4J_USER</code>, <code>NEO4J_PASSWORD</code> in <code>.env</code></p>
+  </div>
+
+  <div class="source-card">
+    <h3>4. YouTube API + iTunes API</h3>
+    <p>Used for Signal 7 (Cross-Platform Detection).</p>
+    <ul>
+      <li><strong>YouTube Data API v3:</strong> Searches for the artist name, returns view count of the top video. Requires <code>YOUTUBE_API_KEY</code> in <code>.env</code>.</li>
+      <li><strong>iTunes Search API:</strong> Free, no authentication needed. Checks whether the artist appears in an iTunes search. Returns artist name, genre, and Apple Music link if found.</li>
+    </ul>
+  </div>
+
+  <h2>API Caching — How We Save Money and Time</h2>
+
+  <div class="analogy">
+    <strong>Think of it like taking notes from a library book.</strong><br>
+    You don't check out the same library book every day to re-read the same passage. You write down the important parts once. Our API cache does the same: the first time we fetch an artist's albums, we save the response as a JSON file. Next time, we read from the file instead of calling the API again. This keeps us under rate limits and makes the app fast.
+  </div>
+
+  <p>Cache location: <code>data/raw/cache/</code><br>
+  Format: <code>artist_{artist_id}_albums.json</code>, <code>album_{album_id}_tracks.json</code>, etc.<br>
+  Cache entries never expire (you must delete them manually to force a refresh).</p>
+
+  <h2>Processed Data Files</h2>
+  <p>Every exercise saves its outputs to <code>data/processed/</code>. Here's what each file contains:</p>
+
+  <div class="file-grid">
+    <div class="file-card">
+      <code>ex1_catalog_features.csv</code>
+      <p>Per-track audio features (danceability, energy, valence, acousticness) for the 6 artists analyzed in Exercise 1.</p>
+    </div>
+    <div class="file-card">
+      <code>ex1_variance_table.csv</code>
+      <p>Per-artist total variance summary. The key Signal 1 output table.</p>
+    </div>
+    <div class="file-card">
+      <code>ex2_entropy_table.csv</code>
+      <p>Shannon entropy scores for 3 playlist archetypes (editorial, fan-curated, ghost-suspect).</p>
+    </div>
+    <div class="file-card">
+      <code>ex2_playlist_features.csv</code>
+      <p>Track-level audio features for all tracks in all 3 playlists analyzed in Exercise 2.</p>
+    </div>
+    <div class="file-card">
+      <code>exercise4_metrics.csv</code>
+      <p>HHI and ISRC concentration metrics per artist (the main Signal 6 table).</p>
+    </div>
+    <div class="file-card">
+      <code>exercise4_ghost_neighborhood.json</code>
+      <p>The bipartite graph structure in JSON — nodes are artists + companies, edges are track registrations.</p>
+    </div>
+    <div class="file-card">
+      <code>exercise5_walk_metrics.csv</code>
+      <p>Release cadence metrics: closure rate, median gap, burst ratio per artist.</p>
+    </div>
+    <div class="file-card">
+      <code>exercise5_walk_graphs.json</code>
+      <p>Temporal release event sequences for each artist — used to draw the cadence histograms.</p>
+    </div>
+    <div class="file-card">
+      <code>ex6_signal_report_card.csv</code>
+      <p>All 7 signal scores for all 4 artists in one table. The main Exercise 6 output.</p>
+    </div>
+    <div class="file-card">
+      <code>ex6_verdicts.json</code>
+      <p>Final verdict (LIKELY_GHOST, SUSPICIOUS, LIKELY_ORGANIC) + confidence + explanation for each study artist.</p>
+    </div>
+    <div class="file-card">
+      <code>ghost_candidates_kaggle.csv</code>
+      <p>~50 artists from Kaggle with very low audio variance and high track counts — ghost <em>candidates</em> (heuristic, not confirmed).</p>
+    </div>
+    <div class="file-card">
+      <code>organic_controls_kaggle.csv</code>
+      <p>~50 artists from Kaggle with high audio variance — used as organic controls in the GNN training set.</p>
+    </div>
+    <div class="file-card">
+      <code>gnn_dataset.pt</code>
+      <p>The PyTorch Geometric graph dataset: 65 nodes, 8 features each, 692 edges, train/val/test masks.</p>
+    </div>
+    <div class="file-card">
+      <code>gnn_dataset_meta.json</code>
+      <p>Metadata for the GNN dataset: feature names, node names, ghost/organic labels, dataset statistics.</p>
+    </div>
+    <div class="file-card">
+      <code>gat_model.pt</code>
+      <p>Trained Graph Attention Network weights. Load with <code>torch.load('gat_model.pt')</code>.</p>
+    </div>
+    <div class="file-card">
+      <code>gcn_model.pt</code>
+      <p>Trained Graph Convolutional Network weights (baseline model).</p>
+    </div>
+    <div class="file-card">
+      <code>gnn_training_summary.json</code>
+      <p>Training results: accuracy per epoch, final ROC-AUC, confusion matrix, feature importance scores.</p>
+    </div>
+  </div>
+
+  <h2>Environment Variables (.env file)</h2>
+  <p>The project needs these secret keys to access external APIs. They go in a file called <code>.env</code> in the project root (never committed to git):</p>
+
+  <pre># Copy this from .env.example and fill in your keys
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+
+NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password_here
+
+OPENAI_API_KEY=sk-...
+YOUTUBE_API_KEY=AIza...
+
+# Optional: custom path to Kaggle dataset
+KAGGLE_DATASET_PATH=data/kaggle/dataset.csv</pre>
+
+  <div class="callout yellow">
+    <strong>Never share your .env file</strong> — it contains private API keys. The <code>.gitignore</code> file already ensures it won't be committed to GitHub by accident.
+  </div>
+
+</div>
+</body>
+</html>

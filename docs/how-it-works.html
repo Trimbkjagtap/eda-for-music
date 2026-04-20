@@ -1,0 +1,247 @@
+a5q65dee  zaol <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — How It Works</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.step-row { display:flex; gap:1.5rem; margin-bottom:1.5rem; align-items:flex-start; }
+.step-num { flex-shrink:0; width:48px; height:48px; border-radius:50%; background:#0d1a10; border:2px solid #00ff88; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; color:#00ff88; }
+.step-body h3 { margin-top:0.1rem; }
+.verdict-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0; }
+.verdict-card { border-radius:10px; padding:1.25rem; text-align:center; }
+.verdict-card.ghost { background:#1a0808; border:2px solid #e74c3c; }
+.verdict-card.suspicious { background:#1a1200; border:2px solid #f0b429; }
+.verdict-card.organic { background:#081a10; border:2px solid #00ff88; }
+.verdict-card .emoji { font-size:2.2rem; }
+.verdict-card .label { font-size:1rem; font-weight:700; margin:0.5rem 0 0.25rem; }
+.verdict-card.ghost .label { color:#e74c3c; }
+.verdict-card.suspicious .label { color:#f0b429; }
+.verdict-card.organic .label { color:#00ff88; }
+.verdict-card .threshold { font-size:0.8rem; color:#888; }
+.convergence-table { margin:1.5rem 0; }
+.convergence-table th:first-child { width:200px; }
+.check { color:#00ff88; font-weight:700; }
+.cross { color:#555; }
+.signal-chip { display:inline-block; background:#1a1a2a; border:1px solid #4da6ff44; color:#4da6ff; border-radius:4px; padding:0.15em 0.5em; font-size:0.8rem; margin:0.1em; }
+@media(max-width:600px){ .verdict-cards { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html" class="active">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › How It Works</div>
+  <h1>How GhostTrack Works</h1>
+  <p class="section-intro">A walkthrough of the entire detection pipeline — from typing in an artist's name to receiving a GHOST or ORGANIC verdict — explained without jargon.</p>
+
+  <h2>The Detective Analogy</h2>
+
+  <div class="analogy">
+    <strong>Think of it like a detective investigating a suspect.</strong><br><br>
+    A good detective never arrests someone based on one clue. If a person was seen near the scene — that's suspicious but not proof. If they also have no alibi, <em>and</em> their fingerprints match, <em>and</em> they had motive, <em>and</em> their story keeps changing… <em>now</em> you have a case.<br><br>
+    GhostTrack is that detective. It checks 7 independent clues. The more clues point toward "ghost," the more confident the verdict.
+  </div>
+
+  <h2>The Full Pipeline (Step by Step)</h2>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>You provide an artist</h3>
+      <p>You either search by name (e.g., "Relaxing White Noise") or pick from the study panel. The system gets their Spotify artist ID — a unique identifier like <code>6bo3atMVp3qFECNALVwq9N</code>.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Fetch all their music data</h3>
+      <p>The system calls the Spotify API to get every album and track ever released under that artist's name. It also checks YouTube and Apple Music for cross-platform presence. All of this data is saved to a cache file so we don't have to call the API again for the same artist.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Run 7 signal checks</h3>
+      <p>Each "signal" is an independent test that answers one specific question about the artist. Each test produces a score between <code>0.0</code> (totally normal / organic) and <code>1.0</code> (highly suspicious / ghost-like).</p>
+      <div style="margin-top:0.75rem;">
+        <span class="signal-chip">S1 Audio Variance</span>
+        <span class="signal-chip">S2 Release Cadence</span>
+        <span class="signal-chip">S3 ISRC Attribution</span>
+        <span class="signal-chip">S4 Catalog Density</span>
+        <span class="signal-chip">S5 Title Similarity</span>
+        <span class="signal-chip">S6 HHI Graph</span>
+        <span class="signal-chip">S7 Cross-Platform</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Combine into an overall score</h3>
+      <p>The 7 scores are averaged into one number between 0 and 1. Some signals are weighted more heavily based on how well they distinguish ghosts from real artists (calibrated on the 4-artist study panel).</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Run through the AI model (optional)</h3>
+      <p>For artists already in our database, a <strong>Graph Neural Network</strong> also evaluates them. It looks at not just the artist themselves, but also their <em>connections</em> — production companies, shared ISRC prefixes, collaborators. This achieved 100% accuracy on our test set.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Deliver a verdict</h3>
+      <p>Based on the overall score, the artist gets one of three labels:</p>
+    </div>
+  </div>
+
+  <div class="verdict-cards">
+    <div class="verdict-card ghost">
+      <div class="emoji">👻</div>
+      <div class="label">LIKELY GHOST</div>
+      <div class="threshold">Score ≥ 0.65</div>
+      <p style="font-size:0.85rem;color:#c08080;margin-top:0.5rem;">High confidence the artist is fraudulent. Multiple signals fire simultaneously.</p>
+    </div>
+    <div class="verdict-card suspicious">
+      <div class="emoji">⚠️</div>
+      <div class="label">SUSPICIOUS</div>
+      <div class="threshold">Score 0.40–0.65</div>
+      <p style="font-size:0.85rem;color:#c0a060;margin-top:0.5rem;">Some red flags but not conclusive. Warrants further investigation.</p>
+    </div>
+    <div class="verdict-card organic">
+      <div class="emoji">🎵</div>
+      <div class="label">LIKELY ORGANIC</div>
+      <div class="threshold">Score &lt; 0.40</div>
+      <p style="font-size:0.85rem;color:#60c080;margin-top:0.5rem;">Artist exhibits normal release patterns and catalog diversity.</p>
+    </div>
+  </div>
+
+  <h2>Why 7 Signals? Why Not Just One?</h2>
+
+  <p>Each signal works in isolation, but ghost artist factories are specifically designed to look normal on any single metric. They learned the rules and break them as little as possible. Here's what happens when you rely on just one signal:</p>
+
+  <table>
+    <thead><tr><th>Signal alone</th><th>Accuracy</th><th>Problem</th></tr></thead>
+    <tbody>
+      <tr><td>S2 Cadence only</td><td>75%</td><td>1 false positive — some prolific artists release in bursts</td></tr>
+      <tr><td>S4 Density only</td><td>85%</td><td>1 false negative — Calmo slips through</td></tr>
+      <tr><td>S6 HHI only</td><td>75%</td><td>1 false positive — indie artists often use one label too</td></tr>
+      <tr><td><strong>S2 + S4</strong></td><td><strong>100%</strong></td><td>None — convergence eliminates noise</td></tr>
+      <tr><td><strong>S2 + S6</strong></td><td><strong>100%</strong></td><td>None</td></tr>
+      <tr><td><strong>Any two anchors</strong></td><td><strong>100%</strong></td><td>None</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <strong>Key insight:</strong> Any combination of two signals from {S2, S4, S6} achieves perfect accuracy. The signals are <em>complementary</em> — each catches what the others miss.
+  </div>
+
+  <h2>The Convergence Matrix</h2>
+  <p>This table shows which signals fired for each artist in our study. A ✓ means the signal flagged the artist as suspicious:</p>
+
+  <table class="convergence-table">
+    <thead>
+      <tr>
+        <th>Artist</th>
+        <th>S1<br><small>Audio</small></th>
+        <th>S2<br><small>Cadence</small></th>
+        <th>S4<br><small>Density</small></th>
+        <th>S5<br><small>Titles</small></th>
+        <th>S6<br><small>HHI</small></th>
+        <th>Flags</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Relaxing White Noise</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td>5 / 5</td>
+        <td><span class="badge ghost">Ghost</span></td>
+      </tr>
+      <tr>
+        <td>Meditation Relax Club</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="cross">—</td>
+        <td class="check">✓</td>
+        <td>4 / 5</td>
+        <td><span class="badge ghost">Ghost</span></td>
+      </tr>
+      <tr>
+        <td>Calmo</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="check">✓</td>
+        <td class="cross">—</td>
+        <td class="cross">—</td>
+        <td>3 / 5</td>
+        <td><span class="badge suspicious">Suspicious</span></td>
+      </tr>
+      <tr>
+        <td>Nils Frahm</td>
+        <td class="cross">—</td>
+        <td class="cross">—</td>
+        <td class="cross">—</td>
+        <td class="cross">—</td>
+        <td class="cross">—</td>
+        <td>0 / 5</td>
+        <td><span class="badge organic">Organic</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Two Analysis Modes</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3>📚 Study Panel Mode</h3>
+      <p>For the 4 known artists in our database. Runs the <strong>full 7-signal pipeline</strong> plus the trained GNN model. Uses cached Neo4j data — no API calls needed. Returns all 7 scores.</p>
+      <p style="font-size:0.85rem;color:#888;margin-top:0.75rem;">API endpoint: <code>POST /analyze</code></p>
+    </div>
+    <div class="card">
+      <h3>🔴 Live Mode</h3>
+      <p>For <em>any</em> Spotify artist. Runs <strong>3 signals live</strong> (S2 cadence, S5 title similarity, S7 cross-platform) by fetching real data from Spotify, YouTube, and Apple Music. Confidence capped at 85% since we only have partial signals.</p>
+      <p style="font-size:0.85rem;color:#888;margin-top:0.75rem;">API endpoint: <code>POST /analyze-live</code></p>
+    </div>
+  </div>
+
+  <div class="callout yellow">
+    <strong>Why are some signals missing in Live Mode?</strong> The Spotify API restricted access to audio features and ISRC data for developer accounts in April 2026. S1 (audio variance) and S6 (HHI) require that data. We use the Kaggle dataset as a fallback for our 4 known artists, but it doesn't cover arbitrary artists.
+  </div>
+
+  <h2>What Happens Inside the AI Model?</h2>
+  <div class="analogy">
+    <strong>Think of it like a social network analysis.</strong><br><br>
+    Imagine you're investigating a crime ring. You don't just look at one person — you look at who they work with, who funds them, and whether their collaborators have suspicious histories too. The GNN does exactly this: it treats each artist as a node in a network, and the edges are shared production companies or similar audio profiles. Ghost artists cluster together — they all connect to the same few registrants, and those connections are the smoking gun.
+  </div>
+
+  <p>Want to understand the AI models in depth? → <a href="models.html">See the AI Models page</a></p>
+  <p>Want to see every signal in detail? → <a href="signals.html">See the 7 Signals page</a></p>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — Web App</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.page-mockup {
+  font-family: monospace; font-size: 0.78rem; line-height: 1.5;
+  background: #050505; border: 1px solid #333; border-radius: 10px;
+  padding: 1rem 1.5rem; color: #aaa; overflow-x: auto; margin: 1rem 0;
+  white-space: pre;
+}
+.page-mockup .green { color: #00ff88; }
+.page-mockup .yellow { color: #f0b429; }
+.page-mockup .red { color: #e74c3c; }
+.page-mockup .blue { color: #4da6ff; }
+.page-mockup .dim { color: #444; }
+.page-section { border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.75rem; margin-bottom: 2.5rem; }
+.page-section h2 { border: none; margin: 0 0 0.25rem; }
+.page-tag { font-size: 0.75rem; color: #888; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+.feature-list { margin: 1rem 0; }
+.feature-list li { padding: 0.3rem 0; }
+.tip-box { background: #0d1a10; border-left: 3px solid #00ff88; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin-top: 1rem; font-size: 0.9rem; color: #a0e8b0; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html" class="active">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Web App</div>
+  <h1>The Web App — Every Page Explained</h1>
+  <p class="section-intro">GhostTrack has 7 pages. Here's exactly what each one shows, what you can click, and how to use it.</p>
+
+  <div class="callout yellow">
+    <strong>To launch the app:</strong> run <code>uvicorn backend.main:app --port 8000</code> then open <a href="http://localhost:8000" target="_blank">http://localhost:8000</a> in your browser.
+  </div>
+
+  <!-- HOME -->
+  <div class="page-section" id="home">
+    <div class="page-tag">Page 1 of 7</div>
+    <h2>🏠 Home</h2>
+    <p>The landing page. Shows the big picture: the case study, 7 key findings, and an invitation to explore.</p>
+
+    <div class="page-mockup">┌──────────────────────────────────────────────────┐
+│  👻 GhostTrack  │ Home │Gallery│Analyzer│Network│  │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  <span class="green">GHOST ARTIST DETECTION SYSTEM</span>                   │
+│  Exposing Spotify fraud through 7 signals        │
+│                                                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │<span class="red"> 81%</span>       │  │<span class="green"> 12.5×</span>    │  │<span class="yellow"> 100%</span>      │       │
+│  │ closure  │  │ variance │  │ AI acc.  │       │
+│  └──────────┘  └──────────┘  └──────────┘       │
+│                                                  │
+│  [<span class="dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>]     │
+│                 Case Study Image                  │
+│                                                  │
+│  ┌─── Finding 1 ───┐  ┌─── Finding 2 ───┐        │
+│  │ Ghost artists   │  │ S2+S6 together  │        │
+│  │ have 12.5x less │  │ achieves 100%   │        │
+│  │ audio variance  │  │ accuracy        │        │
+│  └─────────────────┘  └─────────────────┘        │
+│                                                  │
+│  [Analyze an Artist →]   [View Gallery →]        │
+└──────────────────────────────────────────────────┘</div>
+
+    <h4>What's on this page</h4>
+    <ul class="feature-list">
+      <li><strong>Hero section:</strong> Animated stat counters (81%, 12.5×, 100%) that count up when you first load the page</li>
+      <li><strong>Case study image:</strong> A waveform visualization of Relaxing White Noise's release pattern</li>
+      <li><strong>7 findings cards:</strong> Each anchor finding from the research, clickable to the relevant section</li>
+      <li><strong>Framework diagram:</strong> Shows the 7-layer detection stack (S1 through S7) visually</li>
+      <li><strong>Explore cards:</strong> Quick links to Analyzer, Gallery, Network, AI Assistant</li>
+    </ul>
+
+    <div class="tip-box">💡 <strong>Tip:</strong> The stat counters animate every time you navigate away and back to the Home page.</div>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="page-section" id="gallery">
+    <div class="page-tag">Page 2 of 7</div>
+    <h2>🖼️ Gallery</h2>
+    <p>Shows all 8 publication-quality research figures with captions explaining what each one shows and why it matters.</p>
+
+    <div class="page-mockup">┌──────────────────────────────────────────────────┐
+│  Research Gallery                                │
+│  ─────────────────────────────────────────────  │
+│                                                  │
+│  ┌─────────────────┐  ┌─────────────────┐        │
+│  │                 │  │                 │        │
+│  │  fig1_catalog   │  │  fig2_playlist  │        │
+│  │  coherence.png  │  │  entropy.png    │        │
+│  │                 │  │                 │        │
+│  │ PCA scatter:    │  │ Energy vs       │        │
+│  │ ghost cluster   │  │ Valence by      │        │
+│  │ vs organic      │  │ playlist type   │        │
+│  │                 │  │                 │        │
+│  │ Ex 1 · S1       │  │ Ex 2 · S2       │        │
+│  │ [<span class="blue">Download PDF</span>]  │  │ [<span class="blue">Download PDF</span>]  │        │
+│  └─────────────────┘  └─────────────────┘        │
+│                                                  │
+│  ┌─────────────────┐  ┌─────────────────┐        │
+│  │  fig6_signal    │  │  fig7_gnn       │        │
+│  │  radar.png      │  │  performance    │        │
+│  │  (spider chart) │  │  (training)     │        │
+│  └─────────────────┘  └─────────────────┘        │
+└──────────────────────────────────────────────────┘</div>
+
+    <h4>The 8 figures in the gallery</h4>
+    <table>
+      <thead><tr><th>Figure</th><th>Exercise</th><th>What it shows</th></tr></thead>
+      <tbody>
+        <tr><td>fig1_catalog_coherence</td><td>Ex 1</td><td>PCA scatter: ghost artists cluster in one tiny corner; organics spread wide</td></tr>
+        <tr><td>fig2_playlist_entropy</td><td>Ex 2</td><td>Energy vs Valence for 3 playlist types (editorial, fan, ghost-suspect)</td></tr>
+        <tr><td>fig3_isrc_join</td><td>Ex 3</td><td>Bipartite graph: artists on the left, production companies on the right</td></tr>
+        <tr><td>fig4_bipartite_neighborhood</td><td>Ex 4</td><td>HHI concentration chart — RWN at 0.88, Nils Frahm at 0.00</td></tr>
+        <tr><td>fig5_recommendation_walk</td><td>Ex 5</td><td>Release event timeline — ghost artists spike in huge bursts</td></tr>
+        <tr><td>fig6_signal_radar</td><td>Ex 6</td><td>Spider/radar chart showing all 7 signals for all 4 artists simultaneously</td></tr>
+        <tr><td>fig6b_signal_heatmap</td><td>Ex 6</td><td>Heatmap grid: rows=artists, columns=signals, color=score (red=suspicious)</td></tr>
+        <tr><td>fig7_gnn_performance</td><td>Ex 8</td><td>Training curves, ROC curve, confusion matrix, feature importance bar chart</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip-box">💡 <strong>Tip:</strong> Click any figure card to download the PDF vector version, which is infinitely scalable for printing or presentations.</div>
+  </div>
+
+  <!-- ANALYZER -->
+  <div class="page-section" id="analyzer">
+    <div class="page-tag">Page 3 of 7</div>
+    <h2>🔍 Analyzer</h2>
+    <p>The main interactive tool. Search for any artist by name and get a ghost detection verdict in seconds. Also includes quick picks for the 4 study artists with full 7-signal analysis.</p>
+
+    <div class="page-mockup">┌──────────────────────────────────────────────────┐
+│  Artist Analyzer                                 │
+│  ─────────────────────────────────────────────  │
+│                                                  │
+│  Search any artist:                              │
+│  ┌──────────────────────────────────────┐        │
+│  │ 🔍  Arijit Singh                     │        │
+│  └──────────────────────────────────────┘        │
+│  ┌──────────────────────────────────────┐        │
+│  │ 🎵 Arijit Singh  · 34M followers    │        │
+│  │ 🎵 Arijit Singh  · Official         │        │
+│  └──────────────────────────────────────┘        │
+│                                                  │
+│  ── Or pick from the study panel ─────────────── │
+│  ┌────────────┐ ┌────────────┐ ┌──────────────┐  │
+│  │ Relaxing   │ │ Meditation │ │ Nils Frahm   │  │
+│  │ White Noise│ │ Relax Club │ │ (organic)    │  │
+│  └────────────┘ └────────────┘ └──────────────┘  │
+│                                                  │
+│  ── Results ──────────────────────────────────── │
+│  👻 <span class="red">LIKELY GHOST</span>               Score: 0.847       │
+│                                                  │
+│  S1 Audio Variance  ████████████░░░  0.91        │
+│  S2 Release Cadence ██████████████░  0.95        │
+│  S3 ISRC Co-occur.  ─────────────── <span class="dim">N/A</span>         │
+│  S6 HHI Graph       ████████░░░░░░░  0.66        │
+│  S7 Cross-Platform  ████░░░░░░░░░░░  0.42        │
+│                                                  │
+│  🤖 GNN Score: 0.97  │  Confidence: 72%          │
+└──────────────────────────────────────────────────┘</div>
+
+    <h4>How to use the Analyzer</h4>
+    <ul class="feature-list">
+      <li><strong>Search box:</strong> Start typing any artist name. A dropdown appears with matching Spotify artists showing their photo and follower count.</li>
+      <li><strong>Click a dropdown result:</strong> Immediately starts analysis via the live pipeline (S2 + S5 + S7 — the signals that work without restricted API data).</li>
+      <li><strong>Quick picks panel:</strong> The 4 study artists. Clicking these runs the full 7-signal pipeline using cached Neo4j data — much faster and more complete.</li>
+      <li><strong>Signal bars:</strong> Each signal gets a colored bar from 0–1. Red = very suspicious, green = normal. Gray bars with "—" mean that signal couldn't be computed (API restriction).</li>
+      <li><strong>GNN score:</strong> Only shown for the 4 study artists. This is the Graph Neural Network's independent verdict.</li>
+      <li><strong>Confidence percentage:</strong> Based on how many signals were available. Full 7-signal: up to 85% confidence. Live mode (3 signals): capped at 60–65%.</li>
+    </ul>
+
+    <div class="callout yellow">
+      <strong>Live mode limitations:</strong> For artists outside the study panel, signals S1 (audio variance), S3 (ISRC), S4 (catalog density), and S6 (HHI graph) are unavailable because the Spotify audio-features and ISRC endpoints were restricted in April 2026. Only S2 (cadence), S5 (title similarity), and S7 (cross-platform) run live.
+    </div>
+
+    <div class="tip-box">💡 <strong>Tip:</strong> Search "Relaxing White Noise" — it's in both the study panel AND searchable, so you can compare the live mode (3-signal) result with the full study-panel (7-signal) result.</div>
+  </div>
+
+  <!-- NETWORK -->
+  <div class="page-section" id="network">
+    <div class="page-tag">Page 4 of 7</div>
+    <h2>🕸️ Network</h2>
+    <p>Shows the bipartite ISRC graph — artists connected to the production companies that registered their tracks. Also includes a cross-platform comparison table.</p>
+
+    <div class="page-mockup">┌──────────────────────────────────────────────────┐
+│  ISRC Network Explorer                           │
+│  ─────────────────────────────────────────────  │
+│                                                  │
+│  Select artist to highlight:                     │
+│  [Relaxing White Noise ▾]                        │
+│                                                  │
+│  ┌──────────────────────────────────────────┐    │
+│  │                                          │    │
+│  │  <span class="green">● RWN</span>                                   │    │
+│  │   ╲                                      │    │
+│  │    ╲──── <span class="yellow">■ DE-A4X (79%)</span>               │    │
+│  │   ╱                                      │    │
+│  │  <span class="green">● MRC</span>                                   │    │
+│  │   ╲                                      │    │
+│  │    ╲──── <span class="yellow">■ IT-B7Z</span>                     │    │
+│  │         ╲                                │    │
+│  │          ╲── <span class="blue">● Calmo</span>                   │    │
+│  │                                          │    │
+│  │  Node size = track count                 │    │
+│  │  Edge width = ISRC share                 │    │
+│  └──────────────────────────────────────────┘    │
+│                                                  │
+│  Cross-Platform Comparison                       │
+│  ──────────────────────────────────────────────  │
+│  Artist          │ YouTube    │ Apple │ HHI       │
+│  Relaxing W.N.   │ 353M views │  Yes  │ 0.88      │
+│  Meditation R.C. │ 157M views │  Yes  │ 0.66      │
+│  Calmo           │   319 view │  No   │ 0.45      │
+│  Nils Frahm      │   9M views │  Yes  │ 0.00      │
+└──────────────────────────────────────────────────┘</div>
+
+    <h4>What you can do here</h4>
+    <ul class="feature-list">
+      <li><strong>ISRC graph:</strong> Shows which production companies registered each artist's tracks. Thickness of edges = proportion of tracks. Ghosts have thick edges to very few nodes.</li>
+      <li><strong>Cross-platform table:</strong> Compares YouTube presence, Apple Music presence, and HHI score side by side for all 4 study artists.</li>
+      <li><strong>Artist selector:</strong> Highlight a specific artist's connections in the graph by clicking on them.</li>
+    </ul>
+
+    <div class="tip-box">💡 <strong>Tip:</strong> Notice that Nils Frahm's HHI is 0.00 — because his tracks come from his own independent label, with no concentration to any registrant.</div>
+  </div>
+
+  <!-- CROSS-PLATFORM -->
+  <div class="page-section" id="cross-platform">
+    <div class="page-tag">Page 5 of 7</div>
+    <h2>🌐 Cross-Platform</h2>
+    <p>A deep dive into Signal 7 — how each artist performs on YouTube and Apple Music, with explanation of the surprising finding that high YouTube views does NOT mean organic.</p>
+
+    <h4>What's on this page</h4>
+    <ul class="feature-list">
+      <li><strong>Platform comparison cards:</strong> For each of the 4 study artists, shows Spotify follower count, YouTube views, Apple Music presence, and the S7 suspicion score.</li>
+      <li><strong>The surprising finding:</strong> Explains that Relaxing White Noise has 353M YouTube views but is still a confirmed fraud — because relaxation content naturally goes viral regardless of who made it.</li>
+      <li><strong>Signal reliability analysis:</strong> Explains when S7 is useful (low-presence = suspicious) vs. when it fails (very popular niche content).</li>
+    </ul>
+
+    <div class="callout yellow">
+      <strong>Key insight on this page:</strong> Cross-platform presence ≠ legitimacy. Ghost factories in the ambient/relaxation niche learned that their content still goes viral on YouTube, giving them a false veneer of legitimacy. S7 works better as a "low score is suspicious" signal than a "high score means organic" signal.
+    </div>
+  </div>
+
+  <!-- AI ASSISTANT -->
+  <div class="page-section" id="ai">
+    <div class="page-tag">Page 6 of 7</div>
+    <h2>🤖 AI Research Assistant</h2>
+    <p>A chat interface powered by GPT-4o that answers questions about the research methodology, findings, and ghost artist detection in general.</p>
+
+    <div class="page-mockup">┌──────────────────────────────────────────────────┐
+│  AI Research Assistant                           │
+│  ─────────────────────────────────────────────  │
+│                                                  │
+│  ┌──────────────────────────────────────────┐    │
+│  │ 🤖 Hello! I'm the GhostTrack research    │    │
+│  │ assistant. Ask me about ghost artist     │    │
+│  │ detection, the 7 signals, or any of the  │    │
+│  │ research findings.                       │    │
+│  └──────────────────────────────────────────┘    │
+│                                                  │
+│  ┌──────────────────────────────────────────┐    │
+│  │ 👤 Why does Relaxing White Noise have    │    │
+│  │ 353 million YouTube views if it's fake? │    │
+│  └──────────────────────────────────────────┘    │
+│                                                  │
+│  ┌──────────────────────────────────────────┐    │
+│  │ 🤖 Great question! The ambient and       │    │
+│  │ white noise genre naturally generates   │    │
+│  │ massive passive viewership because...   │    │
+│  └──────────────────────────────────────────┘    │
+│                                                  │
+│  ┌────────────────────────────────┐ [Send]       │
+│  │ Ask me anything...             │              │
+│  └────────────────────────────────┘              │
+└──────────────────────────────────────────────────┘</div>
+
+    <h4>What the AI knows</h4>
+    <ul class="feature-list">
+      <li>All 7 signal definitions, thresholds, and findings</li>
+      <li>The 4 study artists and their scores</li>
+      <li>The GNN architecture and training results</li>
+      <li>API limitations and how they were worked around</li>
+      <li>The fraud case background (Michael Smith, Dagens Nyheter)</li>
+    </ul>
+
+    <div class="callout yellow">
+      <strong>Note:</strong> The AI assistant requires an OpenAI API key. If <code>OPENAI_API_KEY</code> is not set in your <code>.env</code> file, the chat endpoint will return an error. The API endpoint is <code>POST /chat</code>.
+    </div>
+
+    <div class="tip-box">💡 <strong>Try asking:</strong> "Which two signals together give 100% accuracy?" or "Explain what HHI measures like I'm 10 years old."</div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="page-section" id="about">
+    <div class="page-tag">Page 7 of 7</div>
+    <h2>ℹ️ About</h2>
+    <p>Technical documentation of the project — methodology overview, the full tech stack, system architecture diagram, and links to the paper and supplementary materials.</p>
+
+    <h4>What's on this page</h4>
+    <ul class="feature-list">
+      <li><strong>Project overview:</strong> Course context (INFO 7390, Northeastern University), timeline, and goals</li>
+      <li><strong>System architecture:</strong> Visual diagram showing how the Spotify API, Neo4j, Kaggle dataset, FastAPI backend, and SPA frontend all connect</li>
+      <li><strong>Tech stack table:</strong> Every library and tool used (pandas, PyTorch, neo4j, spotipy, sentence-transformers, FastAPI, etc.)</li>
+      <li><strong>API documentation link:</strong> Points to <code>/docs</code> (the FastAPI auto-generated Swagger UI)</li>
+      <li><strong>Known limitations:</strong> The 8 documented limitations (L1–L8) from the research paper</li>
+    </ul>
+
+    <div class="tip-box">💡 <strong>Tip:</strong> Visit <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a> to see the auto-generated interactive API documentation (Swagger UI) — you can test any endpoint directly from your browser.</div>
+  </div>
+
+  <h2>Technical Notes</h2>
+
+  <h3>How the app is built</h3>
+  <p>The web app is a <strong>Single-Page Application (SPA)</strong> written in plain JavaScript — no React, no Vue, no framework. This was a deliberate choice: simpler to understand, nothing to install, runs anywhere.</p>
+
+  <div class="analogy">
+    <strong>Think of it like a slide projector vs. a TV.</strong><br>
+    A TV (React/Vue app) is powerful but needs electricity, a remote, settings, and maintenance. A slide projector just needs a light bulb and a slide. Our SPA is the slide projector — it does exactly one thing (show pages of content) with the simplest possible mechanism: swap out the HTML inside a single <code>&lt;div&gt;</code> when you click a link.
+  </div>
+
+  <h3>File structure of the frontend</h3>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>static/index.html</code></td><td>The HTML shell — just a nav, a <code>#page-root</code> div, and a script tag</td></tr>
+      <tr><td><code>static/css/styles.css</code></td><td>All styling — dark theme, colors, animations, responsive layout</td></tr>
+      <tr><td><code>static/js/app.js</code></td><td>The entire application logic — routing, API calls, page rendering (~850 lines)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>How navigation works</h3>
+  <p>When you click "Analyzer" in the nav bar, JavaScript calls <code>navigate('analyzer')</code>, which calls <code>renderAnalyzer()</code>, which returns a big HTML string, which gets inserted into <code>document.getElementById('page-root').innerHTML</code>. No page reload happens — it's instant.</p>
+
+</div>
+</body>
+</html>

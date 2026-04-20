@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — Home</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.hero-badge { display:inline-block; background:#0d1a10; border:1px solid #00ff8844; color:#00ff88; padding:0.4em 1em; border-radius:20px; font-size:0.85rem; margin-bottom:1.5rem; }
+.flow-diagram { display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap; margin:2rem 0; }
+.flow-box { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:0.8rem 1.2rem; text-align:center; font-size:0.88rem; min-width:120px; }
+.flow-box .icon { font-size:1.6rem; margin-bottom:0.3rem; }
+.flow-box.green { border-color:#00ff8844; background:#0d1a10; color:#00ff88; }
+.flow-box.red { border-color:#e74c3c44; background:#1a0a0a; color:#e74c3c; }
+.flow-arrow { color:#555; font-size:1.5rem; padding:0 0.5rem; }
+.story-box { background:#0d0d1a; border-left:4px solid #b088f9; border-radius:0 8px 8px 0; padding:1.25rem 1.5rem; margin:1.5rem 0; }
+.story-box h4 { color:#b088f9; margin-top:0; font-size:1rem; }
+.story-box p { color:#c0b0e0; margin:0; }
+.stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; margin:1.5rem 0; }
+.stat-box { background:#111; border:1px solid #2a2a2a; border-radius:8px; padding:1rem; text-align:center; }
+.stat-box .num { font-size:2rem; font-weight:800; color:#00ff88; }
+.stat-box .label { font-size:0.8rem; color:#888; margin-top:0.25rem; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html" class="active">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="hero">
+    <div class="hero-badge">INFO 7390 · Spring 2026 · Northeastern University</div>
+    <h1>👻 GhostTrack</h1>
+    <p style="color:#aaa;font-size:1.2rem;">A beginner-friendly guide to understanding how this project detects fake artists on Spotify — explained for everyone, from curious grandparents to seasoned engineers.</p>
+  </div>
+
+  <h2>What Problem Does This Solve?</h2>
+
+  <div class="story-box">
+    <h4>📰 Real Story: The Music Fraud That Shocked the Industry</h4>
+    <p>In 2024, an American musician named <strong>Michael Smith</strong> was charged with wire fraud for creating over <strong>1,000 fake "ghost" artist accounts</strong> on Spotify. He used AI tools to generate thousands of ambient and relaxation tracks, uploaded them under fake names, then used bots to stream them millions of times — stealing over <strong>$10 million in royalties</strong> from real artists.</p>
+  </div>
+
+  <p>Music streaming platforms pay artists based on how many times their songs are played. If someone can create a fake artist, upload lots of songs, and generate fake streams — they steal money from the pool that real artists should receive.</p>
+
+  <p>This project builds a <strong>detection system</strong> that analyzes music catalog data and flags artists that look suspiciously like ghost factories.</p>
+
+  <div class="callout green">
+    <strong>In one sentence:</strong> GhostTrack looks at 7 different clues about a music artist and decides whether they're a real musician or a fraud bot generating fake songs for money.
+  </div>
+
+  <h2>How Does It Work? (Simple Version)</h2>
+
+  <div class="flow-diagram">
+    <div class="flow-box">
+      <div class="icon">🎵</div>
+      <div>Artist on Spotify</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="icon">🔍</div>
+      <div>7 Checks</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="icon">🧠</div>
+      <div>AI Analysis</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box green">
+      <div class="icon">✅</div>
+      <div>REAL</div>
+    </div>
+    <span style="color:#555;padding:0 0.5rem;font-size:1.5rem;">/</span>
+    <div class="flow-box red">
+      <div class="icon">👻</div>
+      <div>GHOST</div>
+    </div>
+  </div>
+
+  <p>Think of it like a doctor running tests. One unusual test result alone might not mean much. But when <em>all seven tests</em> come back abnormal — that's when you know something is wrong.</p>
+
+  <h2>What Did We Study?</h2>
+  <p>We looked at 4 artists with known histories:</p>
+
+  <table>
+    <thead>
+      <tr><th>Artist</th><th>Status</th><th>Why They're Known</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Relaxing White Noise</strong></td>
+        <td><span class="badge ghost">Ghost</span></td>
+        <td>Linked to Michael Smith fraud case; thousands of bot-streamed tracks</td>
+      </tr>
+      <tr>
+        <td><strong>Meditation Relax Club</strong></td>
+        <td><span class="badge ghost">Ghost</span></td>
+        <td>Investigated by Dagens Nyheter; 95% of albums uploaded same-day batches</td>
+      </tr>
+      <tr>
+        <td><strong>Calmo</strong></td>
+        <td><span class="badge suspicious">Suspicious</span></td>
+        <td>Shares production companies with known ghost artists</td>
+      </tr>
+      <tr>
+        <td><strong>Nils Frahm</strong></td>
+        <td><span class="badge organic">Organic</span></td>
+        <td>Award-winning German neo-classical pianist; Pitchfork 8.5/10 reviews</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Project by the Numbers</h2>
+  <div class="stat-row">
+    <div class="stat-box"><div class="num">7</div><div class="label">Detection Signals</div></div>
+    <div class="stat-box"><div class="num">114K</div><div class="label">Songs Analyzed</div></div>
+    <div class="stat-box"><div class="num">65</div><div class="label">Artists in AI Model</div></div>
+    <div class="stat-box"><div class="num">100%</div><div class="label">Test Accuracy</div></div>
+    <div class="stat-box"><div class="num">10</div><div class="label">Research Exercises</div></div>
+    <div class="stat-box"><div class="num">3</div><div class="label">Databases Used</div></div>
+  </div>
+
+  <h2>Explore the Guide</h2>
+  <div class="card-grid">
+    <a href="how-it-works.html" style="text-decoration:none">
+      <div class="card">
+        <h3>🔍 How It Works</h3>
+        <p>The big picture — what happens from input to output, and why 7 signals matter more than one.</p>
+      </div>
+    </a>
+    <a href="signals.html" style="text-decoration:none">
+      <div class="card">
+        <h3>📡 The 7 Signals</h3>
+        <p>Every clue explained: what it detects, real numbers, and a plain-English analogy for each one.</p>
+      </div>
+    </a>
+    <a href="models.html" style="text-decoration:none">
+      <div class="card">
+        <h3>🧠 AI Models</h3>
+        <p>What is a neural network? What is a graph? How did we train our AI to spot ghost artists?</p>
+      </div>
+    </a>
+    <a href="frontend.html" style="text-decoration:none">
+      <div class="card">
+        <h3>🌐 Web App</h3>
+        <p>Every page of the GhostTrack website explained — what it shows and how to use it.</p>
+      </div>
+    </a>
+    <a href="data.html" style="text-decoration:none">
+      <div class="card">
+        <h3>📦 The Data</h3>
+        <p>Where the data comes from, what the database looks like, and every processed file explained.</p>
+      </div>
+    </a>
+    <a href="notebooks.html" style="text-decoration:none">
+      <div class="card">
+        <h3>📓 Notebooks</h3>
+        <p>All 10 research exercises explained step by step — what we asked, what we found, and what it means.</p>
+      </div>
+    </a>
+    <a href="code-tour.html" style="text-decoration:none">
+      <div class="card">
+        <h3>🗂️ Code Tour</h3>
+        <p>Every single file in the project explained: what it does, who uses it, and why it exists.</p>
+      </div>
+    </a>
+  </div>
+
+  <h2>Who Is This Guide For?</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>🧒 Total Beginners</h3>
+      <p>Never coded before? Every technical term is explained in plain English first. Look for the blue "Think of it like…" boxes.</p>
+    </div>
+    <div class="card">
+      <h3>💻 Student Coders</h3>
+      <p>Learning Python, data science, or ML? This project shows real-world application of everything you're studying — pandas, scikit-learn, PyTorch, FastAPI.</p>
+    </div>
+    <div class="card">
+      <h3>🎓 Researchers</h3>
+      <p>Want the numbers? Every page has exact metrics, thresholds, and statistical findings from the study. See also the <a href="../paper/SUPPLEMENTARY_MATERIALS.md">Supplementary Materials</a>.</p>
+    </div>
+  </div>
+
+  <div class="callout yellow" style="margin-top:3rem;">
+    <strong>How to run it yourself:</strong> See <a href="code-tour.html#running">Code Tour → Running the Project</a> for step-by-step setup instructions.
+  </div>
+
+</div>
+</body>
+</html>

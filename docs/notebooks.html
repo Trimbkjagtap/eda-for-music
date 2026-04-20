@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — Notebooks</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.nb-card {
+  border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.nb-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.nb-num {
+  width: 56px; height: 56px; border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.1rem; font-weight: 900; flex-shrink: 0;
+  background: #0d1a10; border: 2px solid #00ff88; color: #00ff88;
+}
+.nb-header h2 { border: none; margin: 0; font-size: 1.3rem; }
+.nb-subtitle { color: #888; font-size: 0.88rem; margin-bottom: 1rem; }
+.nb-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.75rem 0; font-size: 0.82rem; }
+.nb-tag { background: #111; border: 1px solid #333; border-radius: 4px; padding: 0.2em 0.6em; color: #888; }
+.nb-tag.signal { border-color: #00ff8844; color: #00ff88; background: #0d1a10; }
+.nb-tag.figure { border-color: #4da6ff44; color: #4da6ff; background: #0d0d1a; }
+.nb-finding { background: #0d1a10; border-left: 3px solid #00ff88; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin: 0.75rem 0; font-size: 0.9rem; color: #a0e8b0; }
+.nb-tip { background: #1a1200; border-left: 3px solid #f0b429; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin: 0.75rem 0; font-size: 0.88rem; color: #c0a060; }
+.nb-question { font-size: 1.05rem; font-style: italic; color: #ccc; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html" class="active">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Notebooks</div>
+  <h1>The 10 Research Exercises</h1>
+  <p class="section-intro">Each Jupyter notebook is one self-contained exercise that answers a specific research question. They build on each other — work through them in order for the clearest understanding.</p>
+
+  <div class="callout yellow">
+    <strong>What is a Jupyter notebook?</strong> It's a document that mixes text explanations with runnable Python code and live output (charts, tables). Open them with <code>jupyter notebook</code> in the project root. Run each cell top-to-bottom.
+  </div>
+
+  <!-- EX 1 -->
+  <div class="nb-card" id="ex1">
+    <div class="nb-header">
+      <div class="nb-num">01</div>
+      <div>
+        <h2>Catalog Coherence — Audio Variance</h2>
+        <div class="nb-subtitle"><code>notebooks/01_catalog_coherence.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">Signal 1</span>
+      <span class="nb-tag figure">fig1_catalog_coherence.png</span>
+      <span class="nb-tag">Kaggle dataset</span>
+      <span class="nb-tag">PCA</span>
+    </div>
+
+    <p class="nb-question">"Do ghost artists produce songs that all sound identical to each other?"</p>
+
+    <p><strong>Method:</strong> Load the Kaggle dataset. For each artist, compute the total variance across 4 audio features (danceability, energy, valence, acousticness). Run PCA (Principal Component Analysis) to reduce 4 features to 2 dimensions for visualization. Draw a scatter plot with 1-sigma confidence ellipses around each artist's tracks.</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> Ghost artists have variance 12.5× lower than organic artists (p &lt; 0.001). On the PCA scatter plot, ghost artist tracks cluster in a tiny blob in one corner; organic artists spread across a wide ellipse.
+    </div>
+
+    <p><strong>Key numbers:</strong></p>
+    <ul>
+      <li>Ghost artist mean total variance: ~0.009–0.013</li>
+      <li>Organic artist mean total variance: ~0.085–0.183</li>
+      <li>Threshold chosen: variance &lt; 0.050 = suspicious</li>
+    </ul>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> PCA sounds scary but the intuition is simple: we have 4 numbers per track (danceability, energy, valence, acousticness), and we want to draw them in 2D. PCA finds the 2 "directions" that preserve the most variation — essentially compressing 4D data into 2D without losing too much information.
+    </div>
+  </div>
+
+  <!-- EX 2 -->
+  <div class="nb-card" id="ex2">
+    <div class="nb-header">
+      <div class="nb-num">02</div>
+      <div>
+        <h2>Playlist Entropy — Aesthetic Coherence</h2>
+        <div class="nb-subtitle"><code>notebooks/02_playlist_entropy.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">Signal 2</span>
+      <span class="nb-tag figure">fig2_playlist_entropy.png</span>
+      <span class="nb-tag">Spotify API</span>
+      <span class="nb-tag">Shannon Entropy</span>
+    </div>
+
+    <p class="nb-question">"Do playlists that ghost artists target have unnaturally low diversity?"</p>
+
+    <p><strong>Method:</strong> Fetch 3 playlist types from Spotify: editorial (curated by Spotify), fan-created (user-made), and ghost-suspect (ambient/relaxation playlists where ghost artists concentrate). For each playlist, compute Shannon Entropy of the audio features across all tracks.</p>
+
+    <p><strong>What is Shannon Entropy?</strong> A number measuring diversity. High entropy = high variety. Low entropy = everything sounds the same. Formula: <code>H = -Σ p_i × log₂(p_i)</code></p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> Ghost-suspect playlists have lower entropy (H ≈ 2.51) than fan playlists (H ≈ 2.89). Ghost artists deliberately target these low-diversity playlists because their monotonous output fits perfectly and goes unnoticed.
+    </div>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> Think of entropy like a fruit salad. A salad with 5 different fruits has high entropy. A bowl of only apples has low entropy. Ghost artist playlists are the all-apple bowl.
+    </div>
+  </div>
+
+  <!-- EX 3 -->
+  <div class="nb-card" id="ex3">
+    <div class="nb-header">
+      <div class="nb-num">03</div>
+      <div>
+        <h2>ISRC Join — Production Company Network</h2>
+        <div class="nb-subtitle"><code>notebooks/03_isrc_join.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">Signal 3</span>
+      <span class="nb-tag figure">fig3_isrc_join.png + bipartite_interactive.html</span>
+      <span class="nb-tag">Neo4j</span>
+      <span class="nb-tag">Bipartite Graph</span>
+    </div>
+
+    <p class="nb-question">"Can we find the production companies behind ghost artists by tracing ISRC codes?"</p>
+
+    <p><strong>Method:</strong> Query Neo4j for all tracks and their ISRC codes. Extract the registrant code (characters 3–5 of the ISRC). Build a <em>bipartite graph</em>: artists on one side, production companies on the other. Draw edges where an artist has tracks registered by that company.</p>
+
+    <p><strong>What is an ISRC?</strong> International Standard Recording Code — a unique identifier embedded in every published song. Format: <code>DE-A4X-21-00001</code>. The middle 3 letters identify the registrant (production company).</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> In our 4-artist seed set, no production companies are shared between artists. This is expected — sophisticated fraud rings use separate registrants per artist to avoid exactly this pattern. The signal becomes powerful at scale (hundreds of artists).
+    </div>
+
+    <div class="nb-tip">
+      <strong>Common mistake:</strong> Students often expect to find shared ISRC prefixes immediately. Don't be disappointed when you don't — this is the correct result for our small seed set. The graph is still valuable for visualizing concentration within each artist.
+    </div>
+  </div>
+
+  <!-- EX 4 -->
+  <div class="nb-card" id="ex4">
+    <div class="nb-header">
+      <div class="nb-num">04</div>
+      <div>
+        <h2>Bipartite Neighborhood — HHI Concentration</h2>
+        <div class="nb-subtitle"><code>notebooks/04_bipartite_neighborhood.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">Signal 6</span>
+      <span class="nb-tag figure">fig4_bipartite_neighborhood.png</span>
+      <span class="nb-tag">Neo4j</span>
+      <span class="nb-tag">HHI Formula</span>
+    </div>
+
+    <p class="nb-question">"Is one production company monopolizing a ghost artist's catalog?"</p>
+
+    <p><strong>Method:</strong> For each artist in Neo4j, compute how many tracks are registered by each production company. Then calculate HHI: <code>Σ(fraction²)</code> for each company. A single company controlling everything = HHI near 1.0 (monopoly). Equal distribution = HHI near 0.0.</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> RWN HHI = 0.88 (one German company registered 79% of all tracks). Nils Frahm HHI = 0.00 (tracks distributed across multiple labels). This was the single most discriminative signal in the entire study.
+    </div>
+
+    <p><strong>Real numbers:</strong></p>
+    <table>
+      <thead><tr><th>Artist</th><th>HHI</th><th>Interpretation</th></tr></thead>
+      <tbody>
+        <tr><td>Relaxing White Noise</td><td>0.88</td><td>Near-monopoly by one German registrant</td></tr>
+        <tr><td>Meditation Relax Club</td><td>0.66</td><td>High concentration, one Italian company dominates</td></tr>
+        <tr><td>Calmo</td><td>0.45</td><td>Moderate concentration, 4 companies</td></tr>
+        <tr><td>Nils Frahm</td><td>0.00</td><td>Independent — own label, no concentration</td></tr>
+      </tbody>
+    </table>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> HHI is the same formula used by economists to detect monopolies (e.g., the US Department of Justice uses it for antitrust analysis). A score above 0.25 is considered "highly concentrated" in economics. Ghost artists score 2–4× above that threshold.
+    </div>
+  </div>
+
+  <!-- EX 5 -->
+  <div class="nb-card" id="ex5">
+    <div class="nb-header">
+      <div class="nb-num">05</div>
+      <div>
+        <h2>Recommendation Walk — Release Cadence</h2>
+        <div class="nb-subtitle"><code>notebooks/05_recommendation_walk.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">Signal 2</span>
+      <span class="nb-tag figure">fig5_recommendation_walk.png + fig5b_hop_decay.png</span>
+      <span class="nb-tag">Spotify API</span>
+      <span class="nb-tag">Closure Rate</span>
+    </div>
+
+    <p class="nb-question">"Do ghost artists upload their entire catalog in sudden bursts rather than releasing music gradually over time?"</p>
+
+    <p><strong>Method:</strong> Fetch all album release dates for each artist. Sort them in time order. Compute consecutive gaps (days between each release and the next). Key metric: <strong>closure rate</strong> = fraction of consecutive pairs where gap ≤ 1 day. Also compute burst ratio (max releases in any 7-day window ÷ total releases) and hop decay (how many new release dates appear in each time quartile).</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> Meditation Relax Club closure rate = 95% — 95% of their albums were released within 1 day of the previous one. This is physically impossible for a human musician writing and recording music. Nils Frahm: 0% closure, with median gap of 98 days between releases.
+    </div>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> The "recommendation walk" in the notebook title refers to how we traverse the Spotify recommendation graph to discover connected artists — but the core output is simply the release date analysis. Don't get confused by the name.
+    </div>
+  </div>
+
+  <!-- EX 6 -->
+  <div class="nb-card" id="ex6">
+    <div class="nb-header">
+      <div class="nb-num">06</div>
+      <div>
+        <h2>Signal Testing — All 7 Signals on 4 Artists</h2>
+        <div class="nb-subtitle"><code>notebooks/06_signal_testing.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag signal">All 7 Signals</span>
+      <span class="nb-tag figure">fig6_signal_radar.png + fig6b_signal_heatmap.png</span>
+      <span class="nb-tag">All data sources</span>
+    </div>
+
+    <p class="nb-question">"When we run all 7 signals simultaneously, which ones are most useful for separating ghost from organic artists?"</p>
+
+    <p><strong>Method:</strong> Run each signal module on all 4 study artists. Normalize scores to [0,1]. Compute discrimination gap (difference between mean ghost score and organic score) for each signal. Visualize as a radar chart (spider web) and a heatmap.</p>
+
+    <div class="nb-finding">
+      <strong>Key findings:</strong><br>
+      — S6 (HHI) most discriminative: gap = 0.574<br>
+      — S4 (Catalog Density): gap = 0.477<br>
+      — S2 (Cadence Closure): gap = 0.389<br>
+      — Any two-signal combination from {S2, S4, S6} achieves 100% accuracy<br>
+      — S7 surprise: RWN has 353M YouTube views — high cross-platform is not a legitimate indicator in the ambient genre
+    </div>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> The radar chart is a 7-sided spider web. The further out from the center on any "spoke," the higher the suspicion score for that signal. Ghost artists should have a large polygon shape; organic artists should have a tiny one.
+    </div>
+  </div>
+
+  <!-- EX 7 -->
+  <div class="nb-card" id="ex7">
+    <div class="nb-header">
+      <div class="nb-num">07</div>
+      <div>
+        <h2>Agent Crew — Autonomous Pipeline Test</h2>
+        <div class="nb-subtitle"><code>notebooks/07_agent_crew_test.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag">CrewAI</span>
+      <span class="nb-tag">LLM Integration</span>
+      <span class="nb-tag">Experimental</span>
+    </div>
+
+    <p class="nb-question">"Can we build an autonomous AI crew that runs the entire analysis pipeline without human guidance?"</p>
+
+    <p><strong>Method:</strong> Uses CrewAI to orchestrate 4 specialized agents: a Crawler (fetches data), a Fingerprint Analyst (computes signals), a Graph Builder (analyzes ISRC network), and a Verdict Agent (synthesizes a final report). Each agent has a role, goal, and backstory, and they pass data to each other in sequence.</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> The pipeline mode (no LLM calls) runs correctly and efficiently (2–5 seconds per artist). The full CrewAI mode with GPT-4o adds a natural language synthesis layer but is much slower and more expensive. Both produce correct verdicts on the 4 study artists.
+    </div>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> CrewAI is a framework for building teams of AI agents where each agent has a specific job. It's like a company org chart, but for AIs. You don't need to understand it deeply — the core analysis in this project works without it.
+    </div>
+  </div>
+
+  <!-- EX 8 -->
+  <div class="nb-card" id="ex8">
+    <div class="nb-header">
+      <div class="nb-num">08</div>
+      <div>
+        <h2>GNN Training — GAT vs GCN</h2>
+        <div class="nb-subtitle"><code>notebooks/08_gnn_training.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag">PyTorch Geometric</span>
+      <span class="nb-tag figure">fig7_gnn_performance.png</span>
+      <span class="nb-tag">GNN</span>
+      <span class="nb-tag">65 artists</span>
+    </div>
+
+    <p class="nb-question">"Can a Graph Neural Network that understands artist relationships achieve better accuracy than individual signals?"</p>
+
+    <p><strong>Method:</strong> Build a 65-node graph (14 ghost, 51 organic). Each node has 8 features (the signal scores + metadata). Add edges: ghost artists fully connected to each other; organic artists connected via k-NN (k=5) based on feature similarity. Train GAT and GCN models. Evaluate on held-out test set. Plot training curves, ROC curve, confusion matrix.</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong> Both GAT and GCN achieve 100% test accuracy (6/6 ghost and 7/7 organic correctly classified, zero errors). Feature importance analysis shows all 8 features contribute. Attention weight analysis shows ghost artists attend heavily to other ghost artists — the network topology is a powerful signal in itself.
+    </div>
+
+    <div class="nb-tip">
+      <strong>Beginner tip:</strong> Don't be alarmed by 100% accuracy — it's partly because the graph was carefully constructed and the test set is very small (13 examples). Read the limitations section for an honest discussion of what this does and doesn't mean.
+    </div>
+  </div>
+
+  <!-- EX 9 -->
+  <div class="nb-card" id="ex9">
+    <div class="nb-header">
+      <div class="nb-num">09</div>
+      <div>
+        <h2>Limitations Analysis</h2>
+        <div class="nb-subtitle"><code>notebooks/09_limitations.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag">Research integrity</span>
+      <span class="nb-tag">API restrictions</span>
+    </div>
+
+    <p class="nb-question">"What are the known limitations of this framework and where might it fail?"</p>
+
+    <p>Documents the 8 known limitations (L1–L8) of the framework:</p>
+    <table>
+      <thead><tr><th>ID</th><th>Limitation</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr><td>L1</td><td>Only 3 confirmed ghost artists (journalist-sourced)</td><td>Small ground truth — overfitting risk</td></tr>
+        <tr><td>L2</td><td>Spotify audio features endpoint restricted Feb 2026</td><td>S1 uses Kaggle proxy, not artist-specific data</td></tr>
+        <tr><td>L3</td><td>Kaggle ghost candidates are heuristic, not confirmed</td><td>GNN label quality uncertain for 11/14 ghost nodes</td></tr>
+        <tr><td>L4</td><td>No cross-artist ISRC sharing in seed set</td><td>S3 is a null result at this scale</td></tr>
+        <tr><td>L5</td><td>Results specific to ambient/relaxation genre</td><td>May not generalize without recalibration</td></tr>
+        <tr><td>L6</td><td>GNN graph is synthetic</td><td>100% accuracy reflects construction, not real generalization</td></tr>
+        <tr><td>L7</td><td>YouTube search may return wrong video</td><td>View count is approximate</td></tr>
+        <tr><td>L8</td><td>Spotify developer rate limit ~25 API calls/day</td><td>Live analysis is throttled</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- EX 10 -->
+  <div class="nb-card" id="ex10">
+    <div class="nb-header">
+      <div class="nb-num">10</div>
+      <div>
+        <h2>Cross-Exercise Integration</h2>
+        <div class="nb-subtitle"><code>notebooks/10_cross_exercise_integration.ipynb</code></div>
+      </div>
+    </div>
+    <div class="nb-meta">
+      <span class="nb-tag figure">fig8_convergence.png</span>
+      <span class="nb-tag">All signals</span>
+      <span class="nb-tag">Final synthesis</span>
+    </div>
+
+    <p class="nb-question">"When we combine all 10 exercises into one unified analysis, do the signals converge on the same artists?"</p>
+
+    <p><strong>Method:</strong> Build the convergence matrix: for each artist × exercise, flag whether that exercise detected the artist as suspicious. Count flags per artist. Compute composability accuracy (what accuracy do you get with 1 signal vs. 2 vs. all 6?).</p>
+
+    <div class="nb-finding">
+      <strong>Key finding:</strong><br>
+      — RWN: 5/5 flags — all 5 exercises flag it simultaneously<br>
+      — MRC: 4/5 flags<br>
+      — Calmo: 3/5 flags<br>
+      — Nils Frahm: 0/5 flags — completely clean<br>
+      — Any 2-signal combination from the top 3 achieves 100% accuracy<br>
+      — The convergence <em>is</em> the evidence — independent signals pointing to the same conclusion
+    </div>
+
+    <div class="nb-tip">
+      <strong>Why this matters:</strong> This is the strongest argument in the entire research. When 5 completely independent measurements — different algorithms, different data sources, different mathematical approaches — all point to the same artists being fraudulent, that's not coincidence. That's detection.
+    </div>
+  </div>
+
+  <div class="callout green">
+    <strong>Run all notebooks in order:</strong>
+    <pre style="margin:0.5rem 0 0;">jupyter nbconvert --to notebook --execute notebooks/01_catalog_coherence.ipynb
+# ... repeat for 02 through 10 ...</pre>
+    Or open <code>jupyter notebook</code> in the project root and run them interactively.
+  </div>
+
+</div>
+</body>
+</html>

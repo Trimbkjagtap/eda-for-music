@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostTrack Docs — 7 Signals</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.signal-header {
+  display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+}
+.signal-num {
+  width: 52px; height: 52px; border-radius: 10px; display: flex;
+  align-items: center; justify-content: center; font-size: 1.4rem;
+  font-weight: 900; flex-shrink: 0; border: 2px solid;
+}
+.signal-num.s1 { background:#1a0d0d; border-color:#e74c3c; color:#e74c3c; }
+.signal-num.s2 { background:#0d1a0d; border-color:#00ff88; color:#00ff88; }
+.signal-num.s3 { background:#0d0d1a; border-color:#4da6ff; color:#4da6ff; }
+.signal-num.s4 { background:#1a0d1a; border-color:#b088f9; color:#b088f9; }
+.signal-num.s5 { background:#1a1200; border-color:#f0b429; color:#f0b429; }
+.signal-num.s6 { background:#001a1a; border-color:#00e5ff; color:#00e5ff; }
+.signal-num.s7 { background:#1a1a0d; border-color:#c8e63d; color:#c8e63d; }
+.signal-section { border: 1px solid #2a2a2a; border-radius:12px; padding:1.5rem; margin-bottom:2rem; }
+.signal-section h2 { border:none; margin:0 0 0.25rem; font-size:1.4rem; }
+.signal-subtitle { color:#888; font-size:0.92rem; margin-bottom:1.25rem; }
+.score-row { display:grid; grid-template-columns:180px 1fr 70px; gap:0.75rem; align-items:center; margin:0.3rem 0; font-size:0.88rem; }
+.score-artist { color:#aaa; }
+.bar-bg { height:12px; background:#1a1a1a; border-radius:6px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:6px; }
+.score-val { text-align:right; font-weight:700; }
+.data-tag { display:inline-block; background:#111; border:1px solid #333; border-radius:4px; padding:0.15em 0.6em; font-size:0.8rem; color:#888; margin:0.15em; }
+.strength-badge { font-size:0.75rem; font-weight:700; padding:0.2em 0.6em; border-radius:4px; }
+.strength-high { background:#0d2a0d; color:#00ff88; }
+.strength-medium { background:#2a1a00; color:#f0b429; }
+.strength-low { background:#1a1a2a; color:#888; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">👻 GhostTrack Docs</div>
+  <a href="index.html">Home</a>
+  <a href="how-it-works.html">How It Works</a>
+  <a href="signals.html" class="active">7 Signals</a>
+  <a href="models.html">AI Models</a>
+  <a href="frontend.html">Web App</a>
+  <a href="data.html">Data</a>
+  <a href="notebooks.html">Notebooks</a>
+  <a href="code-tour.html">Code Tour</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › 7 Signals</div>
+  <h1>The 7 Detection Signals</h1>
+  <p class="section-intro">Each signal is an independent test that asks one specific question about an artist. Scores run from 0.0 (completely normal) to 1.0 (maximally suspicious). Click any signal to learn how it works, what data it uses, and what the numbers mean.</p>
+
+  <!-- S1 -->
+  <div class="signal-section" id="s1">
+    <div class="signal-header">
+      <div class="signal-num s1">S1</div>
+      <div>
+        <h2>Audio Feature Variance</h2>
+        <div class="signal-subtitle">Do all this artist's songs sound identical? · <span class="strength-badge strength-high">Strong Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like a cookie factory vs. a home baker.</strong><br>
+      An industrial cookie factory produces thousands of identical cookies — same shape, same size, every time. A home baker makes different shapes, sizes, and flavors. Ghost artist factories are like cookie factories: they use the same AI settings to generate every track, so all the songs have nearly identical audio profiles.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>Spotify assigns every track 6 numeric features: <strong>danceability</strong>, <strong>energy</strong>, <strong>valence</strong> (happiness), <strong>acousticness</strong>, <strong>speechiness</strong>, and <strong>instrumentalness</strong>. For a real artist, these vary a lot across their catalog — their slow songs are very different from their dance tracks. For ghost artists, the values stay almost constant because it's the same AI generating everything.</p>
+    <p>We compute the <em>total variance</em> across all 6 features: <code>var(danceability) + var(energy) + var(valence) + var(acousticness)</code></p>
+
+    <h4>Real numbers from the study</h4>
+    <div style="margin:0.75rem 0 1.25rem;">
+      <div class="score-row">
+        <div class="score-artist">Relaxing White Noise</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:8%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">0.009</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Meditation Relax Club</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:11%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">0.011</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Calmo</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:13%;background:#f0b429;"></div></div>
+        <div class="score-val" style="color:#f0b429;">0.013</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Nils Frahm (organic)</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:100%;background:#00ff88;"></div></div>
+        <div class="score-val" style="color:#00ff88;">0.183</div>
+      </div>
+    </div>
+    <div class="callout green"><strong>Key finding:</strong> Ghost artist variance is <strong>12–20× lower</strong> than organic artists (p &lt; 0.001). Threshold: variance &lt; 0.050 → suspicious.</div>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">Kaggle dataset (114K tracks)</span> — used as a substitute for the Spotify audio-features API (restricted April 2026)</p>
+
+    <h4>The code</h4>
+    <pre>total_variance = df[['danceability','energy','valence','acousticness']].var().sum()
+# Ghost threshold: total_variance &lt; 0.050</pre>
+
+    <p><strong>File:</strong> <code>src/signals/audio_similarity.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex1">Notebook 01</a></p>
+  </div>
+
+  <!-- S2 -->
+  <div class="signal-section" id="s2">
+    <div class="signal-header">
+      <div class="signal-num s2">S2</div>
+      <div>
+        <h2>Release Cadence Synchrony</h2>
+        <div class="signal-subtitle">Are hundreds of songs released on the same day? · <span class="strength-badge strength-high">Strongest Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like a bookstore vs. a book club.</strong><br>
+      A regular author publishes one book every year or two — carefully written, edited, promoted. A ghost writing factory dumps 50 books onto Amazon in a single weekend. Ghost artist factories do the same: they batch-upload hundreds of AI-generated tracks all at once, so the release dates cluster tightly.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>We sort all of an artist's albums/tracks by release date, then measure consecutive gaps (time between releases). The key metric is the <strong>closure rate</strong>: the percentage of consecutive release pairs where the gap is ≤ 1 day.</p>
+    <p>A real artist might release an album every 6–18 months. A ghost factory dumps 100 tracks in a weekend — most consecutive pairs have a 0-day gap.</p>
+
+    <h4>Real numbers from the study</h4>
+    <div style="margin:0.75rem 0 1.25rem;">
+      <div class="score-row">
+        <div class="score-artist">Meditation Relax Club</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:95%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">95%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Relaxing White Noise</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:81%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">81%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Calmo</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:32%;background:#f0b429;"></div></div>
+        <div class="score-val" style="color:#f0b429;">32%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Nils Frahm (organic)</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:1%;background:#00ff88;"></div></div>
+        <div class="score-val" style="color:#00ff88;">0%</div>
+      </div>
+    </div>
+    <div class="callout green"><strong>Key finding:</strong> MRC uploads 95% of its catalog in same-day batches. Nils Frahm has <em>zero</em> same-day pairs — every album was released months apart. Threshold: closure rate &gt; 20% → suspicious.</div>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">Spotify API (album release dates)</span> <span class="data-tag">Neo4j (cached)</span></p>
+
+    <h4>The code</h4>
+    <pre>gaps = np.diff([d.toordinal() for d in sorted_dates])
+closure_rate = (gaps == 0).sum() / len(gaps)
+# 0.81 for RWN, 0.95 for MRC, 0.000 for Nils Frahm</pre>
+
+    <p><strong>File:</strong> <code>src/signals/cadence_sync.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex5">Notebook 05</a></p>
+  </div>
+
+  <!-- S3 -->
+  <div class="signal-section" id="s3">
+    <div class="signal-header">
+      <div class="signal-num s3">S3</div>
+      <div>
+        <h2>ISRC Attribution / Playlist Co-occurrence</h2>
+        <div class="signal-subtitle">Who registered this music, and are there network connections? · <span class="strength-badge strength-medium">Context Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like tracking shell companies.</strong><br>
+      Every published song has an ISRC code — like a serial number. The first 5 characters identify the registrant (record label or production company). If 10 different "artists" all have tracks registered by the same obscure German company, that's suspicious — a real independent artist picks their own registrant.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>An <strong>ISRC code</strong> looks like: <code>DE-A4X-21-00001</code></p>
+    <ul>
+      <li><code>DE</code> = Country (Germany)</li>
+      <li><code>A4X</code> = Registrant (the production company)</li>
+      <li><code>21</code> = Year 2021</li>
+      <li><code>00001</code> = Serial number</li>
+    </ul>
+    <p>We look at whether multiple "different" artists share the same ISRC registrant — which would mean the same production company is behind them all.</p>
+
+    <h4>Findings</h4>
+    <p>In our 4-artist study set, no shared registrants were found — each artist used their own companies. This is expected: sophisticated fraud rings use separate registrants per artist to avoid detection. This signal becomes powerful when analyzing <em>hundreds</em> of artists, where shared registrants form visible clusters.</p>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">Neo4j graph database</span> <span class="data-tag">Spotify ISRC metadata</span></p>
+
+    <p><strong>File:</strong> <code>src/signals/playlist_cooccurrence.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex3">Notebook 03</a></p>
+  </div>
+
+  <!-- S4 -->
+  <div class="signal-section" id="s4">
+    <div class="signal-header">
+      <div class="signal-num s4">S4</div>
+      <div>
+        <h2>Catalog Density / Upload Velocity</h2>
+        <div class="signal-subtitle">How fast is this artist uploading? · <span class="strength-badge strength-high">Strong Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like words per minute.</strong><br>
+      A professional typist does ~80 words per minute. If someone claims to type 2,000 words per minute, you know something's automated. Ghost artist factories produce tracks at inhuman speed — sometimes hundreds per month — because the songs are computer-generated.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>We compute the artist's <strong>upload velocity</strong>: total tracks ÷ career span in days = tracks per day. A prolific real artist might do 0.01–0.05 tracks/day. Ghost factories often exceed 0.5–2.0 tracks/day.</p>
+
+    <h4>Findings</h4>
+    <table>
+      <thead><tr><th>Artist</th><th>Total Tracks</th><th>Career Span</th><th>Tracks/Day</th></tr></thead>
+      <tbody>
+        <tr><td>Relaxing White Noise</td><td>280+</td><td>~3 years</td><td>0.25+</td></tr>
+        <tr><td>Meditation Relax Club</td><td>170+</td><td>~2 years</td><td>0.23+</td></tr>
+        <tr><td>Nils Frahm</td><td>~60</td><td>15 years</td><td>0.011</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout yellow"><strong>Caution:</strong> Some legitimate prolific artists (electronic, beat producers) may have high upload rates. This signal works best in combination with S2 and S6.</div>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">Spotify API (track count + dates)</span> <span class="data-tag">Neo4j (cached)</span></p>
+
+    <p><strong>File:</strong> <code>src/signals/follower_ratio.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex6">Notebook 06</a></p>
+  </div>
+
+  <!-- S5 -->
+  <div class="signal-section" id="s5">
+    <div class="signal-header">
+      <div class="signal-num s5">S5</div>
+      <div>
+        <h2>Metadata / Title Similarity</h2>
+        <div class="signal-subtitle">Are the track titles suspiciously similar to each other? · <span class="strength-badge strength-medium">Strategy-Specific Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like spam email subject lines.</strong><br>
+      Spammers generate thousands of emails with titles like "Special Offer for You", "Amazing Deal Today", "Great Savings Now" — they're all semantically the same even if the words vary. Ghost artists that use title templates ("Relaxing Rain Sounds Vol. 1", "Relaxing Rain Sounds Vol. 2", etc.) leave the same fingerprint.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>We use a <strong>sentence-transformers</strong> AI model (<code>all-MiniLM-L6-v2</code>) to convert every track title into a vector of numbers that captures its meaning. Then we measure how similar all the titles are to each other using <strong>cosine similarity</strong> (a number from 0 = completely different to 1 = identical meaning).</p>
+    <p>The mean pairwise cosine across all track title pairs is the signal. Organic artists: ~0.16. Template-based ghosts: ~0.56+.</p>
+
+    <h4>Real numbers</h4>
+    <table>
+      <thead><tr><th>Artist</th><th>Mean Cosine</th><th>Strategy</th></tr></thead>
+      <tbody>
+        <tr><td>Relaxing White Noise</td><td>0.557</td><td>Template titles: "White Noise for Sleeping Vol. X"</td></tr>
+        <tr><td>Meditation Relax Club</td><td>0.217</td><td>Thematic but varied: catches less here</td></tr>
+        <tr><td>Calmo</td><td>0.275</td><td>Mixed strategy</td></tr>
+        <tr><td>Nils Frahm (organic)</td><td>~0.16</td><td>Artistic, varied titles</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout yellow"><strong>Nuance:</strong> S5 is a <em>strategy-specific</em> detector. It catches ghost artists that use rigid title templates (like RWN). Ghost artists that use more varied naming (like MRC) score lower. This is why you need multiple signals.</div>
+
+    <h4>The code</h4>
+    <pre>from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("all-MiniLM-L6-v2")
+embs = model.encode(titles, normalize_embeddings=True)
+sims = embs @ embs.T  # all pairwise cosines
+mean_cos = sims[np.triu_indices(n, k=1)].mean()
+# score = clip((mean_cos - 0.10) / 0.50, 0, 1)</pre>
+
+    <p><strong>File:</strong> <code>src/ingest/live_ingest.py</code> · available in Live Mode</p>
+  </div>
+
+  <!-- S6 -->
+  <div class="signal-section" id="s6">
+    <div class="signal-header">
+      <div class="signal-num s6">S6</div>
+      <div>
+        <h2>Graph Density / HHI Index</h2>
+        <div class="signal-subtitle">Is one production company behind everything? · <span class="strength-badge strength-high">Most Discriminative Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like market monopoly.</strong><br>
+      Economists use the Herfindahl-Hirschman Index (HHI) to measure market concentration. If one company controls 90% of a market, HHI is near 1.0 (monopoly). If 10 companies each have 10%, HHI is 0.10 (competitive). Ghost artists register almost all their tracks through one production company — near-monopoly HHI. Real artists spread across multiple labels over their career.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>Formula: <code>HHI = Σ(share_i²)</code> where share_i = fraction of tracks registered by company i.</p>
+    <p>Example: If an artist has 100 tracks, 85 registered by Company A and 15 by Company B:</p>
+    <pre>HHI = (85/100)² + (15/100)² = 0.7225 + 0.0225 = 0.745</pre>
+
+    <h4>Real numbers from the study</h4>
+    <div style="margin:0.75rem 0 1.25rem;">
+      <div class="score-row">
+        <div class="score-artist">Relaxing White Noise</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:88%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">0.88</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Meditation Relax Club</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:66%;background:#e74c3c;"></div></div>
+        <div class="score-val" style="color:#e74c3c;">0.66</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Calmo</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:45%;background:#f0b429;"></div></div>
+        <div class="score-val" style="color:#f0b429;">0.45</div>
+      </div>
+      <div class="score-row">
+        <div class="score-artist">Nils Frahm (organic)</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:1%;background:#00ff88;"></div></div>
+        <div class="score-val" style="color:#00ff88;">0.00</div>
+      </div>
+    </div>
+
+    <div class="callout green"><strong>Key finding:</strong> S6 had the largest discrimination gap of all 7 signals (gap = 0.574). RWN routes 79% of all tracks through a single German registrant. Nils Frahm's tracks come from his own indie label — no concentration at all. Threshold: HHI &gt; 0.40 → suspicious.</div>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">Neo4j bipartite graph (Artist ↔ ProductionCompany)</span> <span class="data-tag">ISRC prefix codes</span></p>
+
+    <p><strong>File:</strong> <code>src/signals/graph_density.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex4">Notebook 04</a></p>
+  </div>
+
+  <!-- S7 -->
+  <div class="signal-section" id="s7">
+    <div class="signal-header">
+      <div class="signal-num s7">S7</div>
+      <div>
+        <h2>Cross-Platform Discrepancy</h2>
+        <div class="signal-subtitle">Does this artist exist outside Spotify? · <span class="strength-badge strength-low">Supporting Signal</span></div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <strong>Think of it like a restaurant with no Google Maps listing.</strong><br>
+      A real restaurant exists on Google Maps, Yelp, TripAdvisor, Instagram, Facebook. A scam "restaurant" that only appears on one food delivery app is suspicious. Similarly, a real musician exists on YouTube, Apple Music, Bandcamp, SoundCloud. A ghost artist factory may only have a Spotify presence.
+    </div>
+
+    <h4>What it measures</h4>
+    <p>We check two things:</p>
+    <ol>
+      <li><strong>YouTube:</strong> Does a search for the artist name return a video? How many views?</li>
+      <li><strong>Apple Music / iTunes:</strong> Does the artist appear in an iTunes search?</li>
+    </ol>
+
+    <h4>Real numbers from the study</h4>
+    <table>
+      <thead><tr><th>Artist</th><th>YouTube Views</th><th>Apple Music</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Relaxing White Noise</td><td>353M views</td><td>Yes</td><td><span style="color:#f0b429;">⚠️ High views but still ghost</span></td></tr>
+        <tr><td>Meditation Relax Club</td><td>157M views</td><td>Yes</td><td><span style="color:#f0b429;">⚠️ Same</span></td></tr>
+        <tr><td>Calmo</td><td>319 views</td><td>No</td><td><span style="color:#e74c3c;">Very low presence</span></td></tr>
+        <tr><td>Nils Frahm</td><td>9M views</td><td>Yes</td><td><span style="color:#00ff88;">Expected organic range</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout red">
+      <strong>Important caveat:</strong> High YouTube views do NOT mean an artist is legitimate. Relaxing White Noise has 353 million views but is a confirmed fraud. Relaxation and white noise content naturally goes viral on YouTube regardless of origin. S7 is an <em>additional supporting signal</em>, not a disqualifying one.
+    </div>
+
+    <h4>Data source</h4>
+    <p><span class="data-tag">YouTube Data API v3</span> <span class="data-tag">iTunes Search API (free, no auth)</span></p>
+
+    <h4>The code</h4>
+    <pre># YouTube: search for artist name, get view count of top result
+yt_views = youtube_client.search_and_get_views(artist_name)
+
+# iTunes: check if artist appears in iTunes search
+itunes_present = apple_music_client.artist_exists(artist_name)</pre>
+
+    <p><strong>File:</strong> <code>src/signals/cross_platform.py</code> · <strong>Exercise:</strong> <a href="notebooks.html#ex6">Notebook 06</a></p>
+  </div>
+
+  <div class="callout green" style="margin-top:2rem;">
+    <strong>Want to see how these signals are combined into a final verdict?</strong> → <a href="how-it-works.html">See How It Works</a><br>
+    <strong>Want to understand the AI model that uses these as inputs?</strong> → <a href="models.html">See AI Models</a>
+  </div>
+
+</div>
+</body>
+</html>

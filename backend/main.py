@@ -152,8 +152,44 @@ async def analyze_artist(req: AnalyzeRequest):
     (not yet exposed via this endpoint).
     """
     from src.agents.crew import run_analysis
+    from src.graph.neo4j_client import Neo4jClient
 
     logger.info(f"POST /analyze — artist_id={req.artist_id}")
+
+    # Reject artists not in our dataset — avoids misleading "LIKELY ORGANIC" for unknown IDs
+    KNOWN_IDS = {
+        "6bo3atMVp3qFECNALVwq9N",  # Relaxing White Noise
+        "39t4EeLBfpT72UQJVkIeuj",  # Meditation Relax Club
+        "4Wx3ZL6d6p1gVMtwQ2YWsz",  # Calmo
+        "5gqhueRUZEa7VDnQt4HODp",  # Nils Frahm
+    }
+    artist_id = req.artist_id.strip()
+    if artist_id not in KNOWN_IDS:
+        # Also accept artists present in Neo4j
+        try:
+            neo4j = Neo4jClient()
+            rows = neo4j.run(
+                "MATCH (a:Artist {spotify_id: $id}) RETURN a.name AS name",
+                id=artist_id,
+            )
+            if not rows:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Artist '{artist_id}' is not in the GhostTrack dataset. "
+                        "This tool only analyzes the four artists in our study panel. "
+                        "Use one of the quick-pick buttons below the search box."
+                    ),
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Artist '{artist_id}' not found. Use one of the four study-panel artists."
+                ),
+            )
 
     try:
         result = run_analysis(
@@ -199,6 +235,56 @@ async def analyze_artist(req: AnalyzeRequest):
         rule_based_score=rule_score,
         gnn_score=gnn_score,
         gnn_available=gnn_available,
+    )
+
+
+@app.get("/search", summary="Search artists by name")
+async def search_artists(q: str, limit: int = 5):
+    """
+    Search Spotify for artists by name. Returns top matches with id, name, image.
+    """
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Query too short")
+    try:
+        from src.ingest.live_ingest import search_artist
+        results = search_artist(q.strip())
+        return {"results": results[:limit]}
+    except Exception as e:
+        logger.error(f"/search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/analyze-live", summary="Live analysis for any Spotify artist")
+async def analyze_live(req: AnalyzeRequest):
+    """
+    Run live 3-signal analysis (S2, S5, S7) for any artist.
+    Fetches albums/tracks from Spotify API in real time.
+    S1, S3, S4, S6 shown as unavailable (restricted endpoints).
+    """
+    logger.info(f"POST /analyze-live — artist_id={req.artist_id}")
+    try:
+        from src.ingest.live_ingest import analyze_live as _analyze_live
+        result = _analyze_live(
+            artist_id=req.artist_id,
+            artist_name=req.artist_name,
+            run_s7=req.run_cross_platform,
+        )
+    except Exception as e:
+        logger.error(f"/analyze-live failed for {req.artist_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return AnalyzeResponse(
+        artist_id=result["artist_id"],
+        artist_name=result["artist_name"],
+        signals=result.get("signal_scores", {}),
+        verdict_score=result.get("overall_score", 0.0),
+        verdict_label=result.get("verdict", "UNKNOWN"),
+        confidence=result.get("confidence", 0.0),
+        explanation=result.get("explanation", ""),
+        timing_seconds=result.get("timing", {}).get("total_seconds", 0.0),
+        rule_based_score=result.get("overall_score"),
+        gnn_score=None,
+        gnn_available=False,
     )
 
 

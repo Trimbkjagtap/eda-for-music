@@ -20,7 +20,7 @@ Methodology:
 Thresholds calibrated on seed set:
   MRC: 94.7% closure, RWN: 81.0% closure → GHOST
   Calmo: 32.4% closure → SUSPICIOUS
-  Nils Frahm: 3.6% closure → ORGANIC
+  Nils Frahm: 0.0% closure → ORGANIC
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ _KNOWN_CLOSURE = {
     "6bo3atMVp3qFECNALVwq9N": 0.810,   # Relaxing White Noise
     "39t4EeLBfpT72UQJVkIeuj": 0.947,   # Meditation Relax Club
     "4Wx3ZL6d6p1gVMtwQ2YWsz": 0.324,   # Calmo
-    "5gqhueRUZEa7VDnQt4HODp": 0.036,   # Nils Frahm
+    "5gqhueRUZEa7VDnQt4HODp": 0.000,   # Nils Frahm
 }
 
 # Walk metrics CSV path
