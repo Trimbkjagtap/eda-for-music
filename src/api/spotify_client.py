@@ -37,9 +37,10 @@ from src.utils.config import config
 from src.utils.rate_limiter import default_limiter, with_retry
 
 # Session-level API call counter and safety limit
+# Raised from 30 (notebook safety guard) to 500 for long-running web server use.
 _call_counter = 0
-_CALL_WARN_AT = 25   # warn loudly when approaching limit
-_CALL_LIMIT = 30     # hard stop — never exceed 30 live calls per session
+_CALL_WARN_AT = 450
+_CALL_LIMIT = 500
 
 
 def _checked_call(fn):

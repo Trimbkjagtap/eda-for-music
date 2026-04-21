@@ -10,16 +10,16 @@ const API = '';   // same origin; prefix all calls with /
 
 const KNOWN_ARTISTS = [
   { label: 'Relaxing White Noise (ghost)',    id: '6bo3atMVp3qFECNALVwq9N', name: 'Relaxing White Noise' },
-  { label: 'Meditation Relax Club (ghost)',   id: '3BqBPFLxBkzKQTkuBPGMNF', name: 'Meditation Relax Club' },
+  { label: 'Meditation Relax Club (ghost)',   id: '39t4EeLBfpT72UQJVkIeuj', name: 'Meditation Relax Club' },
   { label: 'Calmo (candidate)',               id: '4Wx3ZL6d6p1gVMtwQ2YWsz', name: 'Calmo' },
-  { label: 'Nils Frahm (organic)',            id: '5hVghJ3sCFHFJoLnSHySjL', name: 'Nils Frahm' },
+  { label: 'Nils Frahm (organic)',            id: '5gqhueRUZEa7VDnQt4HODp', name: 'Nils Frahm' },
 ];
 
 const CROSS_PLATFORM = [
   { name: 'Relaxing White Noise',  id: '6bo3atMVp3qFECNALVwq9N', yt: 353_775_028, apple: true,  verdict: 'LIKELY_GHOST',   s6: 0.716 },
-  { name: 'Meditation Relax Club', id: '3BqBPFLxBkzKQTkuBPGMNF', yt: 157_581_269, apple: true,  verdict: 'LIKELY_GHOST',   s6: 0.560 },
+  { name: 'Meditation Relax Club', id: '39t4EeLBfpT72UQJVkIeuj', yt: 157_581_269, apple: true,  verdict: 'LIKELY_GHOST',   s6: 0.560 },
   { name: 'Calmo',                 id: '4Wx3ZL6d6p1gVMtwQ2YWsz', yt: 155,         apple: false, verdict: 'SUSPICIOUS',     s6: 0.446 },
-  { name: 'Nils Frahm',            id: '5hVghJ3sCFHFJoLnSHySjL', yt: 9_107_596,  apple: true,  verdict: 'LIKELY_ORGANIC',  s6: 0.000 },
+  { name: 'Nils Frahm',            id: '5gqhueRUZEa7VDnQt4HODp', yt: 9_107_596,  apple: true,  verdict: 'LIKELY_ORGANIC',  s6: 0.000 },
 ];
 
 const FRAMEWORK_LAYERS = [
@@ -75,7 +75,6 @@ function navigate(page) {
     analyzer: renderAnalyzer,
     network:  renderNetwork,
     cross:    renderCrossPlatform,
-    ai:       renderAI,
     about:    renderAbout,
   };
 
@@ -126,20 +125,41 @@ function renderHome(root) {
     <!-- Hero -->
     <div class="hero-wrap">
       <section class="hero">
-        <div class="hero-eyebrow">
-          <div class="hero-eyebrow-bars">
-            <span></span><span></span><span></span><span></span><span></span>
+        <div class="hero-layout">
+          <div class="hero-text">
+            <div class="hero-eyebrow">
+              <div class="hero-eyebrow-bars">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              Streaming Platform Integrity
+            </div>
+            <h1>Unmasking <span class="accent">Ghost<br>Artists</span> in the<br>Streaming Era</h1>
+            <p class="hero-subtitle">
+              A 7-layer exploratory data analysis framework that exposes fraudulent streaming
+              accounts using only public API endpoints. No insider data. No black boxes.
+            </p>
+            <div class="hero-btns">
+              <button class="btn-primary" onclick="navigate('gallery')">Explore Framework &nbsp;→</button>
+              <button class="btn-secondary" onclick="document.getElementById('case-study-section').scrollIntoView({behavior:'smooth'})">🎧 View Case Study</button>
+            </div>
           </div>
-          Streaming Platform Integrity
-        </div>
-        <h1>Unmasking <span class="accent">Ghost<br>Artists</span> in the<br>Streaming Era</h1>
-        <p class="hero-subtitle">
-          A 7-layer exploratory data analysis framework that exposes fraudulent streaming
-          accounts using only public API endpoints. No insider data. No black boxes.
-        </p>
-        <div class="hero-btns">
-          <button class="btn-primary" onclick="navigate('gallery')">Explore Framework &nbsp;→</button>
-          <button class="btn-secondary" onclick="document.getElementById('case-study-section').scrollIntoView({behavior:'smooth'})">🎧 View Case Study</button>
+          <div class="hero-viz">
+            <div class="hero-viz-ring">
+              <div class="hero-viz-dot d1"></div>
+              <div class="hero-viz-dot d2"></div>
+            </div>
+            <div class="hero-viz-ring">
+              <div class="hero-viz-dot d3"></div>
+              <div class="hero-viz-dot d4"></div>
+              <div class="hero-viz-dot d5"></div>
+            </div>
+            <div class="hero-viz-ring">
+              <div class="hero-viz-dot d6"></div>
+              <div class="hero-viz-dot d7"></div>
+            </div>
+            <div class="hero-viz-center"></div>
+            <div class="hero-viz-label">7-Layer Detection</div>
+          </div>
         </div>
       </section>
     </div>
@@ -405,9 +425,32 @@ function renderAnalyzer(root) {
     <div class="page-header">
       <div class="eyebrow">Artist Analyzer</div>
       <h1>Ghost Detection Tool</h1>
-      <p>Search any artist by name — or pick from the study panel below.</p>
+      <p>Analyze any artist using our 7-signal framework, or ask our AI research assistant.</p>
     </div>
+    <div class="analyzer-tabs">
+      <button class="analyzer-tab active" data-tab="signal" onclick="switchAnalyzerTab('signal')">Signal Analysis</button>
+      <button class="analyzer-tab" data-tab="ai" onclick="switchAnalyzerTab('ai')">AI Assistant</button>
+    </div>
+    <div id="analyzer-tab-content"></div>
+    <footer class="site-footer">GhostTrack | INFO 7390 - Spring 2026 | By Trimbkeshwar Jagtap</footer>
+  `;
+  switchAnalyzerTab('signal');
+}
 
+function switchAnalyzerTab(tab) {
+  document.querySelectorAll('.analyzer-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  const container = document.getElementById('analyzer-tab-content');
+  if (tab === 'signal') {
+    renderSignalAnalysisPanel(container);
+  } else {
+    renderAIAssistantPanel(container);
+  }
+}
+
+function renderSignalAnalysisPanel(container) {
+  container.innerHTML = `
     <div class="search-box" style="position:relative">
       <input id="artist-input" class="search-input" type="text"
              placeholder="Artist name  e.g. Arijit Singh, Nils Frahm…"
@@ -419,21 +462,33 @@ function renderAnalyzer(root) {
            background:#111;border:1px solid var(--border);border-radius:8px;z-index:100;
            overflow:hidden;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.6)"></div>
     </div>
-
     <div class="quick-picks">
       ${KNOWN_ARTISTS.map(a => `
         <button class="quick-pill" onclick="setAndAnalyze('${a.id}','${a.name}')">${a.label}</button>
       `).join('')}
     </div>
-
     <div id="analyzer-result"></div>
-    <footer class="site-footer">GhostTrack | INFO 7390 - Spring 2026 | By Trimbkeshwar Jagtap</footer>
+  `;
+}
+
+function renderAIAssistantPanel(container) {
+  container.innerHTML = `
+    <div class="quick-qs">
+      ${QUICK_QUESTIONS.map(q => `<button class="quick-q" onclick="askQuestion(this)">${q}</button>`).join('')}
+    </div>
+    <div class="chat-window" id="chat-window"></div>
+    <div class="chat-input-row">
+      <textarea id="chat-input" class="chat-input" placeholder="Ask a research question about ghost artist detection…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+      <button class="btn-primary" onclick="sendChat()">Send</button>
+    </div>
   `;
 }
 
 let _searchTimer = null;
 let _selectedArtistId = null;
 let _selectedArtistName = null;
+let _lastAnalyzedId = null;
 
 function onArtistInput(val) {
   _selectedArtistId = null;
@@ -480,6 +535,7 @@ function _selectArtist(id, name, image) {
 function setAndAnalyze(id, name) {
   _selectedArtistId = id;
   _selectedArtistName = name || id;
+  _lastAnalyzedId = id;
   document.getElementById('artist-input').value = name || id;
   document.getElementById('search-dropdown').style.display = 'none';
   runAnalysis();
@@ -491,20 +547,25 @@ async function runAnalysis() {
   if (!inputVal) return;
   const result = document.getElementById('analyzer-result');
 
-  // Use selected artist ID if available, otherwise treat input as Spotify ID
   const artistId = _selectedArtistId || inputVal;
-  const artistName = _selectedArtistName || null;
+  const artistName = _selectedArtistName || inputVal;
+  _lastAnalyzedId = artistId;
   const isStudyPanel = KNOWN_ARTISTS.some(a => a.id === artistId);
   const endpoint = isStudyPanel ? '/analyze' : '/analyze-live';
 
-  result.innerHTML = `<div class="loading-state"><span class="spinner"></span> ${isStudyPanel ? 'Running full 7-signal pipeline' : 'Fetching live data from Spotify'}…</div>`;
+  result.innerHTML = `<div class="loading-state"><span class="spinner"></span> ${isStudyPanel ? 'Running full 7-signal pipeline' : 'Fetching live data'}… also pulling track intelligence from YouTube &amp; iTunes…</div>`;
 
   try {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
-    });
+    // Fire analysis + track lookup in parallel
+    const [resp, tracksResp] = await Promise.all([
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
+      }),
+      fetch(`/artist-tracks?artist=${encodeURIComponent(artistName)}`).catch(() => null),
+    ]);
+
     const d = await resp.json();
     if (!resp.ok) {
       const msg = d.detail || `API error ${resp.status}`;
@@ -514,10 +575,11 @@ async function runAnalysis() {
         </div>`;
       return;
     }
-    if (!isStudyPanel) {
-      d._liveMode = true;
-    }
-    renderAnalysisResult(result, d);
+    if (!isStudyPanel) d._liveMode = true;
+
+    const tracksData = tracksResp && tracksResp.ok ? await tracksResp.json() : null;
+    renderAnalysisResult(result, d, tracksData);
+    loadNeighborhoodGraph(d.artist_id || _lastAnalyzedId);
   } catch (e) {
     result.innerHTML = `
       <div style="background:#2a0a0a;border:1px solid #e74c3c;border-radius:10px;padding:20px;color:#fca5a5;font-size:0.88rem;">
@@ -527,7 +589,7 @@ async function runAnalysis() {
   }
 }
 
-function renderAnalysisResult(container, d) {
+function renderAnalysisResult(container, d, tracks) {
   const score = d.verdict_score;
   const vcls = score >= 0.7 ? 'verdict-ghost' : score >= 0.4 ? 'verdict-suspicious' : 'verdict-organic';
   const vicon = score >= 0.7 ? '👻' : score >= 0.4 ? '⚠️' : '✓';
@@ -543,6 +605,89 @@ function renderAnalysisResult(container, d) {
           <div class="signal-bar" style="width:${pct ?? 0}%;background:${color}"></div>
         </div>
         <div class="signal-score" style="color:${color}">${pct !== null ? pct + '%' : '—'}</div>
+      </div>`;
+  }).join('');
+
+  // ── Track Intelligence panel ──────────────────────────────────────────
+  let trackPanel = '';
+  if (tracks && (tracks.latest_track || tracks.top_track)) {
+    const src = tracks.source;
+    const srcBadge = src === 'youtube' ? '▶ YouTube' : src === 'itunes' ? '🎵 iTunes' : '🤖 OpenAI';
+    const srcColor = src === 'youtube' ? '#e74c3c' : src === 'itunes' ? '#a78bfa' : '#f59e0b';
+
+    function trackCard(label, t, icon) {
+      if (!t) return '';
+      const views = t.views != null ? Number(t.views).toLocaleString() + ' views' : (t.album ? t.album : '');
+      const date = t.published ? `· ${t.published.slice(0,7)}` : '';
+      const link = t.url ? `href="${t.url}" target="_blank" rel="noopener"` : '';
+      const thumb = t.thumbnail
+        ? `<img src="${t.thumbnail}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0"/>`
+        : `<div style="width:72px;height:54px;border-radius:6px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">${icon}</div>`;
+      return `
+        <a ${link} style="display:flex;gap:14px;align-items:flex-start;text-decoration:none;
+             background:#111;border:1px solid var(--border);border-radius:10px;padding:14px;
+             transition:border-color 0.15s;flex:1;min-width:220px"
+           onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+          ${thumb}
+          <div style="overflow:hidden">
+            <div style="font-size:0.72rem;color:${srcColor};font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${label}</div>
+            <div style="color:#fff;font-size:0.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px" title="${t.title}">${t.title}</div>
+            <div style="color:var(--gray3);font-size:0.78rem;margin-top:4px">${views} ${date}</div>
+          </div>
+        </a>`;
+    }
+
+    trackPanel = `
+      <div style="margin-top:28px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+        <h3 style="color:var(--white);font-size:0.95rem;margin:0">Track Intelligence</h3>
+        <span style="font-size:0.72rem;background:${srcColor}22;color:${srcColor};
+              border:1px solid ${srcColor}44;border-radius:20px;padding:2px 10px;font-weight:700">${srcBadge}</span>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px">
+        ${trackCard('Latest Release', tracks.latest_track, '🆕')}
+        ${trackCard('Most Viewed', tracks.top_track, '🔥')}
+      </div>`;
+  }
+
+  // ── 7-Layer EDA Explainer ─────────────────────────────────────────────
+  const EDA_LAYERS = [
+    { n:'1', name:'Catalog Coherence', icon:'〰', desc:'Audio feature variance per artist. Ghost artists collapse into unnaturally tight clusters.', example:'Cohen\'s d = −1.45 to −2.08 (large effect). Levene W=15.7, p=0.0002.', color:'var(--green)' },
+    { n:'2', name:'Playlist Entropy',  icon:'🎛', desc:'Shannon entropy of playlist feature distributions across editorial, fan-curated, ghost-suspect groups.', example:'ANOVA F=0.25, p=0.78 — honest negative result: entropy alone does not discriminate.', color:'#60a5fa' },
+    { n:'3', name:'ISRC Attribution',  icon:'🏷', desc:'Production company identification via ISRC prefix codes in track metadata.', example:'All 3 ghost artists use CUSTOM_REGISTRANT. 17 organic artists use TuneCore / DistroKid / labels.', color:'#a78bfa' },
+    { n:'4', name:'Release Cadence',   icon:'📡', desc:'Statistical clustering of release dates — ghost artists batch-upload same-day.', example:'KS D=1.000, p<0.001. Cohen\'s d=3.44. 100% TPR across 1d–14d thresholds.', color:'var(--green)' },
+    { n:'5', name:'Metadata Similarity',icon:'🔤', desc:'Track/artist name reuse detection with minor variations (NLP embeddings).', example:'Cohen\'s d=−0.91. Ghost titles are repetitive ("Relaxing Piano", "Calming Piano Vol.2", …).', color:'#f59e0b' },
+    { n:'6', name:'Graph Centrality',  icon:'🕸', desc:'Neo4j co-appearance network: ghost artists form isolated clusters with no organic connections.', example:'HHI: RWN=0.672, MRC=0.515, Calmo=0.452. Mann-Whitney p=0.003, r=1.000.', color:'#e74c3c' },
+    { n:'7', name:'Aggregate Score',   icon:'🧠', desc:'Weighted logistic regression combining S2+S4+S5. GNN augmentation via GAT/GCN on 65-node graph.', example:'Composite AUC=1.000 on study panel. Top SHAP feature: total_variance (track_count).', color:'var(--green)' },
+  ];
+
+  // Highlight the layer that matches the current top signal
+  const signals = d.signals || {};
+  const topKey = Object.entries(signals).filter(([,v]) => v !== null).sort(([,a],[,b]) => b-a)[0]?.[0] || '';
+  const keyToLayer = { s1_audio:1, s2_cadence:2, s3_playlist:3, s4_density:4, s5_metadata:5, s6_graph:6, s7_cross:7 };
+  const activeLayer = keyToLayer[topKey] || 0;
+
+  const edaRows = EDA_LAYERS.map(l => {
+    const isActive = l.n == activeLayer;
+    const sigKey = Object.keys(signals).find(k => k.includes(`s${l.n}`));
+    const sigVal = sigKey && signals[sigKey] !== null ? `${Math.round(signals[sigKey]*100)}%` : '—';
+    return `
+      <div style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;
+           border-radius:10px;border:1px solid ${isActive ? l.color : 'var(--border)'};
+           background:${isActive ? l.color+'0d' : 'var(--bg2)'};margin-bottom:8px;transition:border-color 0.2s">
+        <div style="width:36px;height:36px;border-radius:8px;background:${l.color}22;
+             display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${l.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="color:${l.color};font-size:0.72rem;font-weight:700;letter-spacing:1px">LAYER ${l.n}</span>
+            <span style="color:var(--white);font-size:0.9rem;font-weight:700">${l.name}</span>
+            ${isActive ? `<span style="font-size:0.68rem;background:${l.color}33;color:${l.color};border-radius:12px;padding:1px 8px;font-weight:700">TOP SIGNAL</span>` : ''}
+            <span style="margin-left:auto;font-size:0.82rem;font-weight:700;color:${scoreColor(signals[Object.keys(signals).find(k=>k.includes(`s${l.n}`))??'']??null)}">${sigVal}</span>
+          </div>
+          <div style="color:var(--gray3);font-size:0.82rem;line-height:1.5;margin-bottom:4px">${l.desc}</div>
+          <div style="color:var(--gray4);font-size:0.76rem;font-style:italic;line-height:1.4">
+            <span style="color:${l.color};font-weight:600">Example: </span>${l.example}
+          </div>
+        </div>
       </div>`;
   }).join('');
 
@@ -573,7 +718,127 @@ function renderAnalysisResult(container, d) {
     <div class="info-box">
       <strong>Timing:</strong> Analysis completed in ${d.timing_seconds.toFixed(2)}s using cached Neo4j data.
     </div>`}
+
+    ${trackPanel}
+
+    <div style="margin-top:32px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+      <h3 style="color:var(--white);font-size:0.95rem;margin:0">7-Layer EDA Framework</h3>
+      <span style="font-size:0.72rem;color:var(--gray3);letter-spacing:1px;text-transform:uppercase">How we detect ghost artists</span>
+    </div>
+    <div style="margin-bottom:32px">${edaRows}</div>
+
+    <div class="graph-panel">
+      <div class="graph-header">
+        <h3 class="panel-title">Artist × Registrant Network</h3>
+        <span class="graph-legend">
+          <span class="legend-dot" style="background:#00ff88"></span> Artist
+          <span class="legend-dot" style="background:#e74c3c"></span> Custom Registrant
+          <span class="legend-dot" style="background:#4a90e2"></span> Aggregator
+          <span class="legend-dot" style="background:#a78bfa"></span> Label / Unknown
+        </span>
+      </div>
+      <div id="neo4j-graph" class="graph-canvas"></div>
+      <div class="graph-caption" id="graph-caption">Loading network…</div>
+    </div>
   `;
+}
+
+// ── NEO4J NEIGHBORHOOD GRAPH ──────────────────────────────────────────────────
+
+async function loadNeighborhoodGraph(artistId) {
+  const graphEl = document.getElementById('neo4j-graph');
+  const captionEl = document.getElementById('graph-caption');
+  if (!graphEl || !artistId) return;
+
+  try {
+    const res = await fetch(`/graph/neighborhood/${artistId}`);
+    if (!res.ok) throw new Error('No graph data');
+    const data = await res.json();
+
+    const rawNodes = data.nodes || [];
+    const rawEdges = data.edges || [];
+
+    if (!rawNodes.length) {
+      graphEl.innerHTML = '<div class="graph-empty">This artist is not in the Neo4j graph — live-mode analyses do not have ISRC graph data.</div>';
+      if (captionEl) captionEl.textContent = '';
+      return;
+    }
+
+    // Classify each company node by its label / prefix
+    const knownAggregators = ['DISTROKID', 'TUNECORE', 'CDBABY', 'AWAL', 'BELIEVE', 'ONERPM', 'AMUSE'];
+    const knownLabels = ['SONY', 'WARN', 'UNIVE', 'ATLANT', 'DEF JAM', 'ISLAND', 'CAPITOL'];
+    function classifyNode(node) {
+      if (node.type === 'artist') return { bg: '#00ff88', border: '#00c46a', font: '#000' };
+      const lbl = (node.label || '').toUpperCase();
+      if (knownAggregators.some(a => lbl.includes(a))) return { bg: '#4a90e2', border: '#3a80d2', font: '#fff' };
+      if (knownLabels.some(l => lbl.includes(l)))       return { bg: '#a78bfa', border: '#9771f0', font: '#fff' };
+      return { bg: '#e74c3c', border: '#c0392b', font: '#fff' };  // custom/unknown = red = ghost signal
+    }
+
+    const visNodes = rawNodes.map(n => {
+      const cls = classifyNode(n);
+      return {
+        id: n.id,
+        label: n.label,
+        color: { background: cls.bg, border: cls.border },
+        font: { color: cls.font, size: n.type === 'artist' ? 14 : 11, face: 'Inter' },
+        shape: n.type === 'artist' ? 'dot' : 'box',
+        size: n.type === 'artist' ? 28 : 16,
+        widthConstraint: n.type === 'artist' ? undefined : { minimum: 80, maximum: 160 },
+      };
+    });
+
+    const visEdges = rawEdges.map((e, i) => ({
+      id: i,
+      from: e.source,
+      to: e.target,
+      label: e.label || '',
+      font: { color: '#888', size: 10, face: 'Inter', strokeWidth: 0, background: '#0a0a0a' },
+      color: { color: 'rgba(255,255,255,0.2)', highlight: '#00ff88' },
+      smooth: { type: 'continuous' },
+      value: e.weight || 1,
+    }));
+
+    if (typeof vis === 'undefined') {
+      graphEl.innerHTML = '<div class="graph-empty">vis.js not loaded — check network connection.</div>';
+      return;
+    }
+
+    new vis.Network(
+      graphEl,
+      { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
+      {
+        physics: {
+          stabilization: { iterations: 120 },
+          barnesHut: { gravitationalConstant: -6000, springLength: 160 },
+        },
+        interaction: { hover: true, dragNodes: true, zoomView: true },
+        nodes: { shadow: true },
+        edges: { shadow: false },
+      }
+    );
+
+    // Caption: count red (custom) company nodes
+    const companyNodes = rawNodes.filter(n => n.type === 'production_company');
+    const customCount = companyNodes.filter(n => {
+      const lbl = (n.label || '').toUpperCase();
+      return !knownAggregators.some(a => lbl.includes(a)) && !knownLabels.some(l => lbl.includes(l));
+    }).length;
+    const total = companyNodes.length;
+    const pct = total ? Math.round((customCount / total) * 100) : 0;
+
+    if (captionEl) {
+      captionEl.textContent = pct >= 70
+        ? `Suspicious — ${customCount}/${total} registrants are unknown custom (${pct}%). Ghost-artist signature.`
+        : pct >= 30
+        ? `Mixed — ${customCount}/${total} custom registrants (${pct}%). Borderline pattern.`
+        : `Healthy — ${total - customCount}/${total} known aggregators or labels. Organic distribution.`;
+    }
+
+  } catch (e) {
+    if (graphEl) graphEl.innerHTML = '<div class="graph-empty">Network data unavailable for this artist.</div>';
+    if (captionEl) captionEl.textContent = '';
+  }
 }
 
 // ── NETWORK EXPLORER ──────────────────────────────────────────────────────────
@@ -702,33 +967,6 @@ const QUICK_QUESTIONS = [
 
 let _chatHistory = [];
 
-function renderAI(root) {
-  root.innerHTML = `
-    <div class="page-header">
-      <div class="eyebrow">AI Research Assistant</div>
-      <h1>Ask the Framework</h1>
-      <p>PhD-level research assistant with full context of all 7 exercises and findings.</p>
-    </div>
-
-    <div class="quick-qs">
-      ${QUICK_QUESTIONS.map(q => `<button class="quick-q" onclick="askQuestion(this)">${q}</button>`).join('')}
-    </div>
-
-    <div class="chat-window" id="chat-window">
-      <div class="chat-msg assistant">
-        <div class="chat-role">GhostTrack AI</div>
-        <div class="chat-bubble">Hello! I'm a PhD-level research assistant for the GhostTrack project. I have full context of all 7 analysis layers, signal scores, and findings. Ask me anything about ghost artist detection, the methodology, or the results.</div>
-      </div>
-    </div>
-
-    <div class="chat-input-row">
-      <textarea id="chat-input" class="chat-input" placeholder="Ask a research question…"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-      <button class="btn-primary" onclick="sendChat()">Send</button>
-    </div>
-    <footer class="site-footer" style="margin-top:40px">GhostTrack | INFO 7390 - Spring 2026 | By Trimbkeshwar Jagtap</footer>
-  `;
-}
 
 function askQuestion(btn) { document.getElementById('chat-input').value = btn.innerText; sendChat(); }
 

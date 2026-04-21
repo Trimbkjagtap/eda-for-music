@@ -114,11 +114,6 @@ async def root():
     return FileResponse(str(STATIC_DIR / "index.html"))
 
 
-@app.get("/health", summary="Health check (API)")
-async def api_health():
-    return {"status": "ok", "project": "EDA for Music", "version": "1.0.0"}
-
-
 @app.get("/health", summary="Detailed health check")
 async def health():
     """Check connectivity to Neo4j and verify signal modules load."""
@@ -252,6 +247,168 @@ async def search_artists(q: str, limit: int = 5):
     except Exception as e:
         logger.error(f"/search failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/artist-tracks", summary="Fetch latest & top tracks with YouTube view counts")
+async def artist_tracks(artist: str):
+    """
+    Given an artist name, returns:
+      - latest_track: most recently released track found
+      - top_track: highest-viewed track on YouTube
+      - source: which API provided the data (youtube / itunes / openai)
+    Fallback chain: YouTube API → iTunes Search → OpenAI GPT-4o.
+    """
+    artist = artist.strip()
+    if not artist:
+        raise HTTPException(status_code=400, detail="artist name required")
+
+    # ── 1. YouTube Data API v3 ─────────────────────────────────────────────
+    yt_key = os.getenv("YOUTUBE_API_KEY", "")
+    if yt_key:
+        try:
+            import httpx
+            # Search for up to 10 videos from this artist (official channel / topic)
+            search_params = {
+                "part": "snippet",
+                "q": f"{artist} official music",
+                "type": "video",
+                "maxResults": 10,
+                "order": "relevance",
+                "key": yt_key,
+            }
+            with httpx.Client(timeout=10) as client:
+                r = client.get("https://www.googleapis.com/youtube/v3/search", params=search_params)
+                r.raise_for_status()
+                items = r.json().get("items", [])
+
+            if items:
+                video_ids = [it["id"]["videoId"] for it in items if it.get("id", {}).get("videoId")]
+                # Get stats for all found videos
+                stats_params = {
+                    "part": "statistics,snippet",
+                    "id": ",".join(video_ids),
+                    "key": yt_key,
+                }
+                with httpx.Client(timeout=10) as client:
+                    r2 = client.get("https://www.googleapis.com/youtube/v3/videos", params=stats_params)
+                    r2.raise_for_status()
+                    vids = r2.json().get("items", [])
+
+                if vids:
+                    # Prefer videos from a channel whose name contains the artist name
+                    artist_lower = artist.lower()
+                    artist_vids = [v for v in vids if artist_lower in v["snippet"].get("channelTitle","").lower()]
+                    pool = artist_vids if artist_vids else vids
+                    # Latest = most recently published
+                    latest = max(pool, key=lambda v: v["snippet"].get("publishedAt",""))
+                    # Top = highest view count
+                    top = max(pool, key=lambda v: int(v.get("statistics", {}).get("viewCount", 0)))
+
+                    def yt_track(v):
+                        return {
+                            "title": v["snippet"]["title"],
+                            "views": int(v.get("statistics", {}).get("viewCount", 0)),
+                            "published": v["snippet"].get("publishedAt", "")[:10],
+                            "url": f"https://www.youtube.com/watch?v={v['id']}",
+                            "thumbnail": v["snippet"].get("thumbnails", {}).get("medium", {}).get("url", ""),
+                        }
+
+                    return {
+                        "source": "youtube",
+                        "artist": artist,
+                        "latest_track": yt_track(latest),
+                        "top_track": yt_track(top),
+                    }
+        except Exception as e:
+            logger.warning(f"/artist-tracks YouTube failed for '{artist}': {e}")
+
+    # ── 2. iTunes Search API (free, no key) ───────────────────────────────
+    try:
+        import httpx
+        itunes_params = {
+            "term": artist,
+            "media": "music",
+            "entity": "song",
+            "limit": 10,
+            "sort": "recent",
+        }
+        with httpx.Client(timeout=10) as client:
+            r = client.get("https://itunes.apple.com/search", params=itunes_params)
+            r.raise_for_status()
+            results = r.json().get("results", [])
+
+        if results:
+            # iTunes doesn't give views — use trackCount as proxy
+            latest = results[0]
+            top = max(results, key=lambda t: t.get("trackTimeMillis", 0))
+
+            def itunes_track(t):
+                return {
+                    "title": t.get("trackName", "Unknown"),
+                    "views": None,
+                    "published": t.get("releaseDate", "")[:10],
+                    "url": t.get("trackViewUrl", ""),
+                    "thumbnail": t.get("artworkUrl100", ""),
+                    "album": t.get("collectionName", ""),
+                    "duration_ms": t.get("trackTimeMillis", 0),
+                }
+
+            return {
+                "source": "itunes",
+                "artist": artist,
+                "latest_track": itunes_track(latest),
+                "top_track": itunes_track(top),
+            }
+    except Exception as e:
+        logger.warning(f"/artist-tracks iTunes failed for '{artist}': {e}")
+
+    # ── 3. OpenAI fallback ────────────────────────────────────────────────
+    try:
+        from openai import OpenAI
+        oai = OpenAI()
+        prompt = (
+            f"For the music artist '{artist}', give me:\n"
+            f"1. Their most recent / latest known track title and approximate release year\n"
+            f"2. Their most popular / highest-viewed track title and approximate YouTube view count\n"
+            f"Reply in JSON only: {{\"latest\": {{\"title\": \"...\", \"year\": \"...\"}}, "
+            f"\"top\": {{\"title\": \"...\", \"views\": 123456789}}}}"
+        )
+        resp = oai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=200,
+            response_format={"type": "json_object"},
+        )
+        import json
+        data = json.loads(resp.choices[0].message.content)
+        return {
+            "source": "openai",
+            "artist": artist,
+            "latest_track": {
+                "title": data.get("latest", {}).get("title", "Unknown"),
+                "views": None,
+                "published": data.get("latest", {}).get("year", ""),
+                "url": "",
+                "thumbnail": "",
+            },
+            "top_track": {
+                "title": data.get("top", {}).get("title", "Unknown"),
+                "views": data.get("top", {}).get("views"),
+                "published": "",
+                "url": "",
+                "thumbnail": "",
+            },
+        }
+    except Exception as e:
+        logger.warning(f"/artist-tracks OpenAI fallback failed for '{artist}': {e}")
+
+    return {
+        "source": "unavailable",
+        "artist": artist,
+        "latest_track": None,
+        "top_track": None,
+    }
 
 
 @app.post("/analyze-live", summary="Live analysis for any Spotify artist")
@@ -617,24 +774,36 @@ async def chat(req: ChatRequest):
     try:
         from openai import OpenAI
         client = OpenAI()
-        PROJECT_CONTEXT = """
-PROJECT: EDA for Music — Ghost Artist Detection on Spotify | INFO 7390, Spring 2026
+        system_prompt = """You are a research assistant for the GhostTrack project.
+PROJECT: GhostTrack — Ghost Artist Detection on Spotify | INFO 7390, Spring 2026
 
-EXERCISE RESULTS:
-- Ex1: Ghost catalog variance 12.5x lower (Levene p<0.001)
-- Ex2: Shannon entropy: editorial=2.59, fan=2.89, ghost-suspect=2.51 bits
-- Ex3: 8 production companies, 490 tracks, 0 cross-artist ISRC sharing
-- Ex4: HHI: RWN=0.88, MRC=0.66, Calmo=0.54
-- Ex5: Walk closure: RWN=81%, MRC=95%, Calmo=32%, Nils Frahm=0%
-- Ex6: S2 cadence + S4 catalog density + S6 HHI most discriminative
-- Ex7: GAT 100% test accuracy on 65-node graph (14 ghost, 51 organic)
+POST-AUDIT EXERCISE RESULTS (use these values, NOT older proxy numbers):
 
-SIGNAL SCORES: RWN→GHOST(0.771), MRC→SUSPICIOUS, Calmo→ORGANIC(rule), NF→ORGANIC
-CROSS-PLATFORM: RWN=353M YT views, MRC=157M, Calmo=155, NF=9M
-KEY INSIGHT: Ghost behavior = Spotify-economic stream farming, NOT cross-platform absence.
-"""
+- Ex1 (Catalog Variance): Same-genre comparison N=13 ghost ambient vs N=75 organic ambient. Levene W=15.7 p=0.0002; Cohen's d=-1.45 to -2.08 per feature (large effect). Genre confound eliminated.
+
+- Ex2 (Playlist Entropy): 7-feature marginal entropy across 30 Kaggle-proxy playlists. One-way ANOVA F=0.25 p=0.78 — HONEST NEGATIVE result. Playlist-level aggregation does not distinguish ghost-suspect from editorial or fan-curated groups.
+
+- Ex3 (ISRC Attribution): Expanded bipartite graph of 3 ghost + 17 organic artists across 27 registrant codes. ALL ghost artists use CUSTOM_REGISTRANT (small, non-public registrants). Organic artists use known aggregators (TuneCore, DistroKid) or labels. The categorical distinction beats HHI magnitude as a fraud signal.
+
+- Ex4 (HHI Concentration): REAL ISRC-derived HHI values:
+    RWN = 0.672
+    MRC = 0.515
+    Calmo = 0.452
+  Mann-Whitney U p=0.003, rank-biserial r=1.000 vs 30 organic artists. Youden-optimal threshold HHI>=0.353. NOTE: Previous proxy values (0.88/0.66/0.54) were variance-derived and tautological; the real values are smaller but defensible.
+
+- Ex5 (Release Cadence): Ghost N=14 vs organic baseline N=1031 across 5 genres. KS D=1.000, p<0.001. Cohen's d=3.44 (very large effect). Robust sensitivity across 1d-14d thresholds: 100% TPR, 0% FPR. Caveat: prolific organic artists (Buckethead, King Gizzard, Merzbow, Guided By Voices) absent from Kaggle dataset — documented limitation.
+
+- Ex6 (Signal Framework): Post-audit, 2 of 7 signals are discriminative at scale: S2 Release Cadence (d=3.44) and S5 Metadata Similarity (d=-0.91, direction documented as collinear with S2). S4 Catalog Density (d=0.32) is below threshold. S1 Audio, S3 Playlist Co-occur, S6 Graph/HHI, S7 Cross-Platform marked N/A at scale due to API access constraints.
+
+- Ex7 (GNN Model): All 5 baselines (LogisticRegression, RandomForest, MLP, GraphSAGE, HGT) achieve AUC=1.000 on n=76 artists. Graph structure adds NO discriminative signal beyond tabular features at this scale. SHAP analysis shows track_count is the dominant feature. This is a NEGATIVE result for the GNN hypothesis — reported honestly. Perfect AUC reflects task triviality at small scale, not model sophistication.
+
+KEY BEHAVIORAL INSIGHT: Ghost artist fraud is Spotify-economic stream farming with pre-staged infrastructure, NOT cross-platform absence. Relaxing White Noise has 353M YouTube views yet exhibits ghost behavioral signatures.
+
+METHODOLOGICAL CONTRIBUTION: Proxy-labeled evaluation produces tautological AUC=1.000 results — a pattern documented throughout this work. External ground truth from independent sources (DOJ Smith indictment, Dagens Nyheter investigation) is essential for credible validation in streaming fraud research.
+
+Respond clearly and concisely. Use markdown. Cite specific exercise results when answering. If a user asks about the older proxy HHI values, explain that those were variance-derived and have been superseded by real ISRC calculations."""
         messages = [
-            {"role": "system", "content": f"You are a PhD-level research assistant for the GhostTrack project.\n{PROJECT_CONTEXT}\nRespond at PhD level. Use markdown."},
+            {"role": "system", "content": system_prompt},
         ]
         for turn in req.history[-6:]:
             messages.append({"role": "user", "content": turn.get("user", "")})

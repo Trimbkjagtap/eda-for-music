@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:8000/artist-tracks?artist=Nils+Frahm\")",
+      "Bash(python3 -m json.tool)"
+    ]
+  }
+}
