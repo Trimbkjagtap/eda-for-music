@@ -23,6 +23,16 @@ from src.api.spotify_client import SpotifyClient
 
 
 _SPOTIFY_ID_RE = re.compile(r"^[A-Za-z0-9]{22}$")
+_S5_MODEL = None
+
+
+def _get_s5_model():
+    """Lazy-load and reuse the sentence model across requests."""
+    global _S5_MODEL
+    if _S5_MODEL is None:
+        from sentence_transformers import SentenceTransformer
+        _S5_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    return _S5_MODEL
 
 
 def search_artist(name: str) -> list[dict]:
@@ -73,10 +83,13 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
     albums = sp.get_artist_albums(artist_id, include_groups="album,single")
     release_dates = [a["release_date"] for a in albums if a.get("release_date")]
     track_names: list[str] = []
-    for album in albums[:20]:  # cap at 20 albums to stay within rate limits
+    # Keep live mode responsive by limiting API calls and downstream embedding size.
+    for album in albums[:12]:
         try:
             tracks = sp.get_album_tracks(album["id"])
             track_names.extend(t["name"] for t in tracks if t.get("name"))
+            if len(track_names) >= 160:
+                break
         except Exception:
             pass
 
@@ -170,9 +183,13 @@ def _score_title_similarity(artist_id: str, artist_name: str, titles: list[str])
         return {"suspicion_score": 0.0, "suspicion_level": "LOW",
                 "mean_cosine": 0.0, "note": "too few tracks"}
     try:
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        embs = model.encode(titles, normalize_embeddings=True, show_progress_bar=False)
+        # Deduplicate and cap to avoid quadratic pairwise-cost on very large catalogs.
+        uniq_titles = list(dict.fromkeys(titles))
+        if len(uniq_titles) > 120:
+            uniq_titles = uniq_titles[:120]
+
+        model = _get_s5_model()
+        embs = model.encode(uniq_titles, normalize_embeddings=True, show_progress_bar=False)
         # upper-triangle mean pairwise cosine
         n = len(embs)
         sims = embs @ embs.T
@@ -185,7 +202,8 @@ def _score_title_similarity(artist_id: str, artist_name: str, titles: list[str])
             "suspicion_score": round(score, 4),
             "suspicion_level": level,
             "mean_cosine": round(mean_cos, 4),
-            "track_count": n,
+            "track_count": len(titles),
+            "sampled_track_count": n,
         }
     except Exception as e:
         logger.warning(f"S5 sentence-transformer failed: {e}")
