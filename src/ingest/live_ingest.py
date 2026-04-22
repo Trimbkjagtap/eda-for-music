@@ -11,6 +11,7 @@ S1 and S6 require audio-features / ISRC endpoints (restricted Apr 2026).
 from __future__ import annotations
 
 import math
+import re
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -19,6 +20,9 @@ import numpy as np
 from loguru import logger
 
 from src.api.spotify_client import SpotifyClient
+
+
+_SPOTIFY_ID_RE = re.compile(r"^[A-Za-z0-9]{22}$")
 
 
 def search_artist(name: str) -> list[dict]:
@@ -46,6 +50,17 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
     """
     t0 = time.perf_counter()
     sp = SpotifyClient()
+
+    # The frontend can send either a Spotify ID or a typed artist name.
+    # Resolve names to the best Spotify match before calling ID-only endpoints.
+    if not _SPOTIFY_ID_RE.fullmatch(artist_id):
+        query = artist_name or artist_id
+        matches = search_artist(query)
+        if not matches:
+            raise ValueError(f"No Spotify artist found for '{query}'")
+        best_match = matches[0]
+        artist_id = best_match["id"]
+        artist_name = best_match["name"]
 
     # Resolve name
     if not artist_name:

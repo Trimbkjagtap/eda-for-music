@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from crewai import Agent
-from crewai.tools import BaseTool
+from crewai.tools.base_tool import BaseTool
 from loguru import logger
 from pydantic import BaseModel, Field
 
