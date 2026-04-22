@@ -4,13 +4,33 @@
    API calls go to FastAPI backend at /api/* (same origin).
 ──────────────────────────────────────────────────────────────────────────── */
 
-const DEFAULT_API_BASE = 'https://eda-for-music.onrender.com';
+const PROD_API_BASE = 'https://eda-for-music.onrender.com';
 
-const API = (
-  window.GHOSTTRACK_API_BASE
-  || localStorage.getItem('GHOSTTRACK_API_BASE')
-  || DEFAULT_API_BASE
-).replace(/\/$/, '');
+function resolveApiBase() {
+  const host = window.location.hostname;
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+  const localDefault = `${window.location.protocol}//${host}:8000`;
+  const defaultBase = isLocalHost ? localDefault : PROD_API_BASE;
+
+  const candidates = [
+    window.GHOSTTRACK_API_BASE,
+    localStorage.getItem('GHOSTTRACK_API_BASE'),
+    defaultBase,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      return new URL(candidate).origin.replace(/\/$/, '');
+    } catch (_) {
+      // Ignore malformed overrides and fall back to the next candidate.
+    }
+  }
+
+  return defaultBase;
+}
+
+const API = resolveApiBase();
 
 function apiUrl(path) {
   return `${API}${path}`;
