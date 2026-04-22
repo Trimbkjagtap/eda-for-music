@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import time
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -465,6 +466,42 @@ LIMITATIONS:
 - Results specific to ambient/relaxation genre
 """
 
+
+def _safe_cache_key(value: str) -> str:
+    """Create a filesystem-safe cache key with a bounded length."""
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip())
+    return (cleaned[:80] or "unknown").strip("._") or "unknown"
+
+
+def _read_json_cache(cache_path: Path) -> dict | None:
+    """Best-effort cache read; ignore stale or invalid cache files."""
+    try:
+        if cache_path.exists():
+            return json.loads(cache_path.read_text())
+    except Exception:
+        return None
+    return None
+
+
+def _write_json_cache(cache_path: Path, payload: dict) -> None:
+    """Write cache atomically enough for local app use without failing UI."""
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(payload))
+    except Exception:
+        # Cache failures should never block user-facing analysis.
+        pass
+
+
+def _get_pandas():
+    import pandas as pd
+    return pd
+
+
+def _get_plotly_go():
+    import plotly.graph_objects as go
+    return go
+
 # ── OpenAI Client ─────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_openai_client():
@@ -551,6 +588,8 @@ def _load_kaggle_df():
 def search_kaggle_for_artist(artist_name: str) -> dict:
     """Search Kaggle dataset for an artist's tracks."""
     try:
+        if not artist_name or not artist_name.strip():
+            return {"found": False, "track_count": 0}
         df = _load_kaggle_df()
         name_lower = artist_name.lower()
         mask = df["artists"].str.lower().str.contains(name_lower, na=False)
@@ -588,11 +627,18 @@ def smart_search(raw_query: str) -> dict:
         "found": bool,
       }
     """
-    q = raw_query.strip()
+    q = (raw_query or "").strip()
+    if not q:
+        return {
+            "resolved_artist": "",
+            "match_type": "raw",
+            "match_label": "Empty query",
+            "track_row": None,
+            "found": False,
+        }
     q_lower = q.lower()
 
     # ── Step 1: Spotify ID (22-char alphanumeric) ─────────────────────────────
-    import re
     if re.fullmatch(r"[A-Za-z0-9]{22}", q):
         try:
             from src.graph.neo4j_client import Neo4jClient
@@ -677,9 +723,14 @@ def smart_search(raw_query: str) -> dict:
 def search_youtube_for_artist(artist_name: str) -> dict:
     """Search YouTube for a top video view count. Two-pass: 'official' then bare name."""
     try:
-        cache_path = ROOT / "data" / "raw" / "cache" / f"yt_artist_{artist_name.replace(' ','_')[:40]}.json"
-        if cache_path.exists():
-            return json.loads(cache_path.read_text())
+        if not artist_name or not artist_name.strip():
+            return {"found": False, "views": 0, "error": "artist name required"}
+
+        cache_key = _safe_cache_key(artist_name)
+        cache_path = ROOT / "data" / "raw" / "cache" / f"yt_artist_{cache_key}.json"
+        cached = _read_json_cache(cache_path)
+        if cached is not None:
+            return cached
 
         from src.api.youtube_client import YouTubeClient
         yt = YouTubeClient()
@@ -723,7 +774,7 @@ def search_youtube_for_artist(artist_name: str) -> dict:
                 "video_title": result["title"] if result else "",
                 "views": 0,
             }
-        cache_path.write_text(json.dumps(data))
+        _write_json_cache(cache_path, data)
         return data
     except Exception as e:
         return {"found": False, "error": str(e), "views": 0}
@@ -732,15 +783,21 @@ def search_youtube_for_artist(artist_name: str) -> dict:
 def search_itunes_for_artist(artist_name: str) -> dict:
     """Search iTunes Search API for artist presence."""
     try:
-        cache_path = ROOT / "data" / "raw" / "cache" / f"itunes_artist_{artist_name.replace(' ','_')[:40]}.json"
-        if cache_path.exists():
-            return json.loads(cache_path.read_text())
+        if not artist_name or not artist_name.strip():
+            return {"found": False, "error": "artist name required"}
+
+        cache_key = _safe_cache_key(artist_name)
+        cache_path = ROOT / "data" / "raw" / "cache" / f"itunes_artist_{cache_key}.json"
+        cached = _read_json_cache(cache_path)
+        if cached is not None:
+            return cached
         import httpx
         resp = httpx.get(
             "https://itunes.apple.com/search",
             params={"term": artist_name, "entity": "musicArtist", "limit": 5},
             timeout=8,
         )
+        resp.raise_for_status()
         results = resp.json().get("results", [])
         data = {
             "found": len(results) > 0,
@@ -748,7 +805,7 @@ def search_itunes_for_artist(artist_name: str) -> dict:
             "primary_genre": results[0].get("primaryGenreName", "") if results else "",
             "artist_name_match": results[0].get("artistName", "") if results else "",
         }
-        cache_path.write_text(json.dumps(data))
+        _write_json_cache(cache_path, data)
         return data
     except Exception as e:
         return {"found": False, "error": str(e)}
@@ -1555,7 +1612,7 @@ Full analysis would compute:
                 st.metric("AI Confidence", f"{confidence}%")
 
             try:
-                import plotly.graph_objects as go
+                go = _get_plotly_go()
                 gauge_fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=ghost_prob,
@@ -1591,7 +1648,7 @@ Full analysis would compute:
             if comparison:
                 with st.expander("📊 Comparison to Known Baselines"):
                     st.markdown(comparison)
-                    import pandas as pd
+                    pd = _get_pandas()
                     baseline_df = pd.DataFrame([
                         {"Artist": "Relaxing White Noise", "Type": "GHOST", "Cadence": "81%", "HHI": "0.67", "YT Views": "353M"},
                         {"Artist": "Meditation Relax Club", "Type": "GHOST", "Cadence": "95%", "HHI": "0.52", "YT Views": "157M"},
@@ -1685,8 +1742,8 @@ elif page == "🌐 Network Explorer":
             (_ns_name,                _ns_views,   _ns_apple, "SEARCHED"),
         ]
 
-        import plotly.graph_objects as go
-        import pandas as pd
+        go = _get_plotly_go()
+        pd = _get_pandas()
 
         # Bar chart — YouTube views comparison
         _colors = {
@@ -1747,7 +1804,7 @@ elif page == "🌐 Network Explorer":
             ORDER BY track_count DESC""")
 
         if cluster_rows:
-            import pandas as pd
+            pd = _get_pandas()
             df = pd.DataFrame(cluster_rows)
             df["artists"] = df["artists"].apply(lambda x: ", ".join(x) if x else "—")
             df["shared"] = df["artist_count"].apply(lambda x: "⚠️ SHARED" if x > 1 else "—")
@@ -1766,7 +1823,7 @@ elif page == "🌐 Network Explorer":
                 RETURN c.isrc_prefix AS prefix, c.name AS company, count(t) AS track_count
                 ORDER BY track_count DESC""", id=aid)
             if nhood:
-                import pandas as pd
+                pd = _get_pandas()
                 ndf = pd.DataFrame(nhood)
                 ndf = ndf.rename(columns={"prefix": "ISRC Prefix", "company": "Production Company", "track_count": "Tracks"})
                 total_t = ndf["Tracks"].sum()
@@ -1890,7 +1947,7 @@ elif page == "📡 Cross-Platform":
         </div>""", unsafe_allow_html=True)
 
     try:
-        import plotly.graph_objects as go
+        go = _get_plotly_go()
         artists_list = list(CROSS_PLATFORM_DATA.keys())
         views_list = [d["youtube_views"] for d in CROSS_PLATFORM_DATA.values()]
         verdicts_list = [d["verdict"] for d in CROSS_PLATFORM_DATA.values()]

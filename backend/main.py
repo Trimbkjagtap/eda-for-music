@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env")
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -60,11 +60,22 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/figures", StaticFiles(directory=str(FIGURES_DIR)), name="figures")
 
 
+def _serve_index_html() -> FileResponse:
+    """Serve SPA index with a clear error if the build artifact is missing."""
+    index_file = STATIC_DIR / "index.html"
+    if not index_file.exists():
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend is not built yet: static/index.html is missing.",
+        )
+    return FileResponse(str(index_file))
+
+
 @app.get("/app", include_in_schema=False)
 @app.get("/app/{rest_of_path:path}", include_in_schema=False)
 async def serve_spa(rest_of_path: str = ""):
     """Serve the SPA index for all frontend routes."""
-    return FileResponse(str(STATIC_DIR / "index.html"))
+    return _serve_index_html()
 
 # ── Request/Response models ───────────────────────────────────────────────────
 
@@ -73,11 +84,6 @@ class AnalyzeRequest(BaseModel):
     artist_name: str | None = None
     track_name: str | None = None
     run_cross_platform: bool = False
-
-
-class SignalScore(BaseModel):
-    score: float | None
-    level: str | None
 
 
 class AnalyzeResponse(BaseModel):
@@ -111,7 +117,7 @@ def _get_neo4j():
 @app.get("/", include_in_schema=False)
 async def root():
     """Serve the SPA."""
-    return FileResponse(str(STATIC_DIR / "index.html"))
+    return _serve_index_html()
 
 
 @app.get("/health", summary="Detailed health check")
@@ -149,16 +155,21 @@ async def analyze_artist(req: AnalyzeRequest):
     from src.agents.crew import run_analysis
     from src.graph.neo4j_client import Neo4jClient
 
-    logger.info(f"POST /analyze — artist_id={req.artist_id}")
+    artist_id = req.artist_id.strip()
+    if not artist_id:
+        raise HTTPException(status_code=400, detail="artist_id is required")
+
+    logger.info(f"POST /analyze — artist_id={artist_id}")
 
     # Reject artists not in our dataset — avoids misleading "LIKELY ORGANIC" for unknown IDs
     KNOWN_IDS = {
         "6bo3atMVp3qFECNALVwq9N",  # Relaxing White Noise
-        "39t4EeLBfpT72UQJVkIeuj",  # Meditation Relax Club
+        "39t4EeLBfpT72UQJVkIeuj",  # Meditation Relax Club (legacy ID)
+        "3BqBPFLxBkzKQTkuBPGMNF",  # Meditation Relax Club (frontend ID)
         "4Wx3ZL6d6p1gVMtwQ2YWsz",  # Calmo
-        "5gqhueRUZEa7VDnQt4HODp",  # Nils Frahm
+        "5gqhueRUZEa7VDnQt4HODp",  # Nils Frahm (legacy ID)
+        "5hVghJ3sCFHFJoLnSHySjL",  # Nils Frahm (frontend ID)
     }
-    artist_id = req.artist_id.strip()
     if artist_id not in KNOWN_IDS:
         # Also accept artists present in Neo4j
         try:
@@ -188,7 +199,7 @@ async def analyze_artist(req: AnalyzeRequest):
 
     try:
         result = run_analysis(
-            artist_id=req.artist_id,
+            artist_id=artist_id,
             artist_name=req.artist_name,
             track_name=req.track_name,
             run_cross_platform=req.run_cross_platform,
@@ -205,7 +216,7 @@ async def analyze_artist(req: AnalyzeRequest):
     try:
         from src.signals.verdict import compute_verdict_gnn
         gnn_result = compute_verdict_gnn(
-            artist_id=req.artist_id,
+            artist_id=artist_id,
             artist_name=result.get("artist_name"),
             run_s7=False,
         )
@@ -240,6 +251,7 @@ async def search_artists(q: str, limit: int = 5):
     """
     if not q or len(q.strip()) < 2:
         raise HTTPException(status_code=400, detail="Query too short")
+    limit = max(1, min(limit, 25))
     try:
         from src.ingest.live_ingest import search_artist
         results = search_artist(q.strip())
@@ -261,6 +273,8 @@ async def artist_tracks(artist: str):
     artist = artist.strip()
     if not artist:
         raise HTTPException(status_code=400, detail="artist name required")
+    if len(artist) > 200:
+        raise HTTPException(status_code=400, detail="artist name too long")
 
     # ── 1. YouTube Data API v3 ─────────────────────────────────────────────
     yt_key = os.getenv("YOUTUBE_API_KEY", "")
@@ -418,11 +432,15 @@ async def analyze_live(req: AnalyzeRequest):
     Fetches albums/tracks from Spotify API in real time.
     S1, S3, S4, S6 shown as unavailable (restricted endpoints).
     """
-    logger.info(f"POST /analyze-live — artist_id={req.artist_id}")
+    artist_id = req.artist_id.strip()
+    if not artist_id:
+        raise HTTPException(status_code=400, detail="artist_id is required")
+
+    logger.info(f"POST /analyze-live — artist_id={artist_id}")
     try:
         from src.ingest.live_ingest import analyze_live as _analyze_live
         result = _analyze_live(
-            artist_id=req.artist_id,
+            artist_id=artist_id,
             artist_name=req.artist_name,
             run_s7=req.run_cross_platform,
         )
@@ -575,6 +593,8 @@ async def get_neighborhood(artist_id: str, hops: int = 1):
     Returns nodes (artist + production companies) and edges.
     """
     try:
+        if hops < 1 or hops > 2:
+            raise HTTPException(status_code=400, detail="hops must be 1 or 2")
         neo4j = _get_neo4j()
         rows = neo4j.run(
             """
@@ -623,6 +643,7 @@ async def get_neighborhood(artist_id: str, hops: int = 1):
         return {
             "artist_id": artist_id,
             "artist_name": artist_name,
+            "hops": hops,
             "nodes": nodes,
             "edges": edges,
             "company_count": len(rows),

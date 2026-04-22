@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: eda-music-frontend-static
+    env: static
+    plan: free
+    autoDeploy: true
+    staticPublishPath: static
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

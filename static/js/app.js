@@ -4,7 +4,15 @@
    API calls go to FastAPI backend at /api/* (same origin).
 ──────────────────────────────────────────────────────────────────────────── */
 
-const API = '';   // same origin; prefix all calls with /
+const API = (
+  window.GHOSTTRACK_API_BASE
+  || localStorage.getItem('GHOSTTRACK_API_BASE')
+  || ''
+).replace(/\/$/, '');
+
+function apiUrl(path) {
+  return `${API}${path}`;
+}
 
 // ── Static data ──────────────────────────────────────────────────────────────
 
@@ -502,7 +510,7 @@ function onArtistInput(val) {
 async function _fetchSuggestions(q) {
   const dd = document.getElementById('search-dropdown');
   try {
-    const resp = await fetch(`/search?q=${encodeURIComponent(q)}&limit=5`);
+    const resp = await fetch(apiUrl(`/search?q=${encodeURIComponent(q)}&limit=5`));
     if (!resp.ok) { dd.style.display = 'none'; return; }
     const data = await resp.json();
     const items = data.results || [];
@@ -558,12 +566,12 @@ async function runAnalysis() {
   try {
     // Fire analysis + track lookup in parallel
     const [resp, tracksResp] = await Promise.all([
-      fetch(endpoint, {
+      fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
       }),
-      fetch(`/artist-tracks?artist=${encodeURIComponent(artistName)}`).catch(() => null),
+      fetch(apiUrl(`/artist-tracks?artist=${encodeURIComponent(artistName)}`)).catch(() => null),
     ]);
 
     const d = await resp.json();
@@ -751,7 +759,7 @@ async function loadNeighborhoodGraph(artistId) {
   if (!graphEl || !artistId) return;
 
   try {
-    const res = await fetch(`/graph/neighborhood/${artistId}`);
+    const res = await fetch(apiUrl(`/graph/neighborhood/${artistId}`));
     if (!res.ok) throw new Error('No graph data');
     const data = await res.json();
 
@@ -991,7 +999,7 @@ async function sendChat() {
   win.scrollTop = win.scrollHeight;
 
   try {
-    const resp = await fetch('/chat', {
+    const resp = await fetch(apiUrl('/chat'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question, history: _chatHistory }),
