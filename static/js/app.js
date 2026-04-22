@@ -4,10 +4,12 @@
    API calls go to FastAPI backend at /api/* (same origin).
 ──────────────────────────────────────────────────────────────────────────── */
 
+const DEFAULT_API_BASE = 'https://eda-for-music.onrender.com';
+
 const API = (
   window.GHOSTTRACK_API_BASE
   || localStorage.getItem('GHOSTTRACK_API_BASE')
-  || ''
+  || DEFAULT_API_BASE
 ).replace(/\/$/, '');
 
 function apiUrl(path) {
@@ -412,7 +414,7 @@ function renderGallery(root) {
           <span class="tag-gray">${f.sig}</span>
         </div>
         <div class="fig-title">${f.title}</div>
-        <img class="fig-img" src="/figures/${f.file}" alt="${f.title}"
+        <img class="fig-img" src="${apiUrl('/figures/' + f.file)}" alt="${f.title}"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
         <div style="display:none;height:120px;align-items:center;justify-content:center;
                     color:var(--gray4);font-size:0.82rem;background:var(--bg);border-radius:8px;margin:14px 0;">
