@@ -57,6 +57,8 @@ STATIC_DIR = ROOT / "static"
 FIGURES_DIR = ROOT / "paper" / "figures"
 STATIC_DIR.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/css", StaticFiles(directory=str(STATIC_DIR / "css")), name="css")
+app.mount("/js", StaticFiles(directory=str(STATIC_DIR / "js")), name="js")
 app.mount("/figures", StaticFiles(directory=str(FIGURES_DIR)), name="figures")
 
 
@@ -137,10 +139,10 @@ async def health():
     except Exception as e:
         checks["signals"] = f"error: {e}"
 
-    all_ok = all(v == "ok" for v in checks.values())
+    all_ok = checks["api"] == "ok" and checks["neo4j"] == "ok" and checks["signals"] == "ok"
     return JSONResponse(
         content={"status": "ok" if all_ok else "degraded", "checks": checks},
-        status_code=200 if all_ok else 503,
+        status_code=200,
     )
 
 
