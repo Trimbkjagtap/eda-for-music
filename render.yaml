@@ -2,7 +2,6 @@ services:
   - type: web
     name: eda-music-frontend-static
     env: static
-    plan: free
     autoDeploy: true
     staticPublishPath: static
     routes:
