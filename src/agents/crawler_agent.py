@@ -12,9 +12,25 @@ from pathlib import Path
 from typing import Any
 
 from crewai import Agent
-from crewai.tools.base_tool import BaseTool
 from loguru import logger
 from pydantic import BaseModel, Field
+
+try:
+    from crewai.tools import BaseTool
+except Exception:
+    try:
+        from crewai.tools.base_tool import BaseTool
+    except Exception:
+        try:
+            from crewai import BaseTool
+        except Exception:
+            class BaseTool(BaseModel):
+                name: str = "tool"
+                description: str = "compat tool"
+                args_schema: type[BaseModel] | None = None
+
+                def _run(self, *args: Any, **kwargs: Any) -> str:
+                    raise NotImplementedError("BaseTool unavailable in current CrewAI install")
 
 from src.graph.neo4j_client import Neo4jClient
 from src.utils.config import config
