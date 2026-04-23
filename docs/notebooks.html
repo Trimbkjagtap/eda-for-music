@@ -167,17 +167,17 @@
     <p><strong>Method:</strong> For each artist in Neo4j, compute how many tracks are registered by each production company. Then calculate HHI: <code>Σ(fraction²)</code> for each company. A single company controlling everything = HHI near 1.0 (monopoly). Equal distribution = HHI near 0.0.</p>
 
     <div class="nb-finding">
-      <strong>Key finding:</strong> RWN HHI = 0.88 (one German company registered 79% of all tracks). Nils Frahm HHI = 0.00 (tracks distributed across multiple labels). This was the single most discriminative signal in the entire study.
+      <strong>Key finding:</strong> RWN HHI = 0.672 (real ISRC-derived value; earlier proxy estimate was 0.88). Nils Frahm HHI = 0.00 (tracks distributed across multiple labels). Mann-Whitney p=0.003 (n=3 ghost vs 30 organic; bootstrap 95% CI [0.567, 0.900]). This was the single most discriminative signal in the seed set.
     </div>
 
-    <p><strong>Real numbers:</strong></p>
+    <p><strong>Real ISRC-derived HHI values:</strong></p>
     <table>
-      <thead><tr><th>Artist</th><th>HHI</th><th>Interpretation</th></tr></thead>
+      <thead><tr><th>Artist</th><th>HHI (real)</th><th>Interpretation</th></tr></thead>
       <tbody>
-        <tr><td>Relaxing White Noise</td><td>0.88</td><td>Near-monopoly by one German registrant</td></tr>
-        <tr><td>Meditation Relax Club</td><td>0.66</td><td>High concentration, one Italian company dominates</td></tr>
-        <tr><td>Calmo</td><td>0.45</td><td>Moderate concentration, 4 companies</td></tr>
-        <tr><td>Nils Frahm</td><td>0.00</td><td>Independent — own label, no concentration</td></tr>
+        <tr><td>Relaxing White Noise</td><td>0.672</td><td>High concentration — one German registrant dominates</td></tr>
+        <tr><td>Meditation Relax Club</td><td>0.515</td><td>High concentration — one Italian company dominates</td></tr>
+        <tr><td>Calmo</td><td>0.452</td><td>Moderate concentration (label: candidate, not journalist-confirmed)</td></tr>
+        <tr><td>Nils Frahm</td><td>0.000</td><td>Independent — own label, no concentration</td></tr>
       </tbody>
     </table>
 

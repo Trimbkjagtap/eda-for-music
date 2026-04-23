@@ -34,12 +34,12 @@ import src.signals.cross_platform as s7_mod
 
 # Default signal weights (must sum to 1.0)
 DEFAULT_WEIGHTS = {
-    "s1_audio_similarity":      0.05,  # rarely available (Kaggle coverage gaps)
-    "s2_cadence_sync":          0.15,  # strong for high-closure ghosts; low for borderline
-    "s3_playlist_cooccurrence": 0.08,  # HHI proxy — secondary signal
+    "s1_audio_similarity":      0.10,  # Kaggle proxy — genre confound partially controlled
+    "s2_cadence_sync":          0.35,  # strongest signal (Cohen's d=3.44) — dominates
+    "s3_playlist_cooccurrence": 0.10,  # ISRC concentration proxy
     "s4_follower_ratio":        0.10,
-    "s5_metadata_similarity":   0.10,  # per-artist keyword score
-    "s6_graph_density":         0.42,  # HHI is most reliable cross-artist discriminator
+    "s5_metadata_similarity":   0.10,  # collinear with S2; kept for convergence signal
+    "s6_graph_density":         0.15,  # valid for seed set only; lower weight for live artists
     "s7_cross_platform":        0.10,  # requires external API
 }
 

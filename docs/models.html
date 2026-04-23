@@ -98,7 +98,7 @@
         <li>32 hidden units per head</li>
         <li>ELU activation + 30% dropout</li>
         <li>200 training epochs</li>
-        <li>100% test accuracy</li>
+        <li>100% test accuracy (AUC=1.000 — see caveat below)</li>
       </ul>
     </div>
     <div class="model-card gcn">
@@ -113,6 +113,10 @@
         <li>No attention = less interpretable</li>
       </ul>
     </div>
+  </div>
+
+  <div style="background:#1a1200;border-left:3px solid #f0b429;padding:0.75rem 1rem;border-radius:0 6px 6px 0;margin:1rem 0;font-size:0.88rem;color:#c0a060;">
+    <strong>⚠ Methodological Note — AUC=1.000:</strong> Both models achieve 100% test accuracy on this graph. This reflects the <em>synthetic graph topology</em> — ghost nodes were fully connected to each other, organic nodes connected only to organic k-NN neighbors. Permutation feature importance is near-zero for all 8 node features, confirming the models learned <strong>cluster membership from graph structure</strong>, not generalizable audio/behavioral patterns. This is a <strong>signal discovery study</strong>, not a validated production classifier. Deployment-grade classification requires a larger independently-labeled dataset with realistic cross-ghost graph topology.
   </div>
 
   <h2>The GAT Architecture (Layer by Layer)</h2>
