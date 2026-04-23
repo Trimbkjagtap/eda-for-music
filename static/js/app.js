@@ -584,11 +584,13 @@ async function runAnalysis() {
   const endpoint = isStudyPanel ? '/analyze' : '/analyze-live';
 
   result.innerHTML = `<div class="loading-state"><span class="spinner"></span> ${isStudyPanel ? 'Running full 7-signal pipeline' : 'Fetching live data'}… also pulling track intelligence from YouTube &amp; iTunes…</div>`;
+  const stopTicker = startAnalysisTicker(result, isStudyPanel);
+  let timeoutId = null;
 
   try {
     const ANALYZE_TIMEOUT_MS = 45000;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+    timeoutId = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
 
     // Fire analysis + track lookup in parallel
     const [resp, tracksResp] = await Promise.all([
@@ -600,7 +602,7 @@ async function runAnalysis() {
       }),
       fetch(apiUrl(`/artist-tracks?artist=${encodeURIComponent(artistName)}`)).catch(() => null),
     ]);
-    clearTimeout(timeoutId);
+    stopTicker();
 
     const d = await resp.json();
     if (!resp.ok) {
@@ -617,6 +619,7 @@ async function runAnalysis() {
     renderAnalysisResult(result, d, tracksData);
     loadNeighborhoodGraph(d.artist_id || _lastAnalyzedId);
   } catch (e) {
+    stopTicker();
     const msg = e && e.name === 'AbortError'
       ? 'Request timed out. Backend may be cold-starting; please retry in a few seconds.'
       : e.message;
@@ -625,7 +628,48 @@ async function runAnalysis() {
         <strong>Analysis failed:</strong> ${msg}<br>
         <span style="color:var(--gray4);font-size:0.8rem;">Make sure the FastAPI backend is running.</span>
       </div>`;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
+}
+
+function startAnalysisTicker(resultEl, isStudyPanel) {
+  const fullStages = [
+    'Running full 7-signal pipeline',
+    'Collecting fingerprint signals (S1, S4, S5)',
+    'Computing graph signals (S2, S3, S6)',
+    'Synthesizing final verdict',
+  ];
+  const liveStages = [
+    'Resolving artist on Spotify',
+    'Fetching live album and track catalog',
+    'Scoring cadence and metadata similarity',
+    'Finalizing live verdict',
+  ];
+
+  const stages = isStudyPanel ? fullStages : liveStages;
+  const startedAt = Date.now();
+  let stageIndex = 0;
+
+  const render = () => {
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    const current = stages[Math.min(stageIndex, stages.length - 1)];
+    resultEl.innerHTML = `
+      <div class="loading-state" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
+        <div><span class="spinner"></span> ${current}…</div>
+        <div style="font-size:0.78rem;color:var(--gray4);">
+          Working for ${elapsed}s. This can take longer on cold starts.
+        </div>
+      </div>`;
+  };
+
+  render();
+  const ticker = setInterval(() => {
+    stageIndex += 1;
+    render();
+  }, 4500);
+
+  return () => clearInterval(ticker);
 }
 
 function renderAnalysisResult(container, d, tracks) {

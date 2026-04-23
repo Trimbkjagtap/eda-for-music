@@ -13,6 +13,7 @@ Docs:
 """
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from loguru import logger
+from starlette.concurrency import run_in_threadpool
 
 app = FastAPI(
     title="EDA for Music — Ghost Artist Detection API",
@@ -441,13 +443,31 @@ async def analyze_live(req: AnalyzeRequest):
     if not artist_id:
         raise HTTPException(status_code=400, detail="artist_id is required")
 
+    analyze_live_timeout_seconds = int(os.getenv("ANALYZE_LIVE_TIMEOUT_SECONDS", "40"))
+
     logger.info(f"POST /analyze-live — artist_id={artist_id}")
     try:
         from src.ingest.live_ingest import analyze_live as _analyze_live
-        result = _analyze_live(
-            artist_id=artist_id,
-            artist_name=req.artist_name,
-            run_s7=req.run_cross_platform,
+        result = await asyncio.wait_for(
+            run_in_threadpool(
+                _analyze_live,
+                artist_id=artist_id,
+                artist_name=req.artist_name,
+                run_s7=req.run_cross_platform,
+            ),
+            timeout=analyze_live_timeout_seconds,
+        )
+    except asyncio.TimeoutError:
+        logger.error(
+            f"/analyze-live timeout for {artist_id} "
+            f"after {analyze_live_timeout_seconds}s"
+        )
+        raise HTTPException(
+            status_code=504,
+            detail=(
+                "Live analysis timed out while waiting on upstream APIs. "
+                "Please retry in a moment."
+            ),
         )
     except Exception as e:
         logger.error(f"/analyze-live failed for {req.artist_id}: {e}")

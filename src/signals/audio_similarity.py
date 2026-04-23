@@ -34,6 +34,25 @@ FINGERPRINT_FEATURES = [
 HIGH_THRESHOLD = 0.88   # > 0.88 → ghost-like
 MEDIUM_THRESHOLD = 0.75  # > 0.75 → suspicious
 
+_GRAPH_DF_CACHE = None
+
+
+def _load_graph_df():
+    """Load the processed artist-track graph once per process."""
+    global _GRAPH_DF_CACHE
+    if _GRAPH_DF_CACHE is not None:
+        return _GRAPH_DF_CACHE
+
+    from pathlib import Path
+
+    cache_path = Path("data/processed/neo4j_full_graph.csv")
+    if not cache_path.exists():
+        _GRAPH_DF_CACHE = pd.DataFrame()
+        return _GRAPH_DF_CACHE
+
+    _GRAPH_DF_CACHE = pd.read_csv(cache_path)
+    return _GRAPH_DF_CACHE
+
 
 def score_tracks(track_ids: list[str], artist_name: str = "unknown") -> dict:
     """
@@ -126,12 +145,9 @@ def score_artist(artist_id: str) -> dict:
 
     Returns score dict (see score_tracks).
     """
-    from pathlib import Path
-
     # Try to load track IDs from cached exercise 4 data (neo4j_full_graph.csv)
-    cache_path = Path("data/processed/neo4j_full_graph.csv")
-    if cache_path.exists():
-        df = pd.read_csv(cache_path)
+    df = _load_graph_df()
+    if not df.empty:
         artist_tracks = df[df["artist_id"] == artist_id]["track_id"].dropna().tolist()
         artist_name = df[df["artist_id"] == artist_id]["artist_name"].iloc[0] if len(df[df["artist_id"] == artist_id]) else artist_id
         if artist_tracks:
@@ -151,14 +167,11 @@ def score_cluster(artist_ids: list[str]) -> dict:
 
     Returns score dict with additional key: artist_count.
     """
-    from pathlib import Path
-
-    cache_path = Path("data/processed/neo4j_full_graph.csv")
-    if not cache_path.exists():
+    df = _load_graph_df()
+    if df.empty:
         logger.warning("score_cluster: neo4j_full_graph.csv not found")
         return _empty_result()
 
-    df = pd.read_csv(cache_path)
     cluster_df = df[df["artist_id"].isin(artist_ids)]
     track_ids = cluster_df["track_id"].dropna().unique().tolist()
     result = score_tracks(track_ids, f"cluster({len(artist_ids)} artists)")

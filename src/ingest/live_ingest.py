@@ -11,6 +11,7 @@ S1 and S6 require audio-features / ISRC endpoints (restricted Apr 2026).
 from __future__ import annotations
 
 import math
+import os
 import re
 import time
 from datetime import date, datetime
@@ -24,6 +25,7 @@ from src.api.spotify_client import SpotifyClient
 
 _SPOTIFY_ID_RE = re.compile(r"^[A-Za-z0-9]{22}$")
 _S5_MODEL = None
+_ENABLE_LIVE_EMBEDDINGS = os.getenv("ENABLE_LIVE_EMBEDDINGS", "false").lower() in {"1", "true", "yes", "on"}
 
 
 def _get_s5_model():
@@ -64,6 +66,7 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
     # The frontend can send either a Spotify ID or a typed artist name.
     # Resolve names to the best Spotify match before calling ID-only endpoints.
     if not _SPOTIFY_ID_RE.fullmatch(artist_id):
+        logger.info(f"Live analysis resolving artist query: {artist_id}")
         query = artist_name or artist_id
         matches = search_artist(query)
         if not matches:
@@ -74,12 +77,14 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
 
     # Resolve name
     if not artist_name:
+        logger.info(f"Live analysis fetching artist metadata: {artist_id}")
         meta = sp.get_artist(artist_id)
         artist_name = meta.get("name", artist_id)
 
     logger.info(f"Live analysis: {artist_name} ({artist_id})")
 
     # --- fetch albums + tracks ---
+    logger.info(f"Live analysis fetching albums for {artist_name}")
     albums = sp.get_artist_albums(artist_id, include_groups="album,single")
     release_dates = [a["release_date"] for a in albums if a.get("release_date")]
     track_names: list[str] = []
@@ -92,11 +97,16 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
                 break
         except Exception:
             pass
+    logger.info(
+        f"Live analysis catalog fetched for {artist_name}: "
+        f"albums={len(albums)}, sampled_tracks={len(track_names)}"
+    )
 
     # --- S2: cadence synchrony ---
     s2_result = _score_cadence(artist_id, artist_name, release_dates)
 
     # --- S5: intra-catalog title similarity ---
+    logger.info(f"Live analysis scoring S5 for {artist_name} (embeddings_enabled={_ENABLE_LIVE_EMBEDDINGS})")
     s5_result = _score_title_similarity(artist_id, artist_name, track_names)
 
     # --- S7: cross-platform ---
@@ -182,12 +192,26 @@ def _score_title_similarity(artist_id: str, artist_name: str, titles: list[str])
     if len(titles) < 2:
         return {"suspicion_score": 0.0, "suspicion_level": "LOW",
                 "mean_cosine": 0.0, "note": "too few tracks"}
-    try:
-        # Deduplicate and cap to avoid quadratic pairwise-cost on very large catalogs.
-        uniq_titles = list(dict.fromkeys(titles))
-        if len(uniq_titles) > 120:
-            uniq_titles = uniq_titles[:120]
+    # Deduplicate and cap to avoid quadratic pairwise-cost on very large catalogs.
+    uniq_titles = list(dict.fromkeys(titles))
+    if len(uniq_titles) > 120:
+        uniq_titles = uniq_titles[:120]
 
+    # Fast lexical fallback (default): avoids first-request model download stalls on Render.
+    if not _ENABLE_LIVE_EMBEDDINGS:
+        mean_cos = _mean_lexical_cosine(uniq_titles)
+        score = float(np.clip((mean_cos - 0.10) / (0.60 - 0.10), 0, 1))
+        level = "HIGH" if score >= 0.6 else "MEDIUM" if score >= 0.35 else "LOW"
+        return {
+            "suspicion_score": round(score, 4),
+            "suspicion_level": level,
+            "mean_cosine": round(mean_cos, 4),
+            "track_count": len(titles),
+            "sampled_track_count": len(uniq_titles),
+            "method": "lexical_tfidf",
+        }
+
+    try:
         model = _get_s5_model()
         embs = model.encode(uniq_titles, normalize_embeddings=True, show_progress_bar=False)
         # upper-triangle mean pairwise cosine
@@ -204,11 +228,42 @@ def _score_title_similarity(artist_id: str, artist_name: str, titles: list[str])
             "mean_cosine": round(mean_cos, 4),
             "track_count": len(titles),
             "sampled_track_count": n,
+            "method": "sentence_transformer",
         }
     except Exception as e:
-        logger.warning(f"S5 sentence-transformer failed: {e}")
-        return {"suspicion_score": 0.0, "suspicion_level": "LOW",
-                "mean_cosine": 0.0, "note": str(e)}
+        logger.warning(f"S5 sentence-transformer failed, falling back to lexical TF-IDF: {e}")
+        mean_cos = _mean_lexical_cosine(uniq_titles)
+        score = float(np.clip((mean_cos - 0.10) / (0.60 - 0.10), 0, 1))
+        level = "HIGH" if score >= 0.6 else "MEDIUM" if score >= 0.35 else "LOW"
+        return {
+            "suspicion_score": round(score, 4),
+            "suspicion_level": level,
+            "mean_cosine": round(mean_cos, 4),
+            "track_count": len(titles),
+            "sampled_track_count": len(uniq_titles),
+            "method": "lexical_tfidf_fallback",
+            "note": str(e),
+        }
+
+
+def _mean_lexical_cosine(titles: list[str]) -> float:
+    """Compute mean pairwise similarity from title text without heavy model downloads."""
+    if len(titles) < 2:
+        return 0.0
+
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    vec = TfidfVectorizer(lowercase=True, ngram_range=(1, 2), token_pattern=r"(?u)\\b\\w+\\b")
+    try:
+        X = vec.fit_transform(titles)
+    except ValueError:
+        return 0.0
+    sims = (X * X.T).toarray()
+    n = sims.shape[0]
+    idx = np.triu_indices(n, k=1)
+    if len(idx[0]) == 0:
+        return 0.0
+    return float(np.mean(sims[idx]))
 
 
 def _parse_dates(raw: list[str]) -> list[date]:
