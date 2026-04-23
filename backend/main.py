@@ -345,7 +345,7 @@ async def artist_tracks(artist: str):
             "term": artist,
             "media": "music",
             "entity": "song",
-            "limit": 25,
+            "limit": 50,
             "sort": "recent",
         }
         with httpx.Client(timeout=10) as client:
@@ -414,6 +414,15 @@ async def artist_tracks(artist: str):
         tt = itunes_data.get("top_track", {})
         oai_latest = oai_views.get("latest", {})
         oai_top = oai_views.get("most_viewed", {})
+
+        # If OpenAI knows a newer latest track, override iTunes (iTunes sort=recent is unreliable)
+        itunes_year = lt.get("published", "")[:4] if lt else ""
+        oai_year = str(oai_latest.get("year", ""))[:4]
+        if oai_latest.get("title") and oai_year > itunes_year:
+            lt["title"] = oai_latest["title"]
+            lt["published"] = oai_year
+            lt["views_source"] = "ai_estimate"
+
         # Add view estimates to iTunes tracks
         if lt and oai_latest.get("youtube_views"):
             lt["views"] = oai_latest["youtube_views"]
