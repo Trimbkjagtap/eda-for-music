@@ -34,19 +34,19 @@ import src.signals.cross_platform as s7_mod
 
 # Default signal weights (must sum to 1.0)
 DEFAULT_WEIGHTS = {
-    "s1_audio_similarity": 0.10,     # limited by Kaggle coverage
-    "s2_cadence_sync": 0.20,         # strongest signal, pre-computed
-    "s3_playlist_cooccurrence": 0.15,
-    "s4_follower_ratio": 0.15,
-    "s5_metadata_similarity": 0.15,
-    "s6_graph_density": 0.15,        # HHI — very reliable
-    "s7_cross_platform": 0.10,       # requires external API
+    "s1_audio_similarity":      0.05,  # rarely available (Kaggle coverage gaps)
+    "s2_cadence_sync":          0.15,  # strong for high-closure ghosts; low for borderline
+    "s3_playlist_cooccurrence": 0.08,  # HHI proxy — secondary signal
+    "s4_follower_ratio":        0.10,
+    "s5_metadata_similarity":   0.10,  # per-artist keyword score
+    "s6_graph_density":         0.42,  # HHI is most reliable cross-artist discriminator
+    "s7_cross_platform":        0.10,  # requires external API
 }
 
 _VERDICT_LABELS = {
-    "LIKELY_GHOST": (0.70, 1.01),
-    "SUSPICIOUS": (0.40, 0.70),
-    "LIKELY_ORGANIC": (0.0, 0.40),
+    "LIKELY_GHOST": (0.60, 1.01),
+    "SUSPICIOUS": (0.30, 0.60),
+    "LIKELY_ORGANIC": (0.0, 0.30),
 }
 
 
@@ -261,9 +261,9 @@ def print_report_card(verdict_dict: dict) -> None:
 
 
 def _verdict_label(score: float) -> str:
-    if score >= 0.70:
+    if score >= 0.60:
         return "LIKELY_GHOST"
-    elif score >= 0.40:
+    elif score >= 0.30:
         return "SUSPICIOUS"
     return "LIKELY_ORGANIC"
 

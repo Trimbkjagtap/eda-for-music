@@ -92,6 +92,7 @@ def score_artist(
     # ── YouTube ───────────────────────────────────────────────────────────
     yt_views = 0
     yt_found = False
+    yt_api_ok = False  # True only if API call succeeded (key present + no error)
     try:
         if track_name:
             yt_views = yt_client.get_track_views(artist_name, track_name)
@@ -102,6 +103,7 @@ def score_artist(
                 if vid_id:
                     yt_views = yt_client.get_view_count(vid_id)
         yt_found = yt_views > 0
+        yt_api_ok = True
         _YOUTUBE_CALL_COUNT += 2  # search + stats
         time.sleep(0.5)  # brief pause between API providers
     except Exception as e:
@@ -121,8 +123,37 @@ def score_artist(
     except Exception as e:
         logger.warning(f"Apple Music lookup failed for {artist_name}: {e}")
 
+    # ── OpenAI fallback when both YouTube and Apple failed ────────────────
+    openai_used = False
+    if not yt_api_ok and not apple_found:
+        oai_result = _openai_score(artist_name, track_name)
+        if oai_result is not None:
+            openai_used = True
+            suspicion_score = oai_result["suspicion_score"]
+            suspicion_level = _level(suspicion_score)
+            result = {
+                "artist_name": artist_name,
+                "artist_id": artist_id,
+                "track_queried": track_name or "(artist search)",
+                "youtube_views": 0,
+                "youtube_found": False,
+                "youtube_score": 0.5,
+                "apple_result_count": 0,
+                "apple_found": False,
+                "apple_score": 0.5,
+                "combined_score": suspicion_score,
+                "suspicion_level": suspicion_level,
+                "suspicion_score": suspicion_score,
+                "source": "openai",
+                "openai_reasoning": oai_result.get("reasoning", ""),
+            }
+            logger.info(f"{artist_name}: OpenAI fallback → suspicion={suspicion_score:.2f} [{suspicion_level}]")
+            cache_path.write_text(json.dumps(result, indent=2))
+            return result
+
     # ── Score computation ─────────────────────────────────────────────────
-    yt_score = _youtube_score(yt_views, yt_found)
+    # If YouTube API failed (no key / quota / error), use neutral 0.5 not 1.0
+    yt_score = _youtube_score(yt_views, yt_found) if yt_api_ok else 0.5
     apple_score = _apple_score(apple_count)
     combined = 0.6 * yt_score + 0.4 * apple_score
     suspicion_score = float(np.clip(combined, 0.0, 1.0))
@@ -147,6 +178,7 @@ def score_artist(
         "combined_score": round(combined, 4),
         "suspicion_level": suspicion_level,
         "suspicion_score": round(suspicion_score, 4),
+        "source": "apis",
     }
 
     # Cache result
@@ -221,6 +253,51 @@ def _get_sample_track(artist_name: str, artist_id: str | None, neo4j) -> str | N
         except Exception:
             pass
     return None
+
+
+def _openai_score(artist_name: str, track_name: str | None) -> dict | None:
+    """
+    Ask GPT to estimate cross-platform suspicion when all APIs are unavailable.
+    Returns dict with suspicion_score (0.0–1.0) and reasoning, or None on failure.
+    """
+    try:
+        from openai import OpenAI
+        import json as _json
+        from src.utils.config import config
+        oai = OpenAI(api_key=config.OPENAI_API_KEY if hasattr(config, "OPENAI_API_KEY") else None)
+        prompt = (
+            f"You are a music industry analyst detecting fake/ghost Spotify artists.\n"
+            f"Artist: '{artist_name}'" + (f"\nTrack: '{track_name}'" if track_name else "") + "\n\n"
+            f"Based on your knowledge, estimate:\n"
+            f"1. Is this a real, well-known artist or a likely ghost/fake artist?\n"
+            f"2. Do they have significant YouTube presence (millions of views)?\n"
+            f"3. Are they well represented on Apple Music / iTunes?\n\n"
+            f"Ghost artists typically: have generic names ('Relaxing Piano Music', 'Baby Sleep Sounds'), "
+            f"no YouTube channel, no Apple Music presence, bulk-produce lo-fi/ambient tracks.\n\n"
+            f"Reply in JSON only:\n"
+            f"{{\"suspicion_score\": 0.0 to 1.0, \"is_ghost\": true/false, "
+            f"\"youtube_presence\": \"none/low/medium/high\", "
+            f"\"apple_presence\": \"none/low/medium/high\", "
+            f"\"reasoning\": \"one sentence\"}}"
+        )
+        resp = oai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=200,
+            response_format={"type": "json_object"},
+        )
+        data = _json.loads(resp.choices[0].message.content)
+        score = float(data.get("suspicion_score", 0.5))
+        return {
+            "suspicion_score": round(float(np.clip(score, 0.0, 1.0)), 4),
+            "reasoning": data.get("reasoning", ""),
+            "youtube_presence": data.get("youtube_presence", "unknown"),
+            "apple_presence": data.get("apple_presence", "unknown"),
+        }
+    except Exception as e:
+        logger.warning(f"OpenAI cross-platform fallback failed for {artist_name}: {e}")
+        return None
 
 
 def _youtube_score(views: int, found: bool) -> float:

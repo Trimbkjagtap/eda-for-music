@@ -651,12 +651,12 @@ a  { color: var(--green); text-decoration: none; }
   display: flex; align-items: center; gap: 18px;
   animation: fadeUp 0.4s ease;
 }
-.verdict-ghost       { background: #1a0505; border: 1px solid #5a1515; }
-.verdict-suspicious  { background: #1a1005; border: 1px solid #5a3a0a; }
+.verdict-ghost       { background: #1a0505; border: 1px solid #dc2626; }
+.verdict-suspicious  { background: #1a1500; border: 1px solid #ca8a04; }
 .verdict-organic     { background: var(--green-dim); border: 1px solid var(--green-mid); }
 .verdict-icon        { font-size: 2.2rem; }
 .verdict-label       { color: var(--white); font-size: 1.2rem; font-weight: 900; }
-.verdict-ghost .verdict-label    { color: #fca5a5; }
+.verdict-ghost .verdict-label    { color: #f87171; }
 .verdict-suspicious .verdict-label{ color: #fcd34d; }
 .verdict-organic .verdict-label  { color: #86efac; }
 .verdict-sub         { color: var(--gray3); font-size: 0.83rem; margin-top: 3px; }

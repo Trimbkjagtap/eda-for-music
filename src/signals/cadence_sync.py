@@ -129,15 +129,21 @@ def score_artist(artist_id: str, neo4j: Neo4jClient | None = None) -> dict:
         anomaly_rate = float((preds == -1).sum() / len(preds))
 
     # Use pre-computed closure if available, else estimate from single_day_fraction
+    known_closure = closure_rate is not None
     if closure_rate is None:
         closure_rate = single_day_fraction
 
-    suspicion_score = _compute_suspicion(
-        closure_rate=closure_rate,
-        burst_ratio=burst_ratio,
-        single_day_fraction=single_day_fraction,
-        cv_gap=cv_gap,
-    )
+    # When closure_rate is pre-computed from track data (not album-level),
+    # burst_ratio/single_day_fraction from album dates are unreliable — use sigmoid alone.
+    if known_closure:
+        suspicion_score = float(np.clip(_closure_to_suspicion(closure_rate), 0.0, 1.0))
+    else:
+        suspicion_score = _compute_suspicion(
+            closure_rate=closure_rate,
+            burst_ratio=burst_ratio,
+            single_day_fraction=single_day_fraction,
+            cv_gap=cv_gap,
+        )
     suspicion_level = _level(suspicion_score)
 
     logger.info(
@@ -249,10 +255,10 @@ def _compute_suspicion(
     cv_gap: float,
 ) -> float:
     """Weighted combination of cadence signals → suspicion score [0, 1]."""
-    # closure_rate is the strongest signal (from Exercise 5)
-    score = 0.5 * closure_rate
-    score += 0.25 * min(burst_ratio, 1.0)
-    score += 0.15 * min(single_day_fraction, 1.0)
+    # Apply sigmoid to closure_rate — calibrated so 95% closure → ~1.0, 0% → ~0.02
+    score = 0.60 * _closure_to_suspicion(closure_rate)
+    score += 0.20 * min(burst_ratio, 1.0)
+    score += 0.10 * min(single_day_fraction, 1.0)
     # Low CV (regular spacing) is also suspicious, but weaker signal
     cv_signal = max(0.0, 1.0 - cv_gap / 2.0) if cv_gap < 2.0 else 0.0
     score += 0.10 * cv_signal

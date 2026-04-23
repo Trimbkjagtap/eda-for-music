@@ -102,6 +102,8 @@ class AnalyzeResponse(BaseModel):
     rule_based_score: float | None = None
     gnn_score: float | None = None
     gnn_available: bool = False
+    signal_sources: dict[str, str] = {}
+    ai_reasoning: str = ""
 
 
 # ── Lazy singletons ───────────────────────────────────────────────────────────
@@ -268,14 +270,11 @@ async def search_artists(q: str, limit: int = 5):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/artist-tracks", summary="Fetch latest & top tracks with YouTube view counts")
+@app.get("/artist-tracks", summary="Fetch latest & top tracks from YouTube and iTunes")
 async def artist_tracks(artist: str):
     """
-    Given an artist name, returns:
-      - latest_track: most recently released track found
-      - top_track: highest-viewed track on YouTube
-      - source: which API provided the data (youtube / itunes / openai)
-    Fallback chain: YouTube API → iTunes Search → OpenAI GPT-4o.
+    Given an artist name, returns data from both YouTube and iTunes simultaneously.
+    Response includes youtube and itunes keys, each with latest_track and top_track.
     """
     artist = artist.strip()
     if not artist:
@@ -283,12 +282,15 @@ async def artist_tracks(artist: str):
     if len(artist) > 200:
         raise HTTPException(status_code=400, detail="artist name too long")
 
+    import httpx
+
+    yt_data = None
+    itunes_data = None
+
     # ── 1. YouTube Data API v3 ─────────────────────────────────────────────
     yt_key = os.getenv("YOUTUBE_API_KEY", "")
     if yt_key:
         try:
-            import httpx
-            # Search for up to 10 videos from this artist (official channel / topic)
             search_params = {
                 "part": "snippet",
                 "q": f"{artist} official music",
@@ -304,7 +306,6 @@ async def artist_tracks(artist: str):
 
             if items:
                 video_ids = [it["id"]["videoId"] for it in items if it.get("id", {}).get("videoId")]
-                # Get stats for all found videos
                 stats_params = {
                     "part": "statistics,snippet",
                     "id": ",".join(video_ids),
@@ -316,13 +317,10 @@ async def artist_tracks(artist: str):
                     vids = r2.json().get("items", [])
 
                 if vids:
-                    # Prefer videos from a channel whose name contains the artist name
                     artist_lower = artist.lower()
                     artist_vids = [v for v in vids if artist_lower in v["snippet"].get("channelTitle","").lower()]
                     pool = artist_vids if artist_vids else vids
-                    # Latest = most recently published
                     latest = max(pool, key=lambda v: v["snippet"].get("publishedAt",""))
-                    # Top = highest view count
                     top = max(pool, key=lambda v: int(v.get("statistics", {}).get("viewCount", 0)))
 
                     def yt_track(v):
@@ -334,9 +332,7 @@ async def artist_tracks(artist: str):
                             "thumbnail": v["snippet"].get("thumbnails", {}).get("medium", {}).get("url", ""),
                         }
 
-                    return {
-                        "source": "youtube",
-                        "artist": artist,
+                    yt_data = {
                         "latest_track": yt_track(latest),
                         "top_track": yt_track(top),
                     }
@@ -345,12 +341,11 @@ async def artist_tracks(artist: str):
 
     # ── 2. iTunes Search API (free, no key) ───────────────────────────────
     try:
-        import httpx
         itunes_params = {
             "term": artist,
             "media": "music",
             "entity": "song",
-            "limit": 10,
+            "limit": 25,
             "sort": "recent",
         }
         with httpx.Client(timeout=10) as client:
@@ -359,9 +354,14 @@ async def artist_tracks(artist: str):
             results = r.json().get("results", [])
 
         if results:
-            # iTunes doesn't give views — use trackCount as proxy
+            # Sort by releaseDate descending to get truly newest first
+            results.sort(key=lambda t: t.get("releaseDate", ""), reverse=True)
             latest = results[0]
-            top = max(results, key=lambda t: t.get("trackTimeMillis", 0))
+            # Pick second-most-recent track with a different name to avoid duplicate
+            top = next(
+                (t for t in results[1:] if t.get("trackName") != latest.get("trackName")),
+                results[-1] if len(results) > 1 else latest,
+            )
 
             def itunes_track(t):
                 return {
@@ -374,59 +374,116 @@ async def artist_tracks(artist: str):
                     "duration_ms": t.get("trackTimeMillis", 0),
                 }
 
-            return {
-                "source": "itunes",
-                "artist": artist,
+            itunes_data = {
                 "latest_track": itunes_track(latest),
                 "top_track": itunes_track(top),
             }
     except Exception as e:
         logger.warning(f"/artist-tracks iTunes failed for '{artist}': {e}")
 
-    # ── 3. OpenAI fallback ────────────────────────────────────────────────
+    # ── 3. OpenAI enrichment — always called to get YouTube view estimates ──
+    oai_views = {}
     try:
         from openai import OpenAI
+        import json as _json
         oai = OpenAI()
         prompt = (
-            f"For the music artist '{artist}', give me:\n"
-            f"1. Their most recent / latest known track title and approximate release year\n"
-            f"2. Their most popular / highest-viewed track title and approximate YouTube view count\n"
-            f"Reply in JSON only: {{\"latest\": {{\"title\": \"...\", \"year\": \"...\"}}, "
-            f"\"top\": {{\"title\": \"...\", \"views\": 123456789}}}}"
+            f"For the music artist '{artist}', give me their track data as of your knowledge cutoff.\n"
+            f"Reply in JSON only:\n"
+            f"{{\n"
+            f'  "latest": {{"title": "...", "year": "YYYY", "youtube_views": 123456789}},\n'
+            f'  "most_viewed": {{"title": "...", "year": "YYYY", "youtube_views": 123456789}}\n'
+            f"}}\n"
+            f"For youtube_views use your best estimate of the approximate YouTube view count. "
+            f"Use null if the artist is obscure/unknown."
         )
         resp = oai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
-            max_tokens=200,
+            max_tokens=250,
             response_format={"type": "json_object"},
         )
-        import json
-        data = json.loads(resp.choices[0].message.content)
+        oai_views = _json.loads(resp.choices[0].message.content)
+    except Exception as e:
+        logger.warning(f"/artist-tracks OpenAI enrichment failed for '{artist}': {e}")
+
+    # Enrich iTunes latest_track with OpenAI view estimate if YouTube not available
+    if itunes_data and not yt_data:
+        lt = itunes_data.get("latest_track", {})
+        tt = itunes_data.get("top_track", {})
+        oai_latest = oai_views.get("latest", {})
+        oai_top = oai_views.get("most_viewed", {})
+        # Add view estimates to iTunes tracks
+        if lt and oai_latest.get("youtube_views"):
+            lt["views"] = oai_latest["youtube_views"]
+            lt["views_source"] = "ai_estimate"
+        if tt and oai_top.get("youtube_views"):
+            tt["views"] = oai_top["youtube_views"]
+            tt["views_source"] = "ai_estimate"
+        # Also add OpenAI's most-viewed as a separate youtube entry
+        if oai_top.get("title"):
+            yt_data = {
+                "latest_track": {
+                    "title": oai_latest.get("title", lt.get("title", "Unknown")),
+                    "views": oai_latest.get("youtube_views"),
+                    "published": oai_latest.get("year", lt.get("published", "")),
+                    "url": "",
+                    "thumbnail": lt.get("thumbnail", ""),
+                    "views_source": "ai_estimate",
+                },
+                "top_track": {
+                    "title": oai_top.get("title", "Unknown"),
+                    "views": oai_top.get("youtube_views"),
+                    "published": oai_top.get("year", ""),
+                    "url": "",
+                    "thumbnail": "",
+                    "views_source": "ai_estimate",
+                },
+            }
+
+    if yt_data or itunes_data:
+        return {
+            "source": "multi",
+            "artist": artist,
+            "youtube": yt_data,
+            "itunes": itunes_data,
+            "latest_track": (yt_data or itunes_data or {}).get("latest_track"),
+            "top_track": (yt_data or itunes_data or {}).get("top_track"),
+        }
+
+    # ── 4. OpenAI-only fallback (all APIs failed) ─────────────────────────
+    if oai_views:
+        oai_latest = oai_views.get("latest", {})
+        oai_top = oai_views.get("most_viewed", {})
+        oai_data = {
+            "latest_track": {
+                "title": oai_latest.get("title", "Unknown"),
+                "views": oai_latest.get("youtube_views"),
+                "published": oai_latest.get("year", ""),
+                "url": "", "thumbnail": "", "views_source": "ai_estimate",
+            },
+            "top_track": {
+                "title": oai_top.get("title", "Unknown"),
+                "views": oai_top.get("youtube_views"),
+                "published": oai_top.get("year", ""),
+                "url": "", "thumbnail": "", "views_source": "ai_estimate",
+            },
+        }
         return {
             "source": "openai",
             "artist": artist,
-            "latest_track": {
-                "title": data.get("latest", {}).get("title", "Unknown"),
-                "views": None,
-                "published": data.get("latest", {}).get("year", ""),
-                "url": "",
-                "thumbnail": "",
-            },
-            "top_track": {
-                "title": data.get("top", {}).get("title", "Unknown"),
-                "views": data.get("top", {}).get("views"),
-                "published": "",
-                "url": "",
-                "thumbnail": "",
-            },
+            "youtube": None,
+            "itunes": None,
+            "latest_track": oai_data["latest_track"],
+            "top_track": oai_data["top_track"],
         }
-    except Exception as e:
-        logger.warning(f"/artist-tracks OpenAI fallback failed for '{artist}': {e}")
 
     return {
         "source": "unavailable",
         "artist": artist,
+        "youtube": None,
+        "itunes": None,
         "latest_track": None,
         "top_track": None,
     }
@@ -485,6 +542,8 @@ async def analyze_live(req: AnalyzeRequest):
         rule_based_score=result.get("overall_score"),
         gnn_score=None,
         gnn_available=False,
+        signal_sources=result.get("signal_sources", {}),
+        ai_reasoning=result.get("ai_assessment", {}).get("reasoning", ""),
     )
 
 

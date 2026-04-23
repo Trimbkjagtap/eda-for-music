@@ -598,7 +598,7 @@ async function runAnalysis() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
+        body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: true }),
       }),
       fetch(apiUrl(`/artist-tracks?artist=${encodeURIComponent(artistName)}`)).catch(() => null),
     ]);
@@ -674,18 +674,28 @@ function startAnalysisTicker(resultEl, isStudyPanel) {
 
 function renderAnalysisResult(container, d, tracks) {
   const score = d.verdict_score;
-  const vcls = score >= 0.7 ? 'verdict-ghost' : score >= 0.4 ? 'verdict-suspicious' : 'verdict-organic';
-  const vicon = score >= 0.7 ? '👻' : score >= 0.4 ? '⚠️' : '✓';
+  const label = (d.verdict_label || '').toUpperCase();
+  const vcls = label === 'LIKELY_GHOST' ? 'verdict-ghost' : label === 'SUSPICIOUS' ? 'verdict-suspicious' : 'verdict-organic';
+  const vicon = label === 'LIKELY_GHOST' ? '👻' : label === 'SUSPICIOUS' ? '⚠️' : '✓';
 
+  const signalSources = d.signal_sources || {};
   const signalRows = Object.entries(d.signals || {}).map(([key, val]) => {
     const pct = val !== null ? Math.round(val * 100) : null;
     const name = SIGNAL_NAMES[key] || key;
     const color = scoreColor(val);
+    const src = signalSources[key] || (val !== null ? 'real' : 'unavailable');
+    const srcBadge = src === 'openai'
+      ? `<span title="Estimated by AI (no API data available)" style="font-size:0.62rem;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44;border-radius:10px;padding:1px 6px;margin-left:6px;vertical-align:middle">🤖 AI</span>`
+      : src === 'kaggle'
+      ? `<span title="From local Kaggle dataset" style="font-size:0.62rem;background:#3b82f622;color:#60a5fa;border:1px solid #3b82f644;border-radius:10px;padding:1px 6px;margin-left:6px;vertical-align:middle">📊 Kaggle</span>`
+      : src === 'real'
+      ? `<span title="Real-time data" style="font-size:0.62rem;background:#00ff8811;color:var(--green);border:1px solid #00ff8833;border-radius:10px;padding:1px 6px;margin-left:6px;vertical-align:middle">✓ live</span>`
+      : '';
     return `
       <div class="signal-row">
-        <div class="signal-name">${name}</div>
+        <div class="signal-name">${name}${srcBadge}</div>
         <div class="signal-bar-wrap">
-          <div class="signal-bar" style="width:${pct ?? 0}%;background:${color}"></div>
+          <div class="signal-bar" style="width:${pct ?? 0}%;background:${color}${src === 'openai' ? ';opacity:0.75' : ''}"></div>
         </div>
         <div class="signal-score" style="color:${color}">${pct !== null ? pct + '%' : '—'}</div>
       </div>`;
@@ -693,14 +703,16 @@ function renderAnalysisResult(container, d, tracks) {
 
   // ── Track Intelligence panel ──────────────────────────────────────────
   let trackPanel = '';
-  if (tracks && (tracks.latest_track || tracks.top_track)) {
-    const src = tracks.source;
-    const srcBadge = src === 'youtube' ? '▶ YouTube' : src === 'itunes' ? '🎵 iTunes' : '🤖 OpenAI';
-    const srcColor = src === 'youtube' ? '#e74c3c' : src === 'itunes' ? '#a78bfa' : '#f59e0b';
+  if (tracks && (tracks.latest_track || tracks.top_track || tracks.youtube || tracks.itunes)) {
+    const hasYt = !!(tracks.youtube && (tracks.youtube.latest_track || tracks.youtube.top_track));
+    const hasIt = !!(tracks.itunes && (tracks.itunes.latest_track || tracks.itunes.top_track));
 
-    function trackCard(label, t, icon) {
+    function trackCard(label, t, srcColor, icon) {
       if (!t) return '';
-      const views = t.views != null ? Number(t.views).toLocaleString() + ' views' : (t.album ? t.album : '');
+      const viewsEst = t.views_source === 'ai_estimate' ? ' <span style="font-size:0.65rem;color:#f59e0b;opacity:0.8">(est.)</span>' : '';
+      const views = t.views != null
+        ? Number(t.views).toLocaleString() + ' views' + viewsEst
+        : t.album ? `📀 ${t.album}` : '';
       const date = t.published ? `· ${t.published.slice(0,7)}` : '';
       const link = t.url ? `href="${t.url}" target="_blank" rel="noopener"` : '';
       const thumb = t.thumbnail
@@ -720,16 +732,66 @@ function renderAnalysisResult(container, d, tracks) {
         </a>`;
     }
 
-    trackPanel = `
-      <div style="margin-top:28px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
-        <h3 style="color:var(--white);font-size:0.95rem;margin:0">Track Intelligence</h3>
-        <span style="font-size:0.72rem;background:${srcColor}22;color:${srcColor};
-              border:1px solid ${srcColor}44;border-radius:20px;padding:2px 10px;font-weight:700">${srcBadge}</span>
-      </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px">
-        ${trackCard('Latest Release', tracks.latest_track, '🆕')}
-        ${trackCard('Most Viewed', tracks.top_track, '🔥')}
+    function renderCards(srcKey) {
+      const d = srcKey === 'youtube' ? tracks.youtube : srcKey === 'itunes' ? tracks.itunes : tracks;
+      const col = srcKey === 'youtube' ? '#e74c3c' : srcKey === 'itunes' ? '#a78bfa' : '#f59e0b';
+      const topLabel = srcKey === 'youtube' ? 'Most Viewed' : 'Recent Track';
+      if (!d) return '<div style="color:var(--gray3);font-size:0.85rem;padding:16px 0">No data available for this source.</div>';
+      return `<div style="display:flex;gap:14px;flex-wrap:wrap">
+        ${trackCard('Latest Release', d.latest_track, col, '🆕')}
+        ${trackCard(topLabel, d.top_track, col, '🔥')}
       </div>`;
+    }
+
+    const panelId = `ti-${Date.now()}`;
+    const defaultTab = hasYt ? 'youtube' : hasIt ? 'itunes' : 'other';
+
+    const tabBtn = (key, label, color, active) =>
+      `<button onclick="(function(){
+          document.querySelectorAll('.ti-tab-${panelId}').forEach(b=>b.style.background='transparent');
+          document.querySelectorAll('.ti-tab-${panelId}').forEach(b=>b.style.color='var(--gray3)');
+          this.style.background='${color}22'; this.style.color='${color}';
+          document.getElementById('ti-cards-${panelId}').innerHTML=window._tiRender_${panelId}('${key}');
+        }).call(this)"
+        class="ti-tab-${panelId}"
+        style="font-size:0.72rem;font-weight:700;padding:3px 12px;border-radius:20px;border:1px solid ${color}44;
+               cursor:pointer;transition:all 0.15s;background:${active ? color+'22' : 'transparent'};
+               color:${active ? color : 'var(--gray3)'}">${label}</button>`;
+
+    trackPanel = `
+      <div style="margin-top:28px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h3 style="color:var(--white);font-size:0.95rem;margin:0">Track Intelligence</h3>
+        ${hasYt ? tabBtn('youtube', '▶ YouTube', '#e74c3c', defaultTab==='youtube') : ''}
+        ${hasIt ? tabBtn('itunes',  '🎵 iTunes',  '#a78bfa', defaultTab==='itunes')  : ''}
+        ${!hasYt && !hasIt ? `<span style="font-size:0.72rem;color:var(--gray3)">🤖 OpenAI</span>` : ''}
+      </div>
+      <div id="ti-cards-${panelId}" style="margin-bottom:24px">
+        ${renderCards(defaultTab)}
+      </div>
+      <script>
+        window._tiRender_${panelId} = function(k) {
+          const t = ${JSON.stringify(tracks)};
+          const d = k==='youtube' ? t.youtube : k==='itunes' ? t.itunes : t;
+          const col = k==='youtube' ? '#e74c3c' : k==='itunes' ? '#a78bfa' : '#f59e0b';
+          function card(label, tr, icon) {
+            if (!tr) return '';
+            const viewsEst = tr.views_source==='ai_estimate' ? ' (est.)' : '';
+            const views = tr.views!=null ? Number(tr.views).toLocaleString()+' views'+viewsEst : (tr.album ? '📀 '+tr.album : '');
+            const date = tr.published ? '· '+tr.published.slice(0,7) : '';
+            const link = tr.url ? 'href="'+tr.url+'" target="_blank" rel="noopener"' : '';
+            const thumb = tr.thumbnail
+              ? '<img src="'+tr.thumbnail+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0"/>'
+              : '<div style="width:72px;height:54px;border-radius:6px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">'+icon+'</div>';
+            return '<a '+link+' style="display:flex;gap:14px;align-items:flex-start;text-decoration:none;background:#111;border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color 0.15s;flex:1;min-width:220px" onmouseover="this.style.borderColor=\'var(--green)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+              +thumb+'<div style="overflow:hidden"><div style="font-size:0.72rem;color:'+col+';font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">'+label+'</div>'
+              +'<div style="color:#fff;font-size:0.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px" title="'+tr.title+'">'+tr.title+'</div>'
+              +'<div style="color:var(--gray3);font-size:0.78rem;margin-top:4px">'+views+' '+date+'</div></div></a>';
+          }
+          const topLabel = k==='youtube' ? 'Most Viewed' : 'Recent Track';
+          if (!d) return '<div style="color:var(--gray3);font-size:0.85rem;padding:16px 0">No data available for this source.</div>';
+          return '<div style="display:flex;gap:14px;flex-wrap:wrap">'+card('Latest Release',d.latest_track,'🆕')+card(topLabel,d.top_track,'🔥')+'</div>';
+        };
+      </script>`
   }
 
   // ── 7-Layer EDA Explainer ─────────────────────────────────────────────
@@ -794,9 +856,11 @@ function renderAnalysisResult(container, d, tracks) {
 
     ${d._liveMode ? `
     <div style="background:#0d1a10;border:1px solid #00ff8844;border-radius:10px;padding:14px 18px;margin-top:16px;font-size:0.82rem;color:#a0cfaa;line-height:1.6">
-      <strong style="color:var(--green)">Live analysis mode</strong> — S2 (cadence) and S5 (title similarity) computed from real Spotify data.
-      S1, S3, S4, S6 unavailable (Spotify audio-features / ISRC endpoints restricted Apr 2026).
-      Confidence capped at 85% with partial signals.
+      <strong style="color:var(--green)">Live analysis mode</strong> —
+      <span style="color:var(--green)">✓ live</span> real-time Spotify / YouTube / iTunes &nbsp;·&nbsp;
+      <span style="color:#60a5fa">📊 Kaggle</span> local processed CSV datasets &nbsp;·&nbsp;
+      <span style="color:#f59e0b">🤖 AI</span> GPT-4o-mini estimate (fallback).
+      Higher-quality sources override lower ones. Confidence capped at 85% with partial signals.
     </div>` : `
     <div class="info-box">
       <strong>Timing:</strong> Analysis completed in ${d.timing_seconds.toFixed(2)}s using cached Neo4j data.

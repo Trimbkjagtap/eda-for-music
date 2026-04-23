@@ -147,36 +147,93 @@ def score_cluster(artist_ids: list[str], neo4j: Neo4jClient | None = None) -> di
 def score_artist(artist_id: str, all_artist_ids: list[str] | None = None,
                  neo4j: Neo4jClient | None = None) -> dict:
     """
-    Score a single artist's playlist co-occurrence against all known artists.
+    Score a single artist for production-company concentration (ISRC proxy for playlist co-occurrence).
 
-    If all_artist_ids is None, uses all artists in Neo4j.
+    Ghost artists each use private/unknown registrants (ISRC sharing between artists is 0),
+    so the dominant signal is per-artist HHI (monopolistic production = suspicious).
+    Cross-artist ISRC sharing is kept as a secondary bonus when it fires.
     """
     _neo4j = neo4j or Neo4jClient()
+
+    # Resolve name
+    name_rows = _neo4j.run(
+        "MATCH (a:Artist {spotify_id: $id}) RETURN a.name AS name", id=artist_id
+    )
+    artist_name = name_rows[0]["name"] if name_rows else artist_id
+
+    # Per-artist HHI from pre-computed metrics (most reliable signal)
+    hhi = 0.0
+    if _METRICS4_PATH.exists():
+        m4 = pd.read_csv(_METRICS4_PATH)
+        row = m4[m4["Artist"] == artist_name]
+        if not row.empty:
+            hhi = float(row.iloc[0]["HHI"])
+
+    # If no pre-computed HHI, compute from Neo4j ISRC data
+    if hhi == 0.0:
+        rows = _neo4j.run(
+            """
+            MATCH (a:Artist {spotify_id: $id})-[:RELEASED]->(al:Album)
+                  -[:CONTAINS]->(t:Track)-[:REGISTERED_WITH]->(c:ProductionCompany)
+            RETURN c.isrc_prefix AS prefix, count(t) AS cnt
+            ORDER BY cnt DESC
+            """,
+            id=artist_id,
+        )
+        if rows:
+            total = sum(r["cnt"] for r in rows)
+            if total > 0:
+                hhi = sum((r["cnt"] / total) ** 2 for r in rows)
+
+    # Cross-artist ISRC sharing (bonus — fires rarely but is strong when it does)
     if all_artist_ids is None:
-        rows = _neo4j.run("MATCH (a:Artist) RETURN a.spotify_id AS id")
-        all_artist_ids = [r["id"] for r in rows]
+        id_rows = _neo4j.run("MATCH (a:Artist) RETURN a.spotify_id AS id")
+        all_artist_ids = [r["id"] for r in id_rows]
 
-    # Remove self
     others = [a for a in all_artist_ids if a != artist_id]
-    if not others:
-        return {
-            "artist_id": artist_id,
-            "suspicion_score": 0.0,
-            "suspicion_level": "UNKNOWN",
-        }
+    sharing_score = 0.0
+    if others:
+        my_prefixes_rows = _neo4j.run(
+            """
+            MATCH (a:Artist {spotify_id: $id})-[:RELEASED]->(al:Album)
+                  -[:CONTAINS]->(t:Track)-[:REGISTERED_WITH]->(c:ProductionCompany)
+            RETURN collect(DISTINCT c.isrc_prefix) AS prefixes
+            """,
+            id=artist_id,
+        )
+        my_prefixes = set(my_prefixes_rows[0]["prefixes"]) if my_prefixes_rows else set()
+        shared_pairs = 0
+        for oid in others[:20]:  # cap to avoid slow queries on large DBs
+            o_rows = _neo4j.run(
+                """
+                MATCH (a:Artist {spotify_id: $id})-[:RELEASED]->(al:Album)
+                      -[:CONTAINS]->(t:Track)-[:REGISTERED_WITH]->(c:ProductionCompany)
+                RETURN collect(DISTINCT c.isrc_prefix) AS prefixes
+                """,
+                id=oid,
+            )
+            if o_rows:
+                other_prefixes = set(o_rows[0]["prefixes"])
+                if my_prefixes & other_prefixes:
+                    shared_pairs += 1
+        sharing_score = shared_pairs / min(len(others), 20)
 
-    cluster_result = score_cluster([artist_id] + others, _neo4j)
-    # Extract this artist's pairwise scores
-    shared = [
-        c for c in cluster_result["shared_companies"]
-        if cluster_result["artist_names"].get(artist_id, "") in [c["artist_a"], c["artist_b"]]
-    ]
+    # HHI is the dominant per-artist signal; cross-artist sharing is a bonus
+    suspicion_score = float(np.clip(0.75 * hhi + 0.25 * sharing_score, 0.0, 1.0))
+    suspicion_level = _level(suspicion_score)
+
+    logger.info(
+        f"{artist_name}: hhi={hhi:.3f}, sharing={sharing_score:.3f}, "
+        f"suspicion={suspicion_level} ({suspicion_score:.2f})"
+    )
+
     return {
         "artist_id": artist_id,
-        "artist_name": cluster_result["artist_names"].get(artist_id, artist_id),
-        "shared_with": shared,
-        "suspicion_score": cluster_result["suspicion_score"],
-        "suspicion_level": cluster_result["suspicion_level"],
+        "artist_name": artist_name,
+        "hhi": round(hhi, 4),
+        "sharing_score": round(sharing_score, 4),
+        "suspicion_score": round(suspicion_score, 4),
+        "suspicion_level": suspicion_level,
     }
 
 

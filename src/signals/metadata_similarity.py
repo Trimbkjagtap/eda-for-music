@@ -141,31 +141,84 @@ def score_cluster(artist_ids: list[str], neo4j: Neo4jClient | None = None) -> di
 def score_artist(artist_id: str, all_artist_ids: list[str] | None = None,
                  neo4j: Neo4jClient | None = None) -> dict:
     """
-    Score a single artist against all others in the database.
-    If all_artist_ids is None, uses all artists in Neo4j.
+    Score a single artist for ghost-artist metadata patterns.
+
+    Uses per-artist keyword score (not cluster mean) so ghost-keyword-heavy
+    artists score high regardless of how many organic artists are in the DB.
     """
     _neo4j = neo4j or Neo4jClient()
-    if all_artist_ids is None:
-        rows = _neo4j.run("MATCH (a:Artist) RETURN a.spotify_id AS id")
-        all_artist_ids = [r["id"] for r in rows]
 
-    others = [a for a in all_artist_ids if a != artist_id]
-    if not others:
-        return {
-            "artist_id": artist_id,
-            "suspicion_score": 0.0,
-            "suspicion_level": "UNKNOWN",
-        }
+    # Fetch this artist's own data
+    rows = _neo4j.run(
+        "MATCH (a:Artist {spotify_id: $id}) RETURN a.name AS name, a.genres AS genres",
+        id=artist_id,
+    )
+    track_rows = _neo4j.run(
+        """
+        MATCH (a:Artist {spotify_id: $id})-[:RELEASED]->(al:Album)-[:CONTAINS]->(t:Track)
+        RETURN collect(t.name) AS track_names
+        """,
+        id=artist_id,
+    )
+    if not rows:
+        return {"artist_id": artist_id, "suspicion_score": 0.0, "suspicion_level": "UNKNOWN"}
 
-    cluster_result = score_cluster([artist_id] + others, _neo4j)
+    artist_name = rows[0]["name"]
+    track_names = (track_rows[0]["track_names"] if track_rows else None) or []
+
+    # ── Per-artist keyword score (ghost keywords in name + track titles) ──
+    GHOST_KEYWORDS = {
+        "relaxing", "relax", "sleep", "calm", "calmo", "meditation",
+        "white", "noise", "ambient", "nature", "rain", "ocean",
+        "healing", "spa", "zen", "focus", "study", "baby",
+        "soft", "gentle", "peaceful", "tranquil", "soothing",
+    }
+    name_tokens = set(re.findall(r"\w+", artist_name.lower()))
+    name_keyword_count = len(name_tokens & GHOST_KEYWORDS)
+
+    # Track title keyword density
+    track_keyword_hits = 0
+    for t in track_names:
+        tokens = set(re.findall(r"\w+", t.lower()))
+        if tokens & GHOST_KEYWORDS:
+            track_keyword_hits += 1
+    track_keyword_density = track_keyword_hits / len(track_names) if track_names else 0.0
+
+    # Name score: 1 keyword → 0.5, 2+ → 1.0
+    name_score = min(name_keyword_count / 2.0, 1.0)
+
+    # ── Track title repetitiveness (mean TF-IDF self-similarity) ──
+    track_corpus = " ".join(track_names)
+    track_repetition = 0.0
+    if len(track_names) >= 4:
+        # Split corpus into chunks and measure intra-similarity
+        chunks = [" ".join(track_names[i:i+5]) for i in range(0, len(track_names), 5) if track_names[i:i+5]]
+        track_repetition = _tfidf_mean_pairwise(chunks) if len(chunks) > 1 else 0.0
+
+    # Combined per-artist score
+    suspicion_score = (
+        0.40 * name_score
+        + 0.30 * track_keyword_density
+        + 0.20 * track_repetition
+        + 0.10 * min(name_keyword_count / 3.0, 1.0)  # bonus for very keyword-heavy names
+    )
+    suspicion_score = float(np.clip(suspicion_score, 0.0, 1.0))
+    suspicion_level = _level(suspicion_score)
+
+    logger.info(
+        f"{artist_name}: name_keywords={name_keyword_count}, "
+        f"track_kw_density={track_keyword_density:.2f}, track_rep={track_repetition:.2f}, "
+        f"suspicion={suspicion_level} ({suspicion_score:.2f})"
+    )
+
     return {
         "artist_id": artist_id,
-        "artist_name": cluster_result["artist_names"].get(artist_id, artist_id),
-        "suspicion_score": cluster_result["suspicion_score"],
-        "suspicion_level": cluster_result["suspicion_level"],
-        "keyword_count": cluster_result["keyword_counts"].get(
-            cluster_result["artist_names"].get(artist_id, ""), 0
-        ),
+        "artist_name": artist_name,
+        "name_keyword_count": name_keyword_count,
+        "track_keyword_density": round(track_keyword_density, 4),
+        "track_repetition": round(track_repetition, 4),
+        "suspicion_score": round(suspicion_score, 4),
+        "suspicion_level": suspicion_level,
     }
 
 
