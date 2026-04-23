@@ -865,6 +865,11 @@ function renderAnalysisResult(container, d, tracks) {
     </div>` : `
     <div class="info-box">
       <strong>Timing:</strong> Analysis completed in ${d.timing_seconds.toFixed(2)}s using cached Neo4j data.
+    </div>
+    <div style="margin-top:10px;padding:12px 16px;border:1px solid #334155;border-radius:8px;font-size:0.8rem;color:var(--gray3);line-height:1.6">
+      <strong style="color:#94a3b8">Methodological Notes:</strong> This tool demonstrates signal discovery, not production classification.
+      Sample: 3 confirmed ghost artists (DOJ/journalist sources). Spotify API restrictions (Feb 2026) limit real-time S1 computation.
+      GNN AUC=1.000 reflects synthetic graph topology. <a href="/docs/models.html" style="color:var(--green)">Full methodology →</a>
     </div>`}
 
     ${trackPanel}
@@ -1192,7 +1197,7 @@ function renderAbout(root) {
         <p style="line-height:1.85;font-size:0.9rem;margin-top:14px;">
           The framework is validated on three seed artists and scaled using the Kaggle Spotify Audio Features
           dataset (114,000 tracks, 114 genres). Our Graph Attention Network achieves
-          <strong style="color:var(--white)">100% test accuracy</strong> on the proof-of-concept 65-node collaboration graph.
+          <strong style="color:var(--white)">100% test accuracy</strong> on the proof-of-concept 65-node collaboration graph <em style="color:var(--gray3);font-size:0.9em">(synthetic topology — permutation feature importance near-zero; see <a href="/docs/models.html" style="color:var(--green)">methodology notes</a>)</em>.
         </p>
       </div>
       <div class="course-card">
