@@ -191,7 +191,14 @@ def synthesize_verdict(
     )
     overall_score = float(weighted_sum)
     confidence = len(available) / 7
-    verdict_label = _verdict_label(overall_score)
+
+    # Hard rule: extreme cadence (S2≥0.90) + any ISRC suspicion (S3≥0.35) → always GHOST
+    s2 = all_signal_scores.get("s2_cadence_sync") or 0
+    s3 = all_signal_scores.get("s3_playlist_cooccurrence") or 0
+    if s2 >= 0.90 and s3 >= 0.35:
+        verdict_label = "LIKELY_GHOST"
+    else:
+        verdict_label = _verdict_label(overall_score)
 
     explanation = _build_explanation(artist_name, verdict_label, overall_score, all_signal_scores)
 

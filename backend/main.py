@@ -354,13 +354,19 @@ async def artist_tracks(artist: str):
             results = r.json().get("results", [])
 
         if results:
+            # Filter to tracks where the artist name matches (avoid featured/compilation noise)
+            artist_lower = artist.lower()
+            artist_results = [
+                t for t in results
+                if artist_lower in (t.get("artistName") or "").lower()
+            ] or results  # fallback to all if no exact match
             # Sort by releaseDate descending to get truly newest first
-            results.sort(key=lambda t: t.get("releaseDate", ""), reverse=True)
-            latest = results[0]
+            artist_results.sort(key=lambda t: t.get("releaseDate", ""), reverse=True)
+            latest = artist_results[0]
             # Pick second-most-recent track with a different name to avoid duplicate
             top = next(
-                (t for t in results[1:] if t.get("trackName") != latest.get("trackName")),
-                results[-1] if len(results) > 1 else latest,
+                (t for t in artist_results[1:] if t.get("trackName") != latest.get("trackName")),
+                artist_results[-1] if len(artist_results) > 1 else latest,
             )
 
             def itunes_track(t):
@@ -388,14 +394,16 @@ async def artist_tracks(artist: str):
         import json as _json
         oai = OpenAI()
         prompt = (
-            f"For the music artist '{artist}', give me their track data as of your knowledge cutoff.\n"
+            f"For the music artist '{artist}', give me their most recent track and most-viewed track.\n"
+            f"Use your most up-to-date knowledge (your cutoff is early 2025).\n"
+            f"For 'latest': give the MOST RECENTLY RELEASED song you know about — check for releases in 2024 and 2025 first.\n"
+            f"For 'most_viewed': give the song with the highest YouTube view count.\n"
             f"Reply in JSON only:\n"
             f"{{\n"
-            f'  "latest": {{"title": "...", "year": "YYYY", "youtube_views": 123456789}},\n'
-            f'  "most_viewed": {{"title": "...", "year": "YYYY", "youtube_views": 123456789}}\n'
+            f'  "latest": {{"title": "exact song title", "year": "YYYY", "youtube_views": 123456789}},\n'
+            f'  "most_viewed": {{"title": "exact song title", "year": "YYYY", "youtube_views": 123456789}}\n'
             f"}}\n"
-            f"For youtube_views use your best estimate of the approximate YouTube view count. "
-            f"Use null if the artist is obscure/unknown."
+            f"For youtube_views use your best estimate. Use null if unknown/obscure artist."
         )
         resp = oai.chat.completions.create(
             model="gpt-4o-mini",
@@ -431,13 +439,14 @@ async def artist_tracks(artist: str):
             tt["views"] = oai_top["youtube_views"]
             tt["views_source"] = "ai_estimate"
         # Also add OpenAI's most-viewed as a separate youtube entry
+        # Use iTunes latest (already enriched above) — it has real release dates up to 2025
         if oai_top.get("title"):
             yt_data = {
                 "latest_track": {
-                    "title": oai_latest.get("title", lt.get("title", "Unknown")),
-                    "views": oai_latest.get("youtube_views"),
-                    "published": oai_latest.get("year", lt.get("published", "")),
-                    "url": "",
+                    "title": lt.get("title", "Unknown"),
+                    "views": lt.get("views") or oai_latest.get("youtube_views"),
+                    "published": lt.get("published", oai_latest.get("year", "")),
+                    "url": lt.get("url", ""),
                     "thumbnail": lt.get("thumbnail", ""),
                     "views_source": "ai_estimate",
                 },

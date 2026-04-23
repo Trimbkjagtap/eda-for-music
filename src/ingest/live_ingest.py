@@ -396,7 +396,7 @@ def analyze_live(artist_id: str, artist_name: str | None = None, run_s7: bool = 
     overall_score = float(np.clip(overall_score, 0.0, 1.0))
 
     available = [v for v in signal_scores.values() if v is not None]
-    verdict, confidence = _verdict(overall_score, len(available))
+    verdict, confidence = _verdict(overall_score, len(available), signal_scores)
 
     # Build explanation
     sources_used = [k for k, v in signal_sources.items() if v != "unavailable"]
@@ -670,9 +670,15 @@ def _closure_to_suspicion(closure: float) -> float:
     return float(np.clip(1.0 / (1.0 + math.exp(-8.0 * (closure - 0.5))), 0, 1))
 
 
-def _verdict(score: float, n_signals: int) -> tuple[str, float]:
+def _verdict(score: float, n_signals: int, signal_scores: dict | None = None) -> tuple[str, float]:
     confidence = min(0.4 + 0.2 * n_signals, 0.85)  # max 85% with partial signals
-    if score >= 0.65:
+    # Hard rule: extreme cadence + any ISRC suspicion = ghost regardless of score
+    if signal_scores:
+        s2 = signal_scores.get("s2_cadence_sync", 0) or 0
+        s3 = signal_scores.get("s3_playlist_cooccurrence", 0) or 0
+        if s2 >= 0.90 and s3 >= 0.35:
+            return "LIKELY_GHOST", min(confidence + 0.05, 0.95)
+    if score >= 0.60:
         return "LIKELY_GHOST", confidence
     elif score >= 0.40:
         return "SUSPICIOUS", confidence
