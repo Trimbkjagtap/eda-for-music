@@ -586,15 +586,21 @@ async function runAnalysis() {
   result.innerHTML = `<div class="loading-state"><span class="spinner"></span> ${isStudyPanel ? 'Running full 7-signal pipeline' : 'Fetching live data'}… also pulling track intelligence from YouTube &amp; iTunes…</div>`;
 
   try {
+    const ANALYZE_TIMEOUT_MS = 45000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+
     // Fire analysis + track lookup in parallel
     const [resp, tracksResp] = await Promise.all([
       fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ artist_id: artistId, artist_name: artistName, run_cross_platform: false }),
       }),
       fetch(apiUrl(`/artist-tracks?artist=${encodeURIComponent(artistName)}`)).catch(() => null),
     ]);
+    clearTimeout(timeoutId);
 
     const d = await resp.json();
     if (!resp.ok) {
@@ -611,9 +617,12 @@ async function runAnalysis() {
     renderAnalysisResult(result, d, tracksData);
     loadNeighborhoodGraph(d.artist_id || _lastAnalyzedId);
   } catch (e) {
+    const msg = e && e.name === 'AbortError'
+      ? 'Request timed out. Backend may be cold-starting; please retry in a few seconds.'
+      : e.message;
     result.innerHTML = `
       <div style="background:#2a0a0a;border:1px solid #e74c3c;border-radius:10px;padding:20px;color:#fca5a5;font-size:0.88rem;">
-        <strong>Analysis failed:</strong> ${e.message}<br>
+        <strong>Analysis failed:</strong> ${msg}<br>
         <span style="color:var(--gray4);font-size:0.8rem;">Make sure the FastAPI backend is running.</span>
       </div>`;
   }

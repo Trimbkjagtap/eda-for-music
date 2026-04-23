@@ -210,26 +210,29 @@ async def analyze_artist(req: AnalyzeRequest):
         logger.error(f"/analyze failed for {req.artist_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Augment with GNN score (non-fatal — falls back gracefully)
+    # Augment with GNN score (optional). Disabled by default because it
+    # re-runs heavy verdict computation and can significantly increase latency.
     rule_score = result.get("overall_score", 0.0)
     gnn_score = None
     gnn_available = False
     combined_score = rule_score
-    try:
-        from src.signals.verdict import compute_verdict_gnn
-        gnn_result = compute_verdict_gnn(
-            artist_id=artist_id,
-            artist_name=result.get("artist_name"),
-            run_s7=False,
-        )
-        gnn_score = gnn_result.get("gnn_score")
-        gnn_available = gnn_result.get("gnn_available", False)
-        combined_score = gnn_result.get("combined_score", rule_score)
-        # Use the GNN-combined verdict label and score
-        result["verdict"] = gnn_result.get("verdict", result.get("verdict"))
-        result["overall_score"] = combined_score
-    except Exception as e:
-        logger.warning(f"GNN augmentation failed for {req.artist_id}: {e}")
+    enable_gnn = os.getenv("ENABLE_GNN_AUGMENT", "0").strip().lower() in {"1", "true", "yes", "on"}
+    if enable_gnn:
+        try:
+            from src.signals.verdict import compute_verdict_gnn
+            gnn_result = compute_verdict_gnn(
+                artist_id=artist_id,
+                artist_name=result.get("artist_name"),
+                run_s7=False,
+            )
+            gnn_score = gnn_result.get("gnn_score")
+            gnn_available = gnn_result.get("gnn_available", False)
+            combined_score = gnn_result.get("combined_score", rule_score)
+            # Use the GNN-combined verdict label and score
+            result["verdict"] = gnn_result.get("verdict", result.get("verdict"))
+            result["overall_score"] = combined_score
+        except Exception as e:
+            logger.warning(f"GNN augmentation failed for {req.artist_id}: {e}")
 
     return AnalyzeResponse(
         artist_id=result["artist_id"],
