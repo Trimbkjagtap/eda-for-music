@@ -1,7 +1,7 @@
 # GhostTrack: A Layered Signal Framework for Ghost Artist Detection on Spotify Using Public Metadata
 
-**Trimbkeshwar Jagtap**  
-Khoury College of Computer Sciences, Northeastern University  
+**Trimbkeshwar Jagtap** 
+Northeastern University  
 INFO 7390 — Advances in Data Science, Spring 2026  
 jagtap.t@northeastern.edu
 
